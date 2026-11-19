@@ -38,6 +38,12 @@
 
 发送 `%练度` 或 `%练度统计2`，按原评分统计所选档案的代理人、S 级音擎比例、高影代理人及 SSS 以上驱动盘数量。同分保留存档顺序。练度优先读取该档案的本地面板，缺档时读取已保存的公开展柜。使用 `%展柜练度统计2` 可直接查看该档案的公开展柜。图卡标注来源，一张卡只统计一份存档。未装备音擎时比例显示 `—`。
 
+## 伤害计算
+
+发送 `%安比伤害`、`%安东伤害3` 或 `%安东伤害3 档案2`。图卡显示所选技能及其他技能的暴击和期望伤害、乘区、增益及主副词条差异。数字是技能序号，`档案` 后可指定账号档案。只读取自己的本地面板或该档案已保存的公开展柜，以图卡中注明的敌方条件计算。
+
+当前核验安比·德玛拉、安东和用于对算的音擎及套装规则。计算需要原版本的角色倍率、异常和装备资料，沿用 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 及其相邻的 `dist/model/damage/character/`。部署方可用 `LOTUS_ZZZ_DAMAGE_DATA_DIR` 指定角色倍率目录。资料缺失、版本不符或配装规则未迁入时提示无法计算。
+
 ## 来源
 
 个人战绩、式舆防卫战和危局强袭战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss,deadly}.js`、`resources/{card,abyss,deadly}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。
@@ -49,6 +55,8 @@
 驱动盘评分沿用同版本的 `dist/model/score/Score.js`、`dist/lib/score.js`、角色评分规则、`EquipScore.json`、`EquipMainStats.json` 和 `EquipBaseValue.json`。内置规则随模块发布。
 
 练度统计沿用同版本的 `dist/apps/panel.js`、`dist/model/avatar.js` 及 `resources/proficiency/{index.html,index.css}`。
+
+伤害计算沿用对应构建的 [ZZZure/ZZZ-Plugin 源码提交 bf47b77](https://github.com/ZZZure/ZZZ-Plugin/tree/bf47b77790aa7540f03a1e3c6866be0876b12b82/src/model/damage)，保留作者的 AGPL-3.0 规则及原始乘区和词条公式。图卡以同版本 `resources/panel/{damage.html,damage.css}` 为基准。角色倍率、装备数据和美术由部署方提供。
 
 调频详图沿用同版本的 `resources/gachalog/{index.html,index.css}` 和 `resources/common/layout/`。现有图卡由 Lotus-Yunzai 的 Skia 模板绘制。
 

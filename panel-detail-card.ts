@@ -6,6 +6,8 @@ import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { box, cover, label, openZzzCardTheme, zzzCardFooter, zzzScoreColors, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound, frame } from "./challenge-card.ts";
 import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
+import { drawPanelDamage, panelDamageHeight, panelDamageSections } from "./panel-damage-card.ts";
+import type { PanelDamage } from "./panel-damage.ts";
 import { buildZzzPanelDetail, panelObject, type PanelStat } from "./panel-detail.ts";
 import { loadZzzPanelOriginal } from "./panel-original.ts";
 import { buildZzzPanelScore } from "./panel-score.ts";
@@ -234,15 +236,16 @@ function drawEngine(context: Context, model: Detail, art: Awaited<ReturnType<typ
 
 // Layout follows resources/panel/card.html and card.css from ZZZure/ZZZ-Plugin 2057599.
 export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
-  options: ZzzCardOptions & { readonly showcase?: boolean } = {}) {
+  options: ZzzCardOptions & { readonly showcase?: boolean; readonly damage?: PanelDamage; readonly profileId?: number } = {}) {
   const model = buildZzzPanelDetail(avatar);
   const score = buildZzzPanelScore(avatar, model);
+  const damage = options.damage && panelDamageSections(options.damage, avatar.name_mi18n, avatar.level, options.profileId ?? 1);
   const art = await loadPanelDetailArt(avatar, model, options);
   options.signal?.throwIfAborted();
   const { images } = art;
-  const topHeight = 565;
+  const topHeight = damage ? 722 : 565;
   const scoreHeight = score ? 179 : 0;
-  const height = topHeight + 510 + scoreHeight;
+  const height = topHeight + (damage ? panelDamageHeight(damage) : 510 + scoreHeight);
   const rendered = await renderPng(width * 2, height * 2, context => {
     context.scale(2, 2);
     box(context, "#1d1b20", 0, 0, width, height);
@@ -252,7 +255,7 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
     if (portrait) {
       context.save();
       context.beginPath();
-      context.rect(0, 24, 461, topHeight - 35);
+      context.rect(0, 24, 461, damage ? topHeight - 146 : topHeight - 35);
       context.clip();
       const scale = Math.max(461 / portrait.width, (topHeight - 35) / portrait.height);
       const w = portrait.width * scale;
@@ -286,26 +289,31 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
     if (!model.properties.length) label(context, "暂无属性", 623, 221, 20, { color: muted, align: "center" });
     for (const [index, stat] of model.properties.entries()) {
       const id = Object.hasOwn(propertyWeightIds, stat.name) ? propertyWeightIds[stat.name] : (stat.id ?? 0) * 100 + 3;
-      propertyLine(context, images, stat, 460, 157 + 22 * index, 353, {
+      propertyLine(context, images, stat, 460, 157 + (damage ? 30 : 22) * index, 353, {
         alt: index % 2 === 1, bonus: true, weight: score?.weights[id ?? 0],
       });
     }
-    drawEngine(context, model, art, 404);
+    drawEngine(context, model, art, damage ? 502 : 404);
 
     const skill = images.get("panel/images/skill_bg.png");
-    if (skill) contain(context, skill, 0, 434, 451, 76);
-    else fillRound(context, "#161518", 24, 459, 413, 40, 12);
+    const skillY = damage ? 581 : 434;
+    if (skill) contain(context, skill, 0, skillY, 451, 76);
+    else fillRound(context, "#161518", 24, skillY + 25, 413, 40, 12);
     for (const [index, level] of model.skills.entries()) {
       const x = skill ? 46 + index * 60 : 67 + index * 62;
-      if (!skill) label(context, skillNames[index]!, x, 468, 13, { align: "center", color: muted });
-      label(context, level === undefined ? "—" : String(level), x, 490, 17, { align: "center" });
+      if (!skill) label(context, skillNames[index]!, x, skillY + 34, 13, { align: "center", color: muted });
+      label(context, level === undefined ? "—" : String(level), x, skillY + 56, 17, { align: "center" });
     }
 
-    frame(context, images.get("panel/images/BgFrame01.png"), 8, topHeight - 20, 824, 481 + scoreHeight);
-    title(context, "驱动盘信息", "METAL", 12, topHeight + 16, 816);
-    if (score) drawScoreSummary(context, score, topHeight + 43);
-    for (let slot = 0; slot < 6; slot++) {
-      drawDriveDisc(context, art, model, score, slot, 38 + (slot % 3) * 263, topHeight + scoreHeight + 48 + Math.floor(slot / 3) * 207);
+    if (damage) {
+      drawPanelDamage(context, damage, topHeight);
+    } else {
+      frame(context, images.get("panel/images/BgFrame01.png"), 8, topHeight - 20, 824, 481 + scoreHeight);
+      title(context, "驱动盘信息", "METAL", 12, topHeight + 16, 816);
+      if (score) drawScoreSummary(context, score, topHeight + 43);
+      for (let slot = 0; slot < 6; slot++) {
+        drawDriveDisc(context, art, model, score, slot, 38 + (slot % 3) * 263, topHeight + scoreHeight + 48 + Math.floor(slot / 3) * 207);
+      }
     }
     label(context, zzzCardFooter, width / 2, height - 22, 17, { color: muted, align: "center" });
   }, "gpu");

@@ -8,6 +8,7 @@ import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import type { AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
 import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
 import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
+import { createPanelDamageReader, ZzzDamageUnavailable } from "./panel-damage.ts";
 import { renderZzzPanelDetail } from "./panel-detail-card.ts";
 import { renderZzzPanelList } from "./panel-list-card.ts";
 import { createZzzPanelOriginalLedger, readZzzPanelOriginal } from "./panel-original.ts";
@@ -23,12 +24,22 @@ const showcaseCommand = /^(?:(?:刷新|更新)展柜面板|展柜面板(?:刷新
 const proficiencyCommand = /^(展柜)?练度(?:统计)?\s*([1-9]\d{0,2})?$/u;
 const updateCommand = /^(?:(?:刷新|更新)(.*?)面板|面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const detailCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)面板\s*([1-9]\d{0,2})?$/u;
+const damageCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)伤害 *(\d{1,6})?(?: *档案 *([1-9]\d{0,2}))?$/u;
 const safeName = (name: string) => name.normalize("NFKC").trim().toLowerCase();
 
 export function zzzPanelCommand(raw: string) {
   const command = raw.replace(prefix, "");
   if (command === raw) return;
   if (command === "原图") return { kind: "original" as const };
+  const damage = damageCommand.exec(command);
+  if (damage) {
+    const profileId = Number(damage[3] ?? 1);
+    const name = damage[1]!.trim();
+    if (name && profileId <= MAX_PROFILE_ID) {
+      return { kind: "damage" as const, profileId, name, skill: damage[2] === undefined ? undefined : Number(damage[2]) };
+    }
+    return;
+  }
   const proficiency = proficiencyCommand.exec(command);
   if (proficiency) {
     const profileId = Number(proficiency[2] ?? 1);
@@ -109,6 +120,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   const archive = createZzzPanelStorage(lock);
   const showcaseArchive = createZzzShowcaseStorage(lock);
   const requestShowcase = createZzzShowcaseClient();
+  const readDamage = createPanelDamageReader();
   const originals = createZzzPanelOriginalLedger({
     async get(key) { return globalThis.redis?.get(key); },
     async set(key, value, lifetime) { return globalThis.redis?.set(key, value, { EX: lifetime }); },
@@ -214,8 +226,8 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         await sameRole();
         return { type: "image" as const, file: png };
       }
-      if (command.kind === "detail" || command.kind === "showcase-detail") {
-        const privateRows = command.kind === "detail" ? await archive.read(identity) : [];
+      if (command.kind === "detail" || command.kind === "showcase-detail" || command.kind === "damage") {
+        const privateRows = command.kind === "showcase-detail" ? [] : await archive.read(identity);
         const publicRows = await showcaseArchive.read(identity).catch(error => {
           if (command.kind === "showcase-detail") throw error;
           return [];
@@ -229,7 +241,10 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         if (!row) return command.kind === "showcase-detail"
           ? `暂无角色${command.name}的公开展柜数据，请先%更新展柜面板。`
           : `暂无角色${command.name}面板数据，请先%更新面板。`;
-        const { png, original } = await renderZzzPanelDetail(row, identity.uid, { ...theme, showcase: !privateIds.has(row.id) });
+        const damage = command.kind === "damage" ? await readDamage(row, resources, command.skill) : undefined;
+        const { png, original } = await renderZzzPanelDetail(row, identity.uid, {
+          ...theme, showcase: !privateIds.has(row.id), damage, profileId,
+        });
         await sameRole();
         const message = { type: "image" as const, file: png };
         if (!original || context.self_id === undefined) return message;
@@ -313,6 +328,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ZzzShowcaseError) return error.message;
+      if (error instanceof ZzzDamageUnavailable) return error.message;
       if (error instanceof ProfileError) {
         if (error.code === "changed") return "绝区零档案角色已变化，请重新操作。";
         if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;

@@ -49,7 +49,7 @@ function propertyValue(value: string | undefined) {
   return value.endsWith("%") ? amount / 100 : amount;
 }
 
-function partWeights(avatar: ZzzPanelAvatar, properties: Detail["properties"]) {
+export function buildZzzPanelWeights(avatar: ZzzPanelAvatar, properties: Detail["properties"]) {
   const config = characterRules[avatar.id] ?? defaults[panelInteger(avatar.avatar_profession, 1, 99) ?? 0];
   if (!config) return;
   const overrides = "weights" in config ? config.weights : undefined;
@@ -136,7 +136,7 @@ function scoreDisc(disc: Disc | undefined, slot: number, weights: Weights) {
 }
 
 export function buildZzzPanelScore(avatar: ZzzPanelAvatar, model = buildZzzPanelDetail(avatar)) {
-  const weight = partWeights(avatar, model.properties);
+  const weight = buildZzzPanelWeights(avatar, model.properties);
   if (!weight) return;
   const { rule, weights } = weight;
   const discs = model.discs.map((disc, slot) => {
