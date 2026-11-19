@@ -2,7 +2,7 @@ import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, type ZzzCardOptions } from "./card-theme.ts";
+import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
 import { readPanelJson } from "./panel-storage.ts";
 import { createZzzRecordPortraits } from "./tuning-artwork.ts";
@@ -120,6 +120,6 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
       if (rare) contain(context, rare, x + 42.5, y + 100.7, 17, 17);
       else label(context, row.rarity, x + 51, y + 109.2, 13, { align: "center", color: "#efd368" });
     });
-    label(context, "Lotus-Yunzai · ZZZ-Plugin 2.5.4 · ZZZure", width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
   }, "gpu");
 }

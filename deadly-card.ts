@@ -1,7 +1,7 @@
 import type { ZzzDeadlyRoom, ZzzDeadlySnapshot, ZzzShiyuPortrait } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { artwork, box, cover, label, openZzzCardTheme, type ZzzCardOptions } from "./card-theme.ts";
+import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBand, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
@@ -188,6 +188,6 @@ export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: str
       `本群危局强袭战排名：${options.rankVisibility ? "显示" : "隐藏"}，可用 %显示危局排名 或 %隐藏危局排名 切换`;
     label(context, caption,
       width / 2, footer + 49, 19.2, { align: "center", weight: 700 });
-    label(context, "Lotus-Yunzai · ZZZ-Plugin 2.5.4 · ZZZure", width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
   }, "gpu");
 }

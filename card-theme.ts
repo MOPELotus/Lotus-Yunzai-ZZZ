@@ -6,6 +6,7 @@ import { FontLibrary, loadImage, type CanvasRenderingContext2D as Context, type 
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
 const font = '"LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
+export const zzzCardFooter = "Lotus-Yunzai · ZZZ";
 
 export interface ZzzCardOptions {
   readonly legacyResources?: string;

@@ -2,7 +2,7 @@ import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzShiyuPortrait, ZzzShiyuSnapshot, ZzzShiyuTeam } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, type ZzzCardOptions } from "./card-theme.ts";
+import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBand, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
@@ -174,6 +174,6 @@ export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole,
       `本群式舆防卫战排名：${options.rankVisibility ? "显示" : "隐藏"}，可用 %显示深渊排名 或 %隐藏深渊排名 切换`;
     label(context, caption,
       420, y + 50, 19.2, { align: "center", weight: 700 });
-    label(context, "Lotus-Yunzai · ZZZ-Plugin 2.5.4 · ZZZure", 420, height - 35, 17, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, 420, height - 35, 17, { color: "#a09ca3", align: "center" });
   }, "gpu");
 }

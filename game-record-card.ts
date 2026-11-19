@@ -2,7 +2,7 @@ import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzGameRecordItem, ZzzGameRecordSnapshot } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D, Image } from "skia-canvas";
-import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, type ZzzCardOptions } from "./card-theme.ts";
+import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { createZzzRecordPortraits } from "./tuning-artwork.ts";
 
 type Context = CanvasRenderingContext2D;
@@ -160,6 +160,6 @@ export async function renderZzzGameRecord(record: ZzzGameRecordSnapshot, role: G
     drawGrid(context, record.avatars, agents, badges, startGrid, "影");
     title(context, nextGrid - 48, "BANGBOO", "邦布信息");
     drawGrid(context, record.buddies, buddies, badges, nextGrid, "命");
-    label(context, "Lotus-Yunzai · ZZZ-Plugin 2.5.4 · ZZZure", width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
   }, "gpu");
 }

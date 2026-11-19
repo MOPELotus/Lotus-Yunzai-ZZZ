@@ -1,7 +1,7 @@
 import type { ZzzDeadlyRoom, ZzzShiyuPortrait, ZzzShiyuTeam } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { artwork, box, cover, label, openZzzCardTheme, type ZzzCardOptions } from "./card-theme.ts";
+import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, type ZzzChallengeArt } from "./challenge-card.ts";
 import { rankLabels, type RankMode, type RankRow } from "./challenge-rank-model.ts";
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
@@ -215,6 +215,6 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     label(context, " 以登记本期战绩", x + context.measureText(query).width, noteY, 19.2, { color: "#979797" });
     const tie = mode === "ABYSS" ? "同分同评级" : mode === "DEADLY" ? "同星同分" : "同分";
     label(context, `• ${tie}时，最后通关时间较早者排前`, 74, noteY + 39, 19.2, { color: "#979797", maxWidth: width - 145 });
-    label(context, "Lotus-Yunzai · ZZZ-Plugin 2.5.4 · ZZZure", width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
   }, "gpu");
 }

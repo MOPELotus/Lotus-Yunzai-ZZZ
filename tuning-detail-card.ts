@@ -4,6 +4,7 @@ import { join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderPng } from "@lotus-yunzai/skia";
 import { FontLibrary, loadImage, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
+import { zzzCardFooter } from "./card-theme.ts";
 import type { ZzzTuningDetailModel, ZzzTuningDetailPool } from "./tuning-detail.ts";
 
 interface TuningDetailCardOptions {
@@ -289,20 +290,6 @@ function drawRecord(ctx: Context, row: ZzzTuningDetailPool["list"][number], them
   ctx.restore();
 }
 
-function footer(ctx: Context, y: number) {
-  const parts = [
-    ["Lotus-Yunzai", white], [" · ", "#797979"], ["ZZZ-Plugin 2.5.4 · ZZZure", white],
-  ] as const;
-  const size = 16.8;
-  ctx.font = `${size}px ${font}`;
-  const widths = parts.map(([part]) => ctx.measureText(part).width);
-  let left = (width - widths.reduce((sum, measured) => sum + measured, 0)) / 2;
-  for (const [index, [part, color]] of parts.entries()) {
-    text(ctx, part, left, y + 11, size, color);
-    left += widths[index]!;
-  }
-}
-
 export async function renderZzzTuningDetail(
   model: ZzzTuningDetailModel,
   options: TuningDetailCardOptions = {},
@@ -339,6 +326,6 @@ export async function renderZzzTuningDetail(
       }
       top = next + layouts[index]!;
     }
-    footer(ctx, top);
+    text(ctx, zzzCardFooter, width / 2, top + 11, 16.8, white, "center");
   }, mode);
 }
