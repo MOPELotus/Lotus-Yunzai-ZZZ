@@ -113,6 +113,8 @@ import * as weapon63 from "./rules/weapon/怒目金刚.js";
 import * as weapon64 from "./rules/weapon/焰心桂冠.js";
 import * as weapon65 from "./rules/weapon/禁罪囚笼.js";
 import * as weapon66 from "./rules/weapon/辉骑面铠.js";
+import * as weapon67 from "./rules/weapon/「湍流」-斧型.js";
+import * as weapon68 from "./rules/weapon/电波漫步.js";
 import * as set1 from "./rules/set/云岿如我.js";
 import * as set2 from "./rules/set/原始朋克.js";
 import * as set3 from "./rules/set/啄木鸟电音.js";
@@ -256,6 +258,8 @@ export const weaponRules: Readonly<Partial<Record<string, Rule>>> = {
   "焰心桂冠": weapon64 as Rule,
   "禁罪囚笼": weapon65 as Rule,
   "辉骑面铠": weapon66 as Rule,
+  "「湍流」-斧型": weapon67 as Rule,
+  "电波漫步": weapon68 as Rule,
 };
 
 export const setRules: Readonly<Partial<Record<string, Rule>>> = {
@@ -281,8 +285,3 @@ export const setRules: Readonly<Partial<Record<string, Rule>>> = {
   "混沌重金属": set20 as Rule,
   "混沌爵士": set21 as Rule,
 };
-
-export const unsupportedWeaponRules = new Set([
-  "「湍流」-斧型",
-  "电波漫步",
-]);

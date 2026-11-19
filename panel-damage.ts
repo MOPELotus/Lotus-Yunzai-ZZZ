@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { BuffManager, elementEnum, runtime, type buff } from "./damage-engine/BuffManager.ts";
 import { Calculator, type damage } from "./damage-engine/Calculator.ts";
-import { characterRules, setRules, unsupportedWeaponRules, weaponRules } from "./damage-engine/rules.ts";
+import { characterRules, setRules, weaponRules } from "./damage-engine/rules.ts";
 import type { DamageAvatar, DamageData } from "./damage-engine/types.ts";
 import { buildZzzPanelDetail, panelInteger, panelObject } from "./panel-detail.ts";
 import { buildZzzPanelWeights } from "./panel-score.ts";
@@ -146,7 +146,7 @@ function adapt(avatar: ZzzPanelAvatar, gear: { suits: Json; weapons: Json }): Da
     const official = panelObject(gear.weapons[model.weapon?.id ?? 0]);
     const name = model.weapon?.name;
     const star = model.weapon?.star;
-    if (!name || official.Name !== name || star === undefined || star < 1 || unsupportedWeaponRules.has(name)) {
+    if (!name || official.Name !== name || star === undefined || star < 1) {
       throw new ZzzDamageUnavailable("当前没有该配置音擎的原版伤害计算规则。");
     }
     weapon = { name, star, profession: panelInteger(raw.profession ?? official.Profession, 1, 7) };

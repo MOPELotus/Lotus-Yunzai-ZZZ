@@ -18,7 +18,11 @@ function coefficients(names: readonly string[], name: DamageData["anomaly"][numb
   return {
     character: { skill: Object.fromEntries(names.map(type => [type, [1]])) },
     anomaly: [{ name, element_type, sub_element_type: 0, duration: 1, interval: 1, multiplier: 0.5 }],
-    property: { idToName: () => null, nameToShortName3: name => name, nameZHToNameEN: () => "" },
+    property: {
+      idToName: () => null,
+      nameToShortName3: name => name,
+      nameZHToNameEN: name => name === "冲击力" ? "Impact" : "",
+    },
   };
 }
 
@@ -73,4 +77,36 @@ test("赛维里安沿用风属性，隐藏风刃并计入瞬风裂毁", () => {
   expect(initial.skills.some(row => row.skill.type === "EQ2")).toBe(false);
   expect(stronger.selected.result.expectDMG).toBeGreaterThan(initial.selected.result.expectDMG);
   expect(() => calculatePanelDamage({ ...severian, element_type: 205 }, data, gear)).toThrow(/原版伤害/u);
+});
+
+test("两件音擎使用固定资料中的精炼档位与职业，错职业时只保留面板属性", () => {
+  const qingyi = {
+    ...avatar, id: 1251, name_mi18n: "青衣", avatar_profession: 2, element_type: 203, sub_element_type: 0,
+  };
+  const banyue = {
+    ...avatar, id: 1471, name_mi18n: "般岳", avatar_profession: 6, element_type: 201, sub_element_type: 0,
+  };
+  const qingyiData = coefficients(["AQ", "CF", "EQ", "RL", "RZ"], "感电", 203);
+  const banyueData = coefficients([
+    "AA4", "AE4", "AFS", "AQS", "ACY", "CF", "EQAEA", "EQEEA", "EQEAE", "EQAAE", "EQAEAEEA",
+    "EQEAEAAE", "LTAX", "LTCX", "RL", "RZ",
+  ], "灼烧", 201);
+  const engines = [
+    { id: 12009, name: "「湍流」-斧型", rarity: "B", profession: 2, type: "冲击力", amounts: [9, 10, 11, 12, 13] },
+    { id: 13014, name: "电波漫步", rarity: "A", profession: 6, type: "贯穿力", amounts: [240, 276, 312, 348, 384] },
+  ] as const;
+  for (const engine of engines) {
+    const verified = { suits: {}, weapons: { [engine.id]: { Name: engine.name, Profession: engine.profession } } };
+    for (const [index, expected] of engine.amounts.entries()) {
+      const weapon = { id: engine.id, name: engine.name, rarity: engine.rarity, star: index + 1, level: 30 };
+      const q = calculatePanelDamage({ ...qingyi, weapon }, qingyiData, verified, 2);
+      const b = calculatePanelDamage({ ...banyue, weapon }, banyueData, verified, 1);
+      const matching = engine.profession === 2 ? q : b;
+      const mismatched = matching === q ? b : q;
+      const applied = matching.selected.usefulBuffs.find(buff => buff.name === engine.name);
+      expect(applied).toMatchObject({ source: "音擎", type: engine.type });
+      expect(applied?.value).toBeCloseTo(expected);
+      expect(mismatched.selected.usefulBuffs.some(buff => buff.name === engine.name)).toBe(false);
+    }
+  }
 });
