@@ -291,17 +291,15 @@ function drawRecord(ctx: Context, row: ZzzTuningDetailPool["list"][number], them
 
 function footer(ctx: Context, y: number) {
   const parts = [
-    ["Created By ", "#797979", 16.8], ["ZZZ-Plugin", white, 16.8], ["2.5.4", white, 13.4],
-    [" & Powered By ", "#797979", 16.8], ["ZZZure", white, 16.8],
+    ["Lotus-Yunzai", white], [" · ", "#797979"], ["ZZZ-Plugin 2.5.4 · ZZZure", white],
   ] as const;
-  const sizes = parts.map(([part, , size]) => {
-    ctx.font = `${size}px ${font}`;
-    return ctx.measureText(part).width;
-  });
-  let left = width / 2 - sizes.reduce((sum, right) => sum + right, 0) / 2;
-  for (const [index, [part, color, size]] of parts.entries()) {
-    text(ctx, part, left, y + (size < 15 ? 8 : 11), size, color);
-    left += sizes[index]!;
+  const size = 16.8;
+  ctx.font = `${size}px ${font}`;
+  const widths = parts.map(([part]) => ctx.measureText(part).width);
+  let left = (width - widths.reduce((sum, measured) => sum + measured, 0)) / 2;
+  for (const [index, [part, color]] of parts.entries()) {
+    text(ctx, part, left, y + 11, size, color);
+    left += widths[index]!;
   }
 }
 

@@ -127,8 +127,8 @@ export function createModule({ signal, lockFile }: {
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `[荷花插件]请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `[荷花插件]profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
+        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -190,8 +190,8 @@ export function createModule({ signal, lockFile }: {
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `[荷花插件]请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `[荷花插件]profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
+        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -255,8 +255,8 @@ export function createModule({ signal, lockFile }: {
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `[荷花插件]请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `[荷花插件]profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
+        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
       }
       if (error instanceof HoyoRequestError && error.code === "invalid-input") return error.message;
       if (error instanceof HoyoRequestError && error.code === "profile-changed") return "绝区零档案角色已变化，请重新查询。";
@@ -272,7 +272,7 @@ export function createModule({ signal, lockFile }: {
     fallbackFeatures(context: Pick<GachaContext, "normalizedMessage">) {
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
       if ([helpCommand, generateLinkCommand, linkCommand, updateCommand, linkedViewCommand, viewCommand].some(rule => rule.test(command)) ||
-          command.trim() === "取消" || isZzzGachaLinkMessage(command)) return ["[Lotus-Plugin] Gacha Log"];
+          command.trim() === "取消" || isZzzGachaLinkMessage(command)) return ["[gacha] 抽卡记录"];
       return [];
     },
     async fallback(_message: string, context: GachaContext) {
@@ -312,8 +312,8 @@ export function createModule({ signal, lockFile }: {
         } catch (error) {
           if (signal.aborted) return;
           if (error instanceof ProfileError) {
-            if (error.code === "missing" || error.code === "login-required") return `[荷花插件]请先登录 profile ${profileId}。`;
-            if (error.code === "role-missing") return `[荷花插件]profile ${profileId} 没有同步绝区零 UID。`;
+            if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
+            if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
             if (error.code === "changed") return "绝区零档案角色已变化，请重新获取。";
           }
           if (error instanceof HoyoRequestError) {
@@ -347,21 +347,21 @@ export function createModule({ signal, lockFile }: {
       if (!update) return view(qq, profileId, context, linkedOnly !== null);
       try {
         const result = await gachaUpdate(qq, profileId, () =>
-          context.reply(`[荷花插件]正在为 profile ${profileId} 更新绝区零抽卡记录。`));
+          context.reply(`[zzz] 正在为 profile ${profileId} 更新绝区零抽卡记录。`));
         if (!result) return "该档案的绝区零抽卡记录正在更新，请稍后再试。";
         try {
           const { png } = await renderZzzTuningResult(qq, result);
           return { type: "image" as const, file: png };
         } catch {
-          return "[荷花插件]绝区零抽卡记录更新完成。";
+          return "[zzz] 绝区零抽卡记录更新完成。";
         }
       } catch (error) {
         if (signal.aborted) return;
         if (error instanceof ZzzManualGachaLinkRequired) return linkSession(context, profileId);
         if (error instanceof ZzzTuningHistoryChangedError) return "该角色的绝区零抽卡记录已由另一条请求更新。";
         if (error instanceof ProfileError) {
-          if (error.code === "missing" || error.code === "login-required") return `[荷花插件]请先登录 profile ${profileId}。`;
-          if (error.code === "role-missing") return `[荷花插件]profile ${profileId} 没有同步绝区零 UID。`;
+          if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
+          if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
         }
         const reason = error instanceof ZzzTuningRateLimitError ? "rate-limited"
           : (error instanceof ProfileError && error.code === "changed") ||
@@ -370,7 +370,7 @@ export function createModule({ signal, lockFile }: {
           const { png } = await renderZzzTuningFailure({ qq, profileId, reason });
           return { type: "image" as const, file: png };
         } catch {
-          return "[荷花插件]绝区零抽卡记录更新失败，请检查档案登录状态与绝区零 UID。";
+          return "[zzz] 绝区零抽卡记录更新失败，请检查档案登录状态与绝区零 UID。";
         }
       }
     },
