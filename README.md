@@ -28,6 +28,8 @@
 
 发送 `%琉音面板` 或 `%客服面板2` 查看同档案的角色详情。图卡显示角色等级、影画、六项技能、属性、音擎以及各槽位驱动盘的主副词条，保留真实的升级次数、零值和未装备状态。详情直接读取已保存的米游社及旧展柜面板。保存在旧资源目录的角色立绘和主题素材可继续使用。
 
+角色面板按原角色及配装权重显示驱动盘总分、单盘分档、有益词条和有效词条。评分随盘位、等级、稀有度及主副词条变化。已装备但得到零分的驱动盘保留 `0.00`；空槽显示未装备。
+
 发送 `%更新展柜面板` 或 `%展柜面板刷新2`，将对应档案的游戏 UID 提交给第三方 Enka 公开展柜。它只读取游戏内已公开展示的角色，需在 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 对应的 `map/` 提供角色、音擎及驱动盘资料。结果按区服、QQ 与 UID 独立保存到 `data/zzzShowcasePanels/`，可通过 `LOTUS_ZZZ_SHOWCASE_DIR` 改变该目录。`%客服展柜面板2` 查看单个公开角色。`%客服面板2` 优先使用已保存的米游社或旧面板，再查同档案的公开展柜。公开属性根据本地游戏资料计算。
 
 ## 来源
@@ -37,6 +39,8 @@
 挑战群榜沿用同版本的 `dist/apps/rank.js`、`dist/lib/rank.js` 和 `resources/rank/{abyss,deadly,deadlyHard}/`。
 
 面板名册、官方刷新和角色详情沿用同版本的 `dist/apps/panel.js`、`dist/lib/avatar.js` 和 `resources/panel/{list.html,refresh.html,refresh.css,card.html,card.css}`。
+
+驱动盘评分沿用同版本的 `dist/model/score/Score.js`、`dist/lib/score.js`、角色评分规则、`EquipScore.json`、`EquipMainStats.json` 和 `EquipBaseValue.json`。内置规则随模块发布。
 
 调频详图沿用同版本的 `resources/gachalog/{index.html,index.css}` 和 `resources/common/layout/`。现有图卡由 Lotus-Yunzai 的 Skia 模板绘制。
 

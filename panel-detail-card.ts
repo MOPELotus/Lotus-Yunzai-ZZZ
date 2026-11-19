@@ -6,10 +6,12 @@ import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound, frame } from "./challenge-card.ts";
 import { buildZzzPanelDetail, panelObject, type PanelStat } from "./panel-detail.ts";
+import { buildZzzPanelScore } from "./panel-score.ts";
 import { readPanelJson } from "./panel-storage.ts";
 
 type Local = Awaited<ReturnType<typeof openZzzCardTheme>>;
 type Detail = ReturnType<typeof buildZzzPanelDetail>;
+type Score = NonNullable<ReturnType<typeof buildZzzPanelScore>>;
 type Images = ReadonlyMap<string, Image | undefined>;
 const width = 840;
 const gold = "#f2d267";
@@ -30,6 +32,12 @@ const propertyNames: Readonly<Record<string, string>> = {
   "闪能自动累积": "AdrenalineAccumulate.svg", "锐能自动累积": "SharpnessAccumulate.svg",
 };
 const skillNames = ["普攻", "闪避", "支援", "特殊", "连携", "核心"] as const;
+const gradeColors = { C: "#5ed559", B: "#5ebdf9", A: "#d256ff", S: "#ffdabe", SS: "#ffe174",
+  SSS: "#ffa33b", ACE: "#ff5656", MAX: "#ff5656" } as const;
+const propertyWeightIds: Readonly<Record<string, number>> = {
+  "生命值": 11102, "攻击力": 12102, "防御力": 13102, "冲击力": 12202, "暴击率": 20103,
+  "暴击伤害": 21103, "异常掌控": 31402, "异常精通": 31203, "穿透率": 23103, "能量自动回复": 30502,
+};
 
 function sprite(value: unknown) {
   if (typeof value === "string" && /^[A-Za-z0-9_]{1,80}$/u.test(value)) return value;
@@ -135,12 +143,16 @@ function rarity(context: Context, images: Images, rank: string | undefined, x: n
 }
 
 function propertyLine(context: Context, images: Images, stat: PanelStat, x: number, y: number, w: number,
-  { alt = false, main = false, bonus = false, improvements = false } = {}) {
+  { alt = false, main = false, bonus = false, improvements = false, weight }: {
+    alt?: boolean; main?: boolean; bonus?: boolean; improvements?: boolean; weight?: number;
+  } = {}) {
   fillRound(context, alt ? "#000b" : "#000e", x, y - 11, w, 22, 10);
   const path = propertyImage(stat);
   if (path) icon(context, images.get(path), x + 5, y - 8, 17, 17);
   const name = main ? stat.name.replace("属性伤害加成", "伤加成").replace("能量自动回复", "能量回复") : stat.name;
-  label(context, name, x + 27, y, w > 280 ? 17 : 15, { color: main ? gold : "white", maxWidth: w * 0.49 });
+  const color = main ? gold : weight === undefined ? "white" : weight >= 1 ? "#f9bd40" :
+    weight >= 0.75 ? "#eecf8b" : weight > 0 ? "white" : "#b6b1b9";
+  label(context, name, x + 27, y, w > 280 ? 17 : 15, { color, maxWidth: w * 0.49 });
   if (bonus && stat.base !== undefined && stat.added && Number.parseFloat(stat.added) !== 0) {
     const added = stat.added.startsWith("-") || stat.added.startsWith("+") ? stat.added : `+${stat.added}`;
     label(context, `${stat.base} ${added}`, x + w - 93, y, 11, { color: gold, align: "right", maxWidth: 97 });
@@ -154,7 +166,7 @@ function propertyLine(context: Context, images: Images, stat: PanelStat, x: numb
 }
 
 function drawDriveDisc(context: Context, art: Awaited<ReturnType<typeof loadPanelDetailArt>>, model: Detail,
-  index: number, x: number, y: number) {
+  score: Score | undefined, index: number, x: number, y: number) {
   const { images } = art, disc = model.discs[index];
   skin(context, images.get("panel/images/equip_bg.png"), x - 10, y - 5, 276, 207);
   const disk = disc ? art.discs[index] : images.get("panel/images/empty_equip_03.png");
@@ -173,10 +185,44 @@ function drawDriveDisc(context: Context, art: Awaited<ReturnType<typeof loadPane
   fillRound(context, "#141317", x + 63, y + 12, 96, 24, 12);
   label(context, disc.level === undefined ? "等级 —" : `等级 ${disc.level}`, x + 111, y + 24, 15, { align: "center" });
   label(context, disc.name, x + 129, y + 52, 21, { align: "center", maxWidth: 245 });
+  const scored = score?.discs[index];
+  if (scored) {
+    label(context, scored.grade, x + 114, y + 75, 20, { color: gradeColors[scored.grade], align: "right", weight: 700 });
+    label(context, scored.score.toFixed(2), x + 126, y + 76, 17);
+  } else if (score) label(context, "未评分", x + 129, y + 75, 14, { align: "center", color: muted });
   const stats = [...disc.main, ...disc.extra];
-  stats.forEach((stat, row) => propertyLine(context, images, stat, x + 7, y + 80 + row * 22, 240, {
+  stats.forEach((stat, row) => propertyLine(context, images, stat, x + 7, y + (score ? 98 : 80) + row * 21, 240, {
     alt: row % 2 === 1, main: row < disc.main.length, improvements: row >= disc.main.length,
+    weight: score ? score.weights[stat.id ?? 0] ?? 0 : undefined,
   }));
+}
+
+function drawScoreSummary(context: Context, score: Score, y: number) {
+  const x = 43, width = 754, gradeWidth = 226, cellWidth = (width - gradeWidth) / 3;
+  const border = "#707070";
+  fillRound(context, "#18171c", x, y, width, 163, 14, border);
+  box(context, border, x + gradeWidth, y, 2, 163);
+  box(context, border, x, y + 128, width, 2);
+  fillRound(context, "#232227", x + 19, y + 24, 75, 75, 17, border);
+  label(context, score.grade, x + 56, y + 62, 27, { align: "center", color: gradeColors[score.grade], weight: 700 });
+  label(context, `${score.total.toFixed(2)} 分`, x + 106, y + 63, 21, { weight: 700, maxWidth: 109 });
+  label(context, `规则：${score.rule}`, x + gradeWidth / 2, y + 147, 18, { align: "center", color: muted, maxWidth: 208 });
+  for (let index = 0; index < 9; index++) {
+    const column = Math.floor(index / 3), row = index % 3;
+    const left = x + gradeWidth + column * cellWidth;
+    const top = y + row * 42.66;
+    if (column) box(context, border, left, top, 1, 42.66);
+    if (row) box(context, border, left, top, cellWidth, 1);
+    const stat = score.aggregate[index];
+    if (!stat) continue;
+    const color = stat.weight >= 1 ? "#f9bd40" : stat.weight >= 0.75 ? "#eecf8b" : stat.weight > 0 ? "#eee" : muted;
+    fillRound(context, "#0b0b0d", left + 7, top + 8, 26, 26, 6, border);
+    label(context, String(stat.count), left + 20, top + 21, 14, { align: "center", color });
+    label(context, stat.name, left + 40, top + 21, 16, { color, maxWidth: 65 });
+    label(context, `+${stat.value}`, left + cellWidth - 9, top + 21, 16, { align: "right", color, maxWidth: 67 });
+  }
+  label(context, `有益词条数：${score.useful}    有效词条数：${score.effective.toFixed(2)}`,
+    x + (width + gradeWidth) / 2, y + 147, 18, { align: "center", color: muted, maxWidth: width - gradeWidth - 20 });
 }
 
 function drawEngine(context: Context, model: Detail, art: Awaited<ReturnType<typeof loadPanelDetailArt>>, y: number) {
@@ -206,11 +252,13 @@ function drawEngine(context: Context, model: Detail, art: Awaited<ReturnType<typ
 export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
   options: ZzzCardOptions & { readonly showcase?: boolean } = {}) {
   const model = buildZzzPanelDetail(avatar);
+  const score = buildZzzPanelScore(avatar, model);
   const art = await loadPanelDetailArt(avatar, model, options);
   options.signal?.throwIfAborted();
   const { images } = art;
   const topHeight = 565;
-  const height = topHeight + 510;
+  const scoreHeight = score ? 179 : 0;
+  const height = topHeight + 510 + scoreHeight;
   return renderPng(width * 2, height * 2, context => {
     context.scale(2, 2);
     box(context, "#1d1b20", 0, 0, width, height);
@@ -253,7 +301,10 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
     title(context, "属性", "PROPERTY", 452, 124, 348);
     if (!model.properties.length) label(context, "暂无属性", 623, 221, 20, { color: muted, align: "center" });
     for (const [index, stat] of model.properties.entries()) {
-      propertyLine(context, images, stat, 460, 157 + 22 * index, 353, { alt: index % 2 === 1, bonus: true });
+      const id = Object.hasOwn(propertyWeightIds, stat.name) ? propertyWeightIds[stat.name] : (stat.id ?? 0) * 100 + 3;
+      propertyLine(context, images, stat, 460, 157 + 22 * index, 353, {
+        alt: index % 2 === 1, bonus: true, weight: score?.weights[id ?? 0],
+      });
     }
     drawEngine(context, model, art, 404);
 
@@ -266,10 +317,11 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
       label(context, level === undefined ? "—" : String(level), x, 490, 17, { align: "center" });
     }
 
-    frame(context, images.get("panel/images/BgFrame01.png"), 8, topHeight - 20, 824, 481);
+    frame(context, images.get("panel/images/BgFrame01.png"), 8, topHeight - 20, 824, 481 + scoreHeight);
     title(context, "驱动盘信息", "METAL", 12, topHeight + 16, 816);
+    if (score) drawScoreSummary(context, score, topHeight + 43);
     for (let slot = 0; slot < 6; slot++) {
-      drawDriveDisc(context, art, model, slot, 38 + (slot % 3) * 263, topHeight + 48 + Math.floor(slot / 3) * 207);
+      drawDriveDisc(context, art, model, score, slot, 38 + (slot % 3) * 263, topHeight + scoreHeight + 48 + Math.floor(slot / 3) * 207);
     }
     label(context, zzzCardFooter, width / 2, height - 22, 17, { color: muted, align: "center" });
   }, "gpu");
