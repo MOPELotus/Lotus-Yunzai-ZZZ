@@ -87,7 +87,7 @@ function tableLayout(section: Section) {
   const primaryRow = matrix ? (section.english === "MAINSTAT" ? 96 : 83) : 61;
   const row = matrix ? 75 : 54;
   const notes = section.notes?.length ? 12 + section.notes.length * 28 : 0;
-  return { primaryRow, row, notes, table: primaryRow + Math.max(0, section.rows.length - 1) * row + notes };
+  return { matrix, primaryRow, row, notes, table: primaryRow + Math.max(0, section.rows.length - 1) * row + notes };
 }
 
 export function panelDamageHeight(sections: readonly Section[]) {
@@ -126,10 +126,11 @@ export function drawPanelDamage(context: Context, sections: readonly Section[], 
         if (background) box(context, background, left + 1, baseline + 1, width - 2, rowHeight - 2);
         if (column) box(context, "#ffffff29", left, baseline, 1, rowHeight);
         label(context, text, left + width / 2, baseline + (detail ? rowHeight / 2 - 10 : rowHeight / 2), width < 86 ? 17 : 21, {
-          align: "center", color: selected && column === 1 ? highlight : header ? "#cebe95" : "white", maxWidth: width - 7,
+          align: "center", color: selected && column === 1 ? highlight : header ? "#cebe95" : "white",
+          maxWidth: width - 7, ellipsis: !dimensions.matrix,
         });
         if (detail) label(context, detail, left + width / 2, baseline + rowHeight / 2 + 12, 15, {
-          align: "center", color: muted, maxWidth: width - 7,
+          align: "center", color: muted, maxWidth: width - 7, ellipsis: false,
         });
         left += width;
       });

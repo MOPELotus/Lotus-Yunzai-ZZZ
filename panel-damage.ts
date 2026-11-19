@@ -11,9 +11,15 @@ import { readPanelJson } from "./panel-storage.ts";
 
 type Json = Record<string, unknown>;
 
-const supported: Readonly<Partial<Record<number, {name: string; profession: number; sha256: string}>>> = {
-  1011: { name: "安比", profession: 2, sha256: "cffdaa277369cb79d72235b5c2403c58d3562dde94af60b6c5325024efd1d8bc" },
-  1111: { name: "安东", profession: 1, sha256: "d1859f381dad54583995223ac9e49ed1a1b6e40d16fb34e778f86fd49cddb6c9" },
+const supported: Readonly<Partial<Record<number, {name: string; profession: number; element: number; sha256: string}>>> = {
+  1011: { name: "安比", profession: 2, element: 203, sha256: "cffdaa277369cb79d72235b5c2403c58d3562dde94af60b6c5325024efd1d8bc" },
+  1021: { name: "猫又", profession: 1, element: 200, sha256: "cfd7e6092b7044b1e104bfa3a8e7cb10f3f8f5c8d46a17c4b44689ee942542d0" },
+  1061: { name: "可琳", profession: 1, element: 200, sha256: "d13b2de26de840029974b48354158b92b83c505b57a45a168c72ec0b85b9b078" },
+  1081: { name: "比利", profession: 1, element: 200, sha256: "06d1ed4ca2515ecae66173ca316b97d12a433d25a6ede28730e553656299abb3" },
+  1111: { name: "安东", profession: 1, element: 203, sha256: "d1859f381dad54583995223ac9e49ed1a1b6e40d16fb34e778f86fd49cddb6c9" },
+  1141: { name: "莱卡恩", profession: 2, element: 202, sha256: "cbb4d2c0fcc005ef3d92b39c1d05e0b5d680e16f1550c03ec8111a585c040477" },
+  1191: { name: "艾莲", profession: 1, element: 202, sha256: "75ab8cc43f67ae8fe8757de47aa306f98de71bed1404015ae97f7bbc828e3aa9" },
+  1241: { name: "朱鸢", profession: 1, element: 205, sha256: "0b76e3486861aed30fc1cbde8b57d57272890b1023031bd1f94fc3778771cee5" },
 };
 const maps = {
   AnomalyData: "3cef28fbf7ab8374423c95322275ed431bf9c2b098e778689732e6d942a6f31a",
@@ -71,7 +77,7 @@ function properties(row: ZzzPanelAvatar) {
 function adapt(avatar: ZzzPanelAvatar, gear: { suits: Json; weapons: Json }): DamageAvatar {
   const model = buildZzzPanelDetail(avatar);
   const expected = supported[avatar.id];
-  if (!expected || avatar.element_type !== 203 || avatar.avatar_profession !== expected.profession ||
+  if (!expected || avatar.element_type !== expected.element || avatar.avatar_profession !== expected.profession ||
       (avatar.sub_element_type !== undefined && avatar.sub_element_type !== 0) ||
       avatar.level < 1 || avatar.level > 60) {
     throw new ZzzDamageUnavailable("当前没有该角色配置的原版伤害计算规则。");
@@ -114,7 +120,7 @@ function adapt(avatar: ZzzPanelAvatar, gear: { suits: Json; weapons: Json }): Da
   });
   return {
     id: avatar.id, level: avatar.level, rank: avatar.rank, name_mi18n: avatar.name_mi18n,
-    element_type: 203, sub_element_type: 0, avatar_profession: expected.profession,
+    element_type: expected.element, sub_element_type: 0, avatar_profession: expected.profession,
     scoreWeight: buildZzzPanelWeights(avatar, model.properties)?.weights ?? {}, weapon, equip, skills,
     get base_properties() { return this._base_properties ?? base; },
     get initial_properties() { return this._initial_properties ?? initial; },
@@ -192,7 +198,7 @@ export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, g
   if (rules.buffs) buffs.new(cloneRule(rules.buffs.filter(rule => eligibleMindscape(rule, active.rank))));
   calculator.new(cloneRule([...rules.skills]));
   const skills = calculator.calc();
-  if (skills.length !== rules.skills.length ||
+  if (skills.length !== rules.skills.filter(rule => !rule.isHide).length ||
       skills.some(row => !Number.isFinite(row.result.expectDMG) || !Number.isFinite(row.result.critDMG))) {
     throw new ZzzDamageUnavailable("现有角色属性无法完整核验伤害。");
   }
@@ -215,7 +221,7 @@ export function createPanelDamageReader() {
   let common: { resources: string; value: Promise<readonly unknown[]> } | undefined;
   return async (avatar: ZzzPanelAvatar, resources: string | undefined, requestedSkill?: number) => {
     const character = supported[avatar.id];
-    if (!character) throw new ZzzDamageUnavailable("当前只有安比·德玛拉和安东的原版伤害规则已经核验。");
+    if (!character) throw new ZzzDamageUnavailable("该角色的原版伤害计算规则尚未核验。");
     if (!resources) throw new ZzzDamageUnavailable("本机未配置旧版伤害计算资料目录。");
     if (!common || common.resources !== resources) {
       const pending = Promise.all(Object.entries(maps).map(([name, hash]) => verified(resources, `map/${name}.json`, hash)));
