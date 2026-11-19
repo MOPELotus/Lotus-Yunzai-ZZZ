@@ -184,7 +184,9 @@ export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: str
       row += trialHeight + 24;
     }
     frame(context, theme(art, "BgFrame01"), 24, footer, 792, 98);
-    label(context, snapshot.scheduleType === 2 ? "危局强袭战 · 上期个人战绩" : "危局强袭战 · 本期个人战绩",
+    const caption = options.rankVisibility === undefined ? (snapshot.scheduleType === 2 ? "危局强袭战 · 上期个人战绩" : "危局强袭战 · 本期个人战绩") :
+      `本群危局强袭战排名：${options.rankVisibility ? "显示" : "隐藏"}，可用 %显示危局排名 或 %隐藏危局排名 切换`;
+    label(context, caption,
       width / 2, footer + 49, 19.2, { align: "center", weight: 700 });
     label(context, "Lotus-Yunzai · ZZZ-Plugin 2.5.4 · ZZZure", width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
   }, "gpu");

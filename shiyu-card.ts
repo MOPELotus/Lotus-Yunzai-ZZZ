@@ -170,7 +170,9 @@ export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole,
       y += sectionHeight + 24;
     }
     frame(context, art.local.get("abyss/images/BgFrame01.png"), 24, y, 792, 98);
-    label(context, snapshot.scheduleType === 2 ? "式舆防卫战 · 上期个人战绩" : "式舆防卫战 · 本期个人战绩",
+    const caption = options.rankVisibility === undefined ? (snapshot.scheduleType === 2 ? "式舆防卫战 · 上期个人战绩" : "式舆防卫战 · 本期个人战绩") :
+      `本群式舆防卫战排名：${options.rankVisibility ? "显示" : "隐藏"}，可用 %显示深渊排名 或 %隐藏深渊排名 切换`;
+    label(context, caption,
       420, y + 50, 19.2, { align: "center", weight: 700 });
     label(context, "Lotus-Yunzai · ZZZ-Plugin 2.5.4 · ZZZure", 420, height - 35, 17, { color: "#a09ca3", align: "center" });
   }, "gpu");

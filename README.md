@@ -14,6 +14,14 @@
 
 发送 `%危局强袭战`、`%危局`、`%强袭战` 或 `%强袭` 查询本期。前置「上期」或「往期」查询上一期，例如 `%上期危局2`。战绩卡用一张图展示试炼总分、星级、排名百分比及各首领的得分、通关时间和队伍。官方返回绝境记录时，同一张卡先展示绝境详情。原主题从旧资源目录的 `deadly/images/` 与 `common/images/` 读取。
 
+## 挑战群排行榜
+
+群内发送 `%深渊排名`、`%危局排名` 或 `%危局绝境排名`，查询本期式舆第五防线、危局试炼或危局绝境。首次在群内成功查询本期战绩会登记到该群。成员可用 `%隐藏深渊排名`、`%显示深渊排名` 或对应的危局命令控制可见性。危局试炼与绝境共用可见性开关。私聊和上期查询只回复个人战绩。
+
+群榜使用宿主 Valkey 和协议端实时群成员名单。可通过 `LOTUS_ZZZ_RANK_CONFIG` 指定旧格式的 `rank.yaml`，或置于宿主的 `config/zzz-rank.yaml`。配置支持 `allow_group`、`white_list`、`black_list` 及 1 至 15 名的 `max_display`。有旧 Valkey 榜单时，可将 `LOTUS_ZZZ_LEGACY_DATA_DIR` 指向旧 `data/ZZZ-Plugin`，用同群的旧可见性和 UID 关系续读 `abyss/` 与 `deadly/` 中的战绩。新登记按群保存。
+
 ## 来源
 
 个人战绩、式舆防卫战和危局强袭战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss,deadly}.js`、`resources/{card,abyss,deadly}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。
+
+挑战群榜沿用同版本的 `dist/apps/rank.js`、`dist/lib/rank.js` 和 `resources/rank/{abyss,deadly,deadlyHard}/`。

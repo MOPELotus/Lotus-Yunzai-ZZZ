@@ -11,6 +11,7 @@ export interface ZzzCardOptions {
   readonly legacyResources?: string;
   readonly signal?: AbortSignal;
   readonly qq?: string;
+  readonly rankVisibility?: boolean;
 }
 
 async function localPath(root: string | undefined, path: string) {
@@ -75,14 +76,24 @@ export function label(context: Context, text: string, x: number, y: number, size
   weight?: number;
   align?: CanvasTextAlign;
   maxWidth?: number;
+  ellipsis?: boolean;
 } = {}) {
-  const { color = "white", weight = 400, align = "left", maxWidth } = settings;
+  const { color = "white", weight = 400, align = "left", maxWidth, ellipsis = true } = settings;
   context.textBaseline = "middle";
   context.textAlign = align;
   context.font = `${weight} ${size}px ${font}`;
   context.fillStyle = color;
   if (maxWidth !== undefined) {
-    if (context.measureText(text).width > maxWidth) {
+    const width = context.measureText(text).width;
+    if (!ellipsis && width > maxWidth) {
+      context.save();
+      context.translate(x, y);
+      context.scale(maxWidth / width, 1);
+      context.fillText(text, 0, 0);
+      context.restore();
+      return;
+    }
+    if (width > maxWidth) {
       const points = Array.from(text);
       while (points.length && context.measureText(points.join("") + "…").width > maxWidth) points.pop();
       text = points.join("") + "…";

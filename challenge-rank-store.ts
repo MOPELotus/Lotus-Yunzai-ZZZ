@@ -1,0 +1,218 @@
+import { constants } from "node:fs";
+import { open, readFile, realpath } from "node:fs/promises";
+import { dirname, join, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
+import { normalizeZzzDeadly, normalizeZzzShiyu } from "@lotus-yunzai/hoyo-client";
+import {
+  domesticRegion, idOf, rankIdentity, rankRow, rankType,
+  type RankMode, type RankProfile, type RankRow, type RankSnapshot, type RankType,
+} from "./challenge-rank-model.ts";
+
+type Redis = NonNullable<typeof globalThis.redis>;
+type Json = Record<string, unknown>;
+const legacyUid = /^[1-9]\d{7}$/u;
+const defaultConfig = fileURLToPath(new URL("../../config/zzz-rank.yaml", import.meta.url));
+const defaultLegacyData = fileURLToPath(new URL("../../data/ZZZ-Plugin/", import.meta.url));
+const maxRecordBytes = 2 * 1024 * 1024;
+const rememberRecord = `
+local field, default_status, requested_at, snapshot = unpack(ARGV)
+redis.call('HSETNX', KEYS[1], field, default_status)
+local last = redis.call('HGET', KEYS[3], field)
+if not last or tonumber(last) <= tonumber(requested_at) then
+  redis.call('HSET', KEYS[2], field, snapshot)
+  redis.call('HSET', KEYS[3], field, requested_at)
+end
+return redis.call('HGET', KEYS[1], field)
+`;
+
+function object(value: unknown): Json | undefined {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as Json;
+}
+
+function configIds(input: unknown) {
+  if (input === undefined || input === null) return new Set<string>();
+  if (!Array.isArray(input)) throw new Error("群榜列表无效");
+  const ids = input.map(idOf);
+  if (ids.some(id => !id)) throw new Error("群榜群号无效");
+  return new Set(ids as string[]);
+}
+
+export function parseRankConfig(input: unknown, group: string) {
+  const record = input === undefined ? {} : object(input);
+  if (!record) throw new Error("群榜配置无效");
+  const enable = record.allow_group ?? true;
+  if (typeof enable !== "boolean" && enable !== 0 && enable !== 1) throw new Error("群榜开关无效");
+  const listed = configIds(enable ? record.black_list : record.white_list).has(group);
+  const maximum = Number(record.max_display ?? 15);
+  if (!Number.isInteger(maximum)) throw new Error("群榜显示数量无效");
+  return { allowed: enable ? !listed : listed, maximum: Math.max(1, Math.min(15, maximum)) };
+}
+
+export async function readRankConfig(group: string) {
+  const resourceDirectory = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+  const explicit = Bun.env.LOTUS_ZZZ_RANK_CONFIG;
+  const files = explicit ? [explicit] : [defaultConfig, ...(resourceDirectory ? [join(dirname(resourceDirectory), "config", "rank.yaml")] : [])];
+  for (const path of files) {
+    try {
+      return parseRankConfig(Bun.YAML.parse(await readFile(path, "utf8")), group);
+    } catch (error) {
+      if (explicit || (error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+  }
+  return parseRankConfig(undefined, group);
+}
+
+function keys(group: string, type: RankType) {
+  const base = `lotus-yunzai:zzz-challenge-ranks:${group}:${type}`;
+  return { status: `${base}:visibility`, data: `${base}:records`, requests: `${base}:request-time` };
+}
+
+function oldStatus(group: string, type: RankType, uid: string) {
+  return `ZZZ:RANK:${type}:${group}:${uid}`;
+}
+
+function oldGroup(group: string) {
+  return `ZZZ:RANK:UID2QQS:${group}:`;
+}
+
+function profileText(value: unknown, max = 160) {
+  if (typeof value === "string" && value.isWellFormed() && Buffer.byteLength(value) <= max && !/[\p{Cc}\p{Cf}]/u.test(value)) {
+    return value.trim();
+  }
+}
+
+function parseProfile(raw: Json, qq: string, uid: string) {
+  const region = raw.region;
+  if (typeof region !== "string" || !domesticRegion(region) || !rankIdentity(uid, region)) return;
+  const level = typeof raw.level === "number" || typeof raw.level === "string" ? Number(raw.level) : undefined;
+  const profileId = typeof raw.profileId === "number" && Number.isInteger(raw.profileId) &&
+    raw.profileId > 0 && raw.profileId <= MAX_PROFILE_ID ? raw.profileId : undefined;
+  return { qq, profileId, uid, region, nickname: profileText(raw.nickname) || "绳匠",
+    level: typeof level === "number" && Number.isSafeInteger(level) && level >= 0 && level <= 999 ? level : undefined,
+    regionName: profileText(raw.regionName ?? raw.region_name, 100),
+  };
+}
+
+async function legacyRecord(root: string, type: RankType, uid: string, qq: string) {
+  const directory = join(root, type === "ABYSS" ? "abyss" : "deadly");
+  const actual = await realpath(join(directory, `${uid}.json`)).catch(() => undefined);
+  if (!actual?.startsWith(directory + sep)) return;
+  const file = await open(actual, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK).catch(() => undefined);
+  if (!file) return;
+  try {
+    const stat = await file.stat();
+    if (!stat.isFile() || stat.size < 1 || stat.size > maxRecordBytes) return;
+    const data = object(JSON.parse(await file.readFile("utf8")));
+    const legacy = object(object(data?.player)?.player);
+    if (!legacy || String(legacy.game_uid) !== uid || (legacy.game_biz !== undefined && legacy.game_biz !== "nap_cn")) return;
+    const profile = parseProfile(legacy, qq, uid);
+    if (!profile) return;
+    const identity = { uid, region: profile.region, scheduleType: 1 as const };
+    const snapshot = type === "ABYSS" ? normalizeZzzShiyu(data?.result, identity) : normalizeZzzDeadly(data?.result, identity);
+    return { profile, snapshot };
+  } catch {
+    return;
+  } finally {
+    await file.close();
+  }
+}
+
+function modernRecord(field: string, encoded: string) {
+  if (Buffer.byteLength(encoded) > maxRecordBytes) return;
+  try {
+    const raw = object(JSON.parse(encoded));
+    const storedProfile = object(raw?.profile);
+    const uid = storedProfile && idOf(storedProfile.uid);
+    const qq = storedProfile && idOf(storedProfile.qq);
+    if (raw?.version !== 1 || !storedProfile || !uid || !qq) return;
+    const profile = parseProfile(storedProfile, qq, uid);
+    if (!profile?.profileId || rankIdentity(uid, profile.region) !== field) return;
+    const snapshot = object(raw.snapshot);
+    if (!snapshot || !Array.isArray(snapshot.layers) && (!Array.isArray(snapshot.trial) || !Array.isArray(snapshot.hard))) return;
+    return { profile, snapshot: snapshot as unknown as RankSnapshot };
+  } catch {
+    return;
+  }
+}
+
+export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTUS_ZZZ_LEGACY_DATA_DIR || defaultLegacyData) {
+  return {
+    async remember(group: string, type: RankType, profile: RankProfile, snapshot: RankSnapshot, requestedAt: number) {
+      const field = rankIdentity(profile.uid, profile.region);
+      if (!field || !Number.isSafeInteger(requestedAt) || requestedAt < 1) return;
+      const { status, data, requests } = keys(group, type);
+      const prior = legacyUid.test(profile.uid) && await redis.get(oldStatus(group, type, profile.uid));
+      const encoded = JSON.stringify({ version: 1, profile, snapshot });
+      if (Buffer.byteLength(encoded) > maxRecordBytes) return;
+      const saved = await redis.eval(rememberRecord, {
+        keys: [status, data, requests], arguments: [field, prior === "0" ? "0" : "1", String(requestedAt), encoded],
+      });
+      return saved === "1";
+    },
+    async setVisibility(group: string, types: readonly RankType[], uid: string, region: string, enabled: boolean) {
+      const field = rankIdentity(uid, region);
+      if (!field) return false;
+      const transaction = redis.multi();
+      for (const type of types) transaction.hSet(keys(group, type).status, field, enabled ? "1" : "0");
+      await transaction.exec();
+      return true;
+    },
+    async rows(group: string, mode: RankMode, members: ReadonlySet<string>, now: number) {
+      const type = rankType(mode);
+      const { status, data } = keys(group, type);
+      const [visibility, records, root] = await Promise.all([
+        redis.hGetAll(status), redis.hGetAll(data), realpath(legacyData).catch(() => undefined),
+      ]);
+      const rows = new Map<string, RankRow>();
+      for (const [field, encoded] of Object.entries(records)) {
+        if (visibility[field] !== "1") continue;
+        const current = modernRecord(field, encoded);
+        if (!current || !members.has(current.profile.qq)) continue;
+        try {
+          const row = rankRow(mode, current.profile, current.snapshot, now, "current");
+          if (row) rows.set(field, row);
+        } catch {
+          continue;
+        }
+      }
+      if (!root) return [...rows.values()];
+      const oldMembers = new Map<string, string>();
+      const prefix = oldGroup(group);
+      for await (const key of redis.scanIterator({ MATCH: `${prefix}*`, COUNT: 200 })) {
+        if (!key.startsWith(prefix)) continue;
+        const [uid, qq, extra] = key.slice(prefix.length).split(":");
+        if (!uid || !qq || extra !== undefined || !legacyUid.test(uid) || !members.has(qq) || oldMembers.has(uid)) continue;
+        if (await redis.get(key) === "1") oldMembers.set(uid, qq);
+      }
+      for (const [uid, qq] of oldMembers) {
+        const legacy = await legacyRecord(root, type, uid, qq);
+        if (!legacy) continue;
+        const field = rankIdentity(uid, legacy.profile.region);
+        if (!field || rows.has(field) || visibility[field] === "0") continue;
+        if (visibility[field] !== "1" && await redis.get(oldStatus(group, type, uid)) !== "1") continue;
+        const row = rankRow(mode, legacy.profile, legacy.snapshot, now, "legacy");
+        if (row) rows.set(field, row);
+      }
+      return [...rows.values()];
+    },
+    async stillVisible(group: string, mode: RankMode, members: ReadonlySet<string>, rows: readonly RankRow[], now: number) {
+      const type = rankType(mode);
+      return (await Promise.all(rows.map(async row => {
+        if (!members.has(row.qq) || row.expiresAt < now) return false;
+        const field = rankIdentity(row.uid, row.region);
+        if (!field) return false;
+        const { status, data } = keys(group, type);
+        const current = await redis.hGet(status, field);
+        if (row.source === "current") {
+          if (current !== "1") return false;
+          const record = await redis.hGet(data, field);
+          const owner = record && modernRecord(field, record)?.profile;
+          return !!owner && owner.qq === row.qq && owner.profileId === row.profileId;
+        }
+        if (current === "0" || await redis.get(`${oldGroup(group)}${row.uid}:${row.qq}`) !== "1") return false;
+        return current === "1" || await redis.get(oldStatus(group, type, row.uid)) === "1";
+      }))).every(Boolean);
+    },
+  };
+}

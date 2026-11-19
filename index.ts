@@ -11,6 +11,8 @@ import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-his
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
 import { renderZzzGameRecord } from "./game-record-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
+import { rankCommand } from "./challenge-rank-model.ts";
+import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
 import { renderZzzShiyu } from "./shiyu-card.ts";
 import { createZzzLegacyGachaArtwork, createZzzTuningArtwork } from "./tuning-artwork.ts";
 import { buildZzzTuningDetail, buildZzzTuningInventoryReply } from "./tuning-detail.ts";
@@ -51,7 +53,7 @@ function overseasRegion({ uid, region, gameBiz }: GameRole) {
   }
 }
 
-interface GachaContext {
+interface GachaContext extends ChallengeRankContext {
   readonly adapter?: string;
   readonly normalizedMessage: string;
   readonly self_id?: number;
@@ -66,6 +68,7 @@ export function createModule({ signal, lockFile }: {
 }) {
   const profiles = createProfileStore(Bun.env.LOTUS_PROFILE_DIR || undefined);
   const client = createProfileHoyoClient(profiles);
+  const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const sync = createZzzTuningSync(profiles, client, historyDirectory, lockFile);
   const syncOfficial = createGachaUpdater((qq, profileId) => sync.sync(qq, profileId, { signal }));
   async function gachaUpdate(qq: string, profileId: number, notify?: () => unknown) {
@@ -148,16 +151,23 @@ export function createModule({ signal, lockFile }: {
     try {
       const source = await profiles.requestContext(qq, profileId, "zzz");
       const request = { scheduleType, signal };
+      const requestedAt = Date.now();
       const snapshot = await (mode === "shiyu" ? client.fetchZzzShiyu(source, request) : client.fetchZzzDeadly(source, request));
       if (snapshot.status === "older-format") return `${period}${name}使用旧版深渊战绩格式。`;
       if (snapshot.status === "empty") return `${period}暂无${name}战绩。`;
-      const theme = { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
+      async function stillActive() {
+        const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
+        return active?.revision === snapshot.revision && active.role.uid === snapshot.uid;
+      }
+      const rankVisibility = await challengeRanks.remember(context, profileId, source.role, snapshot,
+        mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive);
+      const theme = { qq, signal, rankVisibility, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
       const result = await ("trial" in snapshot ? renderZzzDeadly(snapshot, source.role.nickname, theme) :
         renderZzzShiyu(snapshot, source.role, theme)).catch(() => undefined);
       if (signal.aborted) return [];
-      const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
+      const active = await stillActive();
       if (signal.aborted) return [];
-      if (active?.revision !== snapshot.revision || active.role.uid !== snapshot.uid) {
+      if (!active) {
         return `绝区零档案已变化，请重新查询${name}。`;
       }
       if (result) return { type: "image" as const, file: result.png };
@@ -264,6 +274,8 @@ export function createModule({ signal, lockFile }: {
       return [];
     },
     async fallback(_message: string, context: GachaContext) {
+      const rank = rankCommand(context.normalizedMessage);
+      if (rank) return challengeRanks.handle(context, rank);
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
       const card = gameRecordCommand.exec(command);
       if (card) {
