@@ -42,6 +42,11 @@ import * as character37 from "./rules/character/「扳机」.js";
 import * as character38 from "./rules/character/伊芙琳.js";
 import * as character39 from "./rules/character/爱丽丝.js";
 import * as character40 from "./rules/character/「席德」.js";
+import * as character41 from "./rules/character/莱特.js";
+import character42 from "./rules/character/星徽·比利.js";
+import character43 from "./rules/character/般岳.js";
+import * as character44 from "./rules/character/雨果.js";
+import * as character45 from "./rules/character/赛维里安.js";
 import * as weapon1 from "./rules/weapon/「月相」-晦.js";
 import * as weapon2 from "./rules/weapon/「月相」-望.js";
 import * as weapon3 from "./rules/weapon/人为刀俎.js";
@@ -104,6 +109,10 @@ import * as weapon59 from "./rules/weapon/机巧心种.js";
 import * as weapon60 from "./rules/weapon/牺牲洁纯.js";
 import * as weapon61 from "./rules/weapon/福虓炉炉.js";
 import * as weapon62 from "./rules/weapon/索魂影眸.js";
+import * as weapon63 from "./rules/weapon/怒目金刚.js";
+import * as weapon64 from "./rules/weapon/焰心桂冠.js";
+import * as weapon65 from "./rules/weapon/禁罪囚笼.js";
+import * as weapon66 from "./rules/weapon/辉骑面铠.js";
 import * as set1 from "./rules/set/云岿如我.js";
 import * as set2 from "./rules/set/原始朋克.js";
 import * as set3 from "./rules/set/啄木鸟电音.js";
@@ -173,6 +182,11 @@ export const characterRules: Readonly<Partial<Record<string, Rule>>> = {
   "伊芙琳": character38 as Rule,
   "爱丽丝": character39 as Rule,
   "「席德」": character40 as Rule,
+  "莱特": character41 as Rule,
+  "星徽·比利": character42 as Rule,
+  "般岳": character43 as Rule,
+  "雨果": character44 as Rule,
+  "赛维里安": character45 as Rule,
 };
 
 export const weaponRules: Readonly<Partial<Record<string, Rule>>> = {
@@ -238,6 +252,10 @@ export const weaponRules: Readonly<Partial<Record<string, Rule>>> = {
   "牺牲洁纯": weapon60 as Rule,
   "福虓炉炉": weapon61 as Rule,
   "索魂影眸": weapon62 as Rule,
+  "怒目金刚": weapon63 as Rule,
+  "焰心桂冠": weapon64 as Rule,
+  "禁罪囚笼": weapon65 as Rule,
+  "辉骑面铠": weapon66 as Rule,
 };
 
 export const setRules: Readonly<Partial<Record<string, Rule>>> = {
@@ -266,9 +284,5 @@ export const setRules: Readonly<Partial<Record<string, Rule>>> = {
 
 export const unsupportedWeaponRules = new Set([
   "「湍流」-斧型",
-  "怒目金刚",
-  "焰心桂冠",
   "电波漫步",
-  "禁罪囚笼",
-  "辉骑面铠",
 ]);

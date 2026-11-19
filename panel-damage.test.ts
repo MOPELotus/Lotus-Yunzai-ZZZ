@@ -44,3 +44,33 @@ test("零号·安比保留苍光隐藏连段和独立的六影追加攻击", () 
   expect(fullRank.selected.skill.name).toBe("6影电磁涡流");
   expect(() => calculatePanelDamage({ ...zero, id: 1011 }, data, gear)).toThrow(/原版伤害/u);
 });
+
+test("星徽·比利的六影贯穿附加在原技能，保留普通比利的独立规则", () => {
+  const starlight = {
+    ...avatar, id: 1531, name_mi18n: "星徽·比利", avatar_profession: 6, sub_element_type: 0,
+  };
+  const data = coefficients(["APZ", "AP4", "CC", "CFJ", "CFW", "EPD", "EPT", "EQG", "EQZ", "EQY", "LK", "LT", "RL", "RZ"], "强击", 200);
+  const initial = calculatePanelDamage(starlight, data, gear, 14);
+  const fullRank = calculatePanelDamage({ ...starlight, rank: 6 }, data, gear, 14);
+  expect(fullRank.selected.skill.type).toBe("RZ");
+  expect(fullRank.selected.skill.isSheerDMG).toBe(true);
+  expect(fullRank.skills.map(row => row.skill.type)).toEqual(initial.skills.map(row => row.skill.type));
+  expect(fullRank.selected.result.expectDMG).toBeGreaterThan(initial.selected.result.expectDMG);
+  expect(() => calculatePanelDamage({ ...starlight, id: 1081 }, data, gear)).toThrow(/原版伤害/u);
+});
+
+test("赛维里安沿用风属性，隐藏风刃并计入瞬风裂毁", () => {
+  const severian = {
+    ...avatar, id: 1631, name_mi18n: "赛维里安", element_type: 204, sub_element_type: 0,
+  };
+  const data = coefficients(["AX", "APL", "AP4", "CF", "EQ1", "EQ2", "RL", "RZ", "LT", "LS"], "强击", 200);
+  const initial = calculatePanelDamage(severian, data, gear, 5);
+  const stronger = calculatePanelDamage(severian, {
+    ...data, character: { skill: { ...data.character.skill, EQ2: [2] } },
+  }, gear, 5);
+  expect(initial.selected.skill.type).toBe("EQ1");
+  expect(initial.selected.skill.element).toBe("Wind");
+  expect(initial.skills.some(row => row.skill.type === "EQ2")).toBe(false);
+  expect(stronger.selected.result.expectDMG).toBeGreaterThan(initial.selected.result.expectDMG);
+  expect(() => calculatePanelDamage({ ...severian, element_type: 205 }, data, gear)).toThrow(/原版伤害/u);
+});

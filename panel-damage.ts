@@ -36,6 +36,7 @@ const supported: Readonly<Partial<Record<number, VerifiedCharacter>>> = {
   1131: { name: "苍角", profession: 4, element: 202, sha256: "70fda67d406dae16a1437e3299b484fb8338609d13a96a24a4ec101fad6ba69c" },
   1141: { name: "莱卡恩", profession: 2, element: 202, sha256: "cbb4d2c0fcc005ef3d92b39c1d05e0b5d680e16f1550c03ec8111a585c040477" },
   1151: { name: "露西", profession: 4, element: 201, sha256: "0ec5c533da51aafb06d7255809545cc50a08f23d6b75fabd698ac01222c73d06" },
+  1161: { name: "莱特", profession: 2, element: 201, sha256: "3eadfc54db9ba73c7dc9eaae427e1fc1f37e0a4f1a4890228222471cb5f1a429" },
   1171: { name: "柏妮思", profession: 3, element: 201, legacyMissingSkill: "Y6灼烧", sha256: "b35c40baccec033c525bf7314b61838715d050adfad174bcd41f452cca9274e8" },
   1181: { name: "格莉丝", profession: 3, element: 203, sha256: "7d93ed13291c0d8810d5c7524aa7d6eefdc7cacf9bf9b5dc0d0ef8d92007d3b1" },
   1191: { name: "艾莲", profession: 1, element: 202, sha256: "75ab8cc43f67ae8fe8757de47aa306f98de71bed1404015ae97f7bbc828e3aa9" },
@@ -47,6 +48,7 @@ const supported: Readonly<Partial<Record<number, VerifiedCharacter>>> = {
   1261: { name: "简", profession: 3, element: 200, sha256: "8cc18079b1bd74306ec6cb77a95b012df6f939f6cce87c367153d003a695cd7b" },
   1271: { name: "赛斯", profession: 5, element: 203, sha256: "6380d522e7d5be7205e823c54be21a0bb14dcf5896cc73ec6ca50716b39e836b" },
   1281: { name: "派派", profession: 3, element: 200, sha256: "a72db07ab60f133e7057ef19db45e1d934d0ddbd2af9e932a9c57cfd9fe8d29a" },
+  1291: { name: "雨果", profession: 1, element: 202, sha256: "29cd4627ef19bda8fa9df789cb7cc227be0f07799ff1686003d7aa62eef426dd" },
   1311: { name: "耀嘉音", profession: 4, element: 205, sha256: "a97f027e2a22ad2323b6e6b64a01ac634151fea384c3f220860882222ce14615" },
   1321: { name: "伊芙琳", profession: 1, element: 201, sha256: "5207fa7d8bd37fd2a442c434febaadf37fdc8c1c0253736f6af228eff7cb6655" },
   1331: { name: "薇薇安", profession: 3, element: 205, sha256: "66620bc682849691eb97147fbb0d9b35b9a45047364a3622b0763ec08e70bb68" },
@@ -61,7 +63,10 @@ const supported: Readonly<Partial<Record<number, VerifiedCharacter>>> = {
   1431: { name: "叶瞬光", profession: 1, element: 200, subElement: 4, sha256: "775582c3509b367d9275a0f14f0372448bad2548378b95373d6a8e9b3c407f48" },
   1441: { name: "狛野真斗", profession: 6, element: 201, sha256: "4c6218d95e5cb447a26364c35cc229d80ae51db30eb583c9a72b5508882f6912" },
   1461: { name: "「席德」", profession: 1, element: 203, sha256: "48dcf286cc281a0927b2381db4d2934c79b4b16f30bc35fae9fecc1e81f80e2c" },
+  1471: { name: "般岳", profession: 6, element: 201, sha256: "109209afd043e352a084782437fe004ee22298d906659caf35b4460b31c0ee8a" },
   1491: { name: "千夏", profession: 4, element: 200, sha256: "66a34152431514724d7f2550a348120e91409ff8a113444932ca3d0bf9b7340c" },
+  1531: { name: "星徽·比利", profession: 6, element: 200, sha256: "02510ec50f02b5f08806f1f5318758e865a2fa7296d5f7d08b0f22a1ef4e09a3" },
+  1631: { name: "赛维里安", profession: 1, element: 204, sha256: "7b210d6c8885ae0b3c3dc7bd42610ca88086d14bfeb76a6f7a485746e7b57d93" },
 };
 const maps = {
   AnomalyData: "3cef28fbf7ab8374423c95322275ed431bf9c2b098e778689732e6d942a6f31a",
