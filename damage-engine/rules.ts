@@ -34,6 +34,14 @@ import * as character29 from "./rules/character/薇薇安.js";
 import * as character30 from "./rules/character/波可娜.js";
 import * as character31 from "./rules/character/柚叶.js";
 import * as character32 from "./rules/character/潘引壶.js";
+import character33 from "./rules/character/叶瞬光.js";
+import * as character34 from "./rules/character/橘福福.js";
+import character35 from "./rules/character/千夏.js";
+import * as character36 from "./rules/character/零号·安比.js";
+import * as character37 from "./rules/character/「扳机」.js";
+import * as character38 from "./rules/character/伊芙琳.js";
+import * as character39 from "./rules/character/爱丽丝.js";
+import * as character40 from "./rules/character/「席德」.js";
 import * as weapon1 from "./rules/weapon/「月相」-晦.js";
 import * as weapon2 from "./rules/weapon/「月相」-望.js";
 import * as weapon3 from "./rules/weapon/人为刀俎.js";
@@ -88,6 +96,14 @@ import * as weapon51 from "./rules/weapon/触电唇彩.js";
 import * as weapon52 from "./rules/weapon/逍遥游球.js";
 import * as weapon53 from "./rules/weapon/震元奇枢.js";
 import * as weapon54 from "./rules/weapon/飞鸟星梦.js";
+import * as weapon55 from "./rules/weapon/云霓孤光.js";
+import * as weapon56 from "./rules/weapon/十方锻星.js";
+import * as weapon57 from "./rules/weapon/心弦夜响.js";
+import * as weapon58 from "./rules/weapon/思络成歌.js";
+import * as weapon59 from "./rules/weapon/机巧心种.js";
+import * as weapon60 from "./rules/weapon/牺牲洁纯.js";
+import * as weapon61 from "./rules/weapon/福虓炉炉.js";
+import * as weapon62 from "./rules/weapon/索魂影眸.js";
 import * as set1 from "./rules/set/云岿如我.js";
 import * as set2 from "./rules/set/原始朋克.js";
 import * as set3 from "./rules/set/啄木鸟电音.js";
@@ -149,6 +165,14 @@ export const characterRules: Readonly<Partial<Record<string, Rule>>> = {
   "波可娜": character30 as Rule,
   "柚叶": character31 as Rule,
   "潘引壶": character32 as Rule,
+  "叶瞬光": character33 as Rule,
+  "橘福福": character34 as Rule,
+  "千夏": character35 as Rule,
+  "零号·安比": character36 as Rule,
+  "「扳机」": character37 as Rule,
+  "伊芙琳": character38 as Rule,
+  "爱丽丝": character39 as Rule,
+  "「席德」": character40 as Rule,
 };
 
 export const weaponRules: Readonly<Partial<Record<string, Rule>>> = {
@@ -206,6 +230,14 @@ export const weaponRules: Readonly<Partial<Record<string, Rule>>> = {
   "逍遥游球": weapon52 as Rule,
   "震元奇枢": weapon53 as Rule,
   "飞鸟星梦": weapon54 as Rule,
+  "云霓孤光": weapon55 as Rule,
+  "十方锻星": weapon56 as Rule,
+  "心弦夜响": weapon57 as Rule,
+  "思络成歌": weapon58 as Rule,
+  "机巧心种": weapon59 as Rule,
+  "牺牲洁纯": weapon60 as Rule,
+  "福虓炉炉": weapon61 as Rule,
+  "索魂影眸": weapon62 as Rule,
 };
 
 export const setRules: Readonly<Partial<Record<string, Rule>>> = {
@@ -234,17 +266,9 @@ export const setRules: Readonly<Partial<Record<string, Rule>>> = {
 
 export const unsupportedWeaponRules = new Set([
   "「湍流」-斧型",
-  "云霓孤光",
-  "十方锻星",
-  "心弦夜响",
   "怒目金刚",
-  "思络成歌",
-  "机巧心种",
   "焰心桂冠",
-  "牺牲洁纯",
   "电波漫步",
   "禁罪囚笼",
-  "福虓炉炉",
-  "索魂影眸",
   "辉骑面铠",
 ]);

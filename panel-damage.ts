@@ -21,6 +21,7 @@ interface VerifiedCharacter {
 }
 
 const supported: Readonly<Partial<Record<number, VerifiedCharacter>>> = {
+  // The legacy six-mindscape callback calls an unregistered Burn skill and produces no row.
   1011: { name: "安比", profession: 2, element: 203, sha256: "cffdaa277369cb79d72235b5c2403c58d3562dde94af60b6c5325024efd1d8bc" },
   1021: { name: "猫又", profession: 1, element: 200, sha256: "cfd7e6092b7044b1e104bfa3a8e7cb10f3f8f5c8d46a17c4b44689ee942542d0" },
   1031: { name: "妮可", profession: 4, element: 205, sha256: "4ccfa318856202f7e78465c708a2c0efe94481d93ddf29474aa282169055b12b" },
@@ -35,7 +36,6 @@ const supported: Readonly<Partial<Record<number, VerifiedCharacter>>> = {
   1131: { name: "苍角", profession: 4, element: 202, sha256: "70fda67d406dae16a1437e3299b484fb8338609d13a96a24a4ec101fad6ba69c" },
   1141: { name: "莱卡恩", profession: 2, element: 202, sha256: "cbb4d2c0fcc005ef3d92b39c1d05e0b5d680e16f1550c03ec8111a585c040477" },
   1151: { name: "露西", profession: 4, element: 201, sha256: "0ec5c533da51aafb06d7255809545cc50a08f23d6b75fabd698ac01222c73d06" },
-  // The legacy six-mindscape callback calls an unregistered Burn skill and produces no row.
   1171: { name: "柏妮思", profession: 3, element: 201, legacyMissingSkill: "Y6灼烧", sha256: "b35c40baccec033c525bf7314b61838715d050adfad174bcd41f452cca9274e8" },
   1181: { name: "格莉丝", profession: 3, element: 203, sha256: "7d93ed13291c0d8810d5c7524aa7d6eefdc7cacf9bf9b5dc0d0ef8d92007d3b1" },
   1191: { name: "艾莲", profession: 1, element: 202, sha256: "75ab8cc43f67ae8fe8757de47aa306f98de71bed1404015ae97f7bbc828e3aa9" },
@@ -48,12 +48,20 @@ const supported: Readonly<Partial<Record<number, VerifiedCharacter>>> = {
   1271: { name: "赛斯", profession: 5, element: 203, sha256: "6380d522e7d5be7205e823c54be21a0bb14dcf5896cc73ec6ca50716b39e836b" },
   1281: { name: "派派", profession: 3, element: 200, sha256: "a72db07ab60f133e7057ef19db45e1d934d0ddbd2af9e932a9c57cfd9fe8d29a" },
   1311: { name: "耀嘉音", profession: 4, element: 205, sha256: "a97f027e2a22ad2323b6e6b64a01ac634151fea384c3f220860882222ce14615" },
+  1321: { name: "伊芙琳", profession: 1, element: 201, sha256: "5207fa7d8bd37fd2a442c434febaadf37fdc8c1c0253736f6af228eff7cb6655" },
   1331: { name: "薇薇安", profession: 3, element: 205, sha256: "66620bc682849691eb97147fbb0d9b35b9a45047364a3622b0763ec08e70bb68" },
   1351: { name: "波可娜", profession: 2, element: 200, sha256: "bb4b4e8076322f257f737808ff0193fe73cfba562773714768cb901f220e580d" },
+  1361: { name: "「扳机」", profession: 2, element: 203, sha256: "1841ecae9080bfe1c835de27ab7cfb5d53b172f53de8a72a52ab6a1fb880754e" },
   1371: { name: "仪玄", profession: 6, element: 205, subElement: 2, sha256: "a1edd11459ec6b0d3bf3d73cded60539b396001a85e9b33155f40ae8cffd2757" },
+  1381: { name: "零号·安比", profession: 1, element: 203, sha256: "68daa4b347c051cddb5b1c4013001585d5cf6f5bb3ae20e486a9b25e16b07cca" },
+  1391: { name: "橘福福", profession: 2, element: 201, sha256: "e790a562d08c016ae20fa031dda53d447263b9e79777658654ccd26a0aafcdfb" },
+  1401: { name: "爱丽丝", profession: 3, element: 200, sha256: "c0220ba78970491e61c29ddfdf79cc240d2c629fa4528b683115c1c5ec6d5494" },
   1411: { name: "柚叶", profession: 4, element: 200, sha256: "3c3a8333740bd84dfee39960f714be84f39e6f8cb36b3ca85ff86218b916cd6a" },
   1421: { name: "潘引壶", profession: 5, element: 200, sha256: "a0793e76b2146bacc679d4e412d94b68a96a79e10046de8182a7db0bbd1eb9b4" },
+  1431: { name: "叶瞬光", profession: 1, element: 200, subElement: 4, sha256: "775582c3509b367d9275a0f14f0372448bad2548378b95373d6a8e9b3c407f48" },
   1441: { name: "狛野真斗", profession: 6, element: 201, sha256: "4c6218d95e5cb447a26364c35cc229d80ae51db30eb583c9a72b5508882f6912" },
+  1461: { name: "「席德」", profession: 1, element: 203, sha256: "48dcf286cc281a0927b2381db4d2934c79b4b16f30bc35fae9fecc1e81f80e2c" },
+  1491: { name: "千夏", profession: 4, element: 200, sha256: "66a34152431514724d7f2550a348120e91409ff8a113444932ca3d0bf9b7340c" },
 };
 const maps = {
   AnomalyData: "3cef28fbf7ab8374423c95322275ed431bf9c2b098e778689732e6d942a6f31a",
