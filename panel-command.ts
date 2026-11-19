@@ -4,7 +4,9 @@ import { fileURLToPath } from "node:url";
 import { createProfileStore, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
 import { createProfileHoyoClient, GameRecordRequestError, HoyoRequestError } from "@lotus-yunzai/hoyo-client";
+import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import type { AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
+import { renderZzzPanelDetail } from "./panel-detail-card.ts";
 import { renderZzzPanelList } from "./panel-list-card.ts";
 import { createZzzPanelStorage, readPanelJson, zzzPanelRegion } from "./panel-storage.ts";
 
@@ -13,6 +15,7 @@ const atlasRoot = fileURLToPath(new URL("../../data/atlas/", import.meta.url));
 const prefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)/iu;
 const listCommand = /^(?:面板|.*面板列表)\s*([1-9]\d{0,2})?$/u;
 const updateCommand = /^(?:(?:刷新|更新)(.*?)面板|面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
+const detailCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)面板\s*([1-9]\d{0,2})?$/u;
 const safeName = (name: string) => name.normalize("NFKC").trim().toLowerCase();
 
 export function zzzPanelCommand(raw: string) {
@@ -29,7 +32,13 @@ export function zzzPanelCommand(raw: string) {
   if (list) {
     const profileId = Number(list[1] ?? 1);
     if (profileId <= MAX_PROFILE_ID) return { kind: "list" as const, profileId };
+    return;
   }
+  const detail = detailCommand.exec(command);
+  if (!detail) return;
+  const name = detail[1]!.trim();
+  const profileId = Number(detail[2] ?? 1);
+  if (name && profileId <= MAX_PROFILE_ID) return { kind: "detail" as const, profileId, name };
 }
 
 type Json = Readonly<Record<string, unknown>>;
@@ -72,7 +81,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   const running = new Set<string>();
   const lastSuccess = new Map<string, number>();
 
-  async function targets(names: readonly string[], resources: string | undefined) {
+  async function targets(names: readonly string[], resources: string | undefined, rows: readonly ZzzPanelAvatar[] = []) {
     const ids = new Set<number>();
     const missing: string[] = [];
     const [map, aliases, index] = await Promise.all([
@@ -89,7 +98,10 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         [object(candidate).name, object(candidate).full_name].some(value =>
           typeof value === "string" && safeName(value) === safeName(alias ?? name)))?.[0];
       const found = index ? findTraditionalEntries(index, alias ?? name, "zzz", "character") : [];
-      const raw = legacy ?? (found.length === 1 ? found[0]?.entry.id : undefined);
+      const matches = rows.filter(row => [row.name_mi18n, row.full_name_mi18n]
+        .some(value => value && safeName(value) === safeName(alias ?? name)));
+      const raw = legacy ?? (matches.length === 1 ? String(matches[0]!.id) : undefined) ??
+        (found.length === 1 ? found[0]?.entry.id : undefined);
       if (!raw || !/^[1-9]\d{0,5}$/u.test(raw)) missing.push(name);
       else ids.add(Number(raw));
     }
@@ -124,6 +136,17 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         const rows = await archive.read(identity);
         if (!rows.length) return `UID:${role.uid}无本地面板数据，请先%更新面板。`;
         const { png } = await renderZzzPanelList(rows, display, theme);
+        await sameRole();
+        return { type: "image" as const, file: png };
+      }
+      if (command.kind === "detail") {
+        const rows = await archive.read(identity);
+        const { ids } = await targets([command.name], resources, rows);
+        const row = rows.find(avatar => avatar.id === ids[0]);
+        await sameRole();
+        if (!ids.length) return `角色${command.name}不存在，请确保角色名称/别称存在。`;
+        if (!row) return `暂无角色${command.name}面板数据，请先%更新面板。`;
+        const { png } = await renderZzzPanelDetail(row, identity.uid, theme);
         await sameRole();
         return { type: "image" as const, file: png };
       }

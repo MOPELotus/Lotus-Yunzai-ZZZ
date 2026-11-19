@@ -26,12 +26,14 @@
 
 名册可从 `LOTUS_ZZZ_LEGACY_DATA_DIR/panel/<UID>.json` 只读续用，刷新后的数据存到 `data/zzzPanels/<区服>/<QQ>/<UID>.json`。可通过 `LOTUS_ZZZ_PANEL_DIR` 配置此目录。原五列主题和旧角色别名沿用 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 对应的旧插件资源与配置。
 
+发送 `%琉音面板` 或 `%客服面板2` 查看同档案的角色详情。图卡显示角色等级、影画、六项技能、属性、音擎以及各槽位驱动盘的主副词条，保留真实的升级次数、零值和未装备状态。详情直接读取已保存的米游社及旧展柜面板。保存在旧资源目录的角色立绘和主题素材可继续使用。
+
 ## 来源
 
 个人战绩、式舆防卫战和危局强袭战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss,deadly}.js`、`resources/{card,abyss,deadly}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。
 
 挑战群榜沿用同版本的 `dist/apps/rank.js`、`dist/lib/rank.js` 和 `resources/rank/{abyss,deadly,deadlyHard}/`。
 
-面板名册及官方刷新沿用同版本的 `dist/apps/panel.js`、`dist/lib/avatar.js` 和 `resources/panel/{list.html,refresh.html,refresh.css}`。
+面板名册、官方刷新和角色详情沿用同版本的 `dist/apps/panel.js`、`dist/lib/avatar.js` 和 `resources/panel/{list.html,refresh.html,refresh.css,card.html,card.css}`。
 
 调频详图沿用同版本的 `resources/gachalog/{index.html,index.css}` 和 `resources/common/layout/`。现有图卡由 Lotus-Yunzai 的 Skia 模板绘制。
