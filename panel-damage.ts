@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
-import { BuffManager, elementEnum, type buff } from "./damage-engine/BuffManager.ts";
+import { BuffManager, elementEnum, runtime, type buff } from "./damage-engine/BuffManager.ts";
 import { Calculator, type damage } from "./damage-engine/Calculator.ts";
-import { characterRules, setRules, unsupportedSetRules, unsupportedWeaponRules, weaponRules } from "./damage-engine/rules.ts";
+import { characterRules, setRules, unsupportedWeaponRules, weaponRules } from "./damage-engine/rules.ts";
 import type { DamageAvatar, DamageData } from "./damage-engine/types.ts";
 import { buildZzzPanelDetail, panelInteger, panelObject } from "./panel-detail.ts";
 import { buildZzzPanelWeights } from "./panel-score.ts";
@@ -11,15 +11,23 @@ import { readPanelJson } from "./panel-storage.ts";
 
 type Json = Record<string, unknown>;
 
-const supported: Readonly<Partial<Record<number, {name: string; profession: number; element: number; sha256: string}>>> = {
+const supported: Readonly<Partial<Record<number, {name: string; profession: number; element: number; subElement?: number; sha256: string}>>> = {
   1011: { name: "安比", profession: 2, element: 203, sha256: "cffdaa277369cb79d72235b5c2403c58d3562dde94af60b6c5325024efd1d8bc" },
   1021: { name: "猫又", profession: 1, element: 200, sha256: "cfd7e6092b7044b1e104bfa3a8e7cb10f3f8f5c8d46a17c4b44689ee942542d0" },
+  1031: { name: "妮可", profession: 4, element: 205, sha256: "4ccfa318856202f7e78465c708a2c0efe94481d93ddf29474aa282169055b12b" },
   1061: { name: "可琳", profession: 1, element: 200, sha256: "d13b2de26de840029974b48354158b92b83c505b57a45a168c72ec0b85b9b078" },
   1081: { name: "比利", profession: 1, element: 200, sha256: "06d1ed4ca2515ecae66173ca316b97d12a433d25a6ede28730e553656299abb3" },
+  1091: { name: "星见雅", profession: 3, element: 202, subElement: 1, sha256: "bfc43dfb0234160a06137a8b32a477073d5fd7f3eb79a6985a74e1a0cb0584f4" },
   1111: { name: "安东", profession: 1, element: 203, sha256: "d1859f381dad54583995223ac9e49ed1a1b6e40d16fb34e778f86fd49cddb6c9" },
   1141: { name: "莱卡恩", profession: 2, element: 202, sha256: "cbb4d2c0fcc005ef3d92b39c1d05e0b5d680e16f1550c03ec8111a585c040477" },
+  1151: { name: "露西", profession: 4, element: 201, sha256: "0ec5c533da51aafb06d7255809545cc50a08f23d6b75fabd698ac01222c73d06" },
+  1181: { name: "格莉丝", profession: 3, element: 203, sha256: "7d93ed13291c0d8810d5c7524aa7d6eefdc7cacf9bf9b5dc0d0ef8d92007d3b1" },
   1191: { name: "艾莲", profession: 1, element: 202, sha256: "75ab8cc43f67ae8fe8757de47aa306f98de71bed1404015ae97f7bbc828e3aa9" },
+  1211: { name: "丽娜", profession: 4, element: 203, sha256: "9e9729ad852a647443ee0bb58c830a93a2a421e36f225e09b4e17834fd1116dd" },
   1241: { name: "朱鸢", profession: 1, element: 205, sha256: "0b76e3486861aed30fc1cbde8b57d57272890b1023031bd1f94fc3778771cee5" },
+  1281: { name: "派派", profession: 3, element: 200, sha256: "a72db07ab60f133e7057ef19db45e1d934d0ddbd2af9e932a9c57cfd9fe8d29a" },
+  1371: { name: "仪玄", profession: 6, element: 205, subElement: 2, sha256: "a1edd11459ec6b0d3bf3d73cded60539b396001a85e9b33155f40ae8cffd2757" },
+  1441: { name: "狛野真斗", profession: 6, element: 201, sha256: "4c6218d95e5cb447a26364c35cc229d80ae51db30eb583c9a72b5508882f6912" },
 };
 const maps = {
   AnomalyData: "3cef28fbf7ab8374423c95322275ed431bf9c2b098e778689732e6d942a6f31a",
@@ -59,6 +67,8 @@ function properties(row: ZzzPanelAvatar) {
   const list = Array.isArray(row.properties) ? row.properties.slice(0, 64).map(panelObject) : [];
   function get(name: string, base: boolean) {
     const item = list.find(line => line.property_name === name);
+    // Rupture panels replace these fields with Sheer Force and Adrenaline.
+    if (!item && row.avatar_profession === 6 && (name === "能量自动回复" || name === "穿透率")) return 0;
     const value = originalNumber(base ? item?.base || item?.final : item?.final);
     if (value !== undefined) return value;
     throw new ZzzDamageUnavailable(`角色面板缺少${name}，请先刷新面板。`);
@@ -78,7 +88,7 @@ function adapt(avatar: ZzzPanelAvatar, gear: { suits: Json; weapons: Json }): Da
   const model = buildZzzPanelDetail(avatar);
   const expected = supported[avatar.id];
   if (!expected || avatar.element_type !== expected.element || avatar.avatar_profession !== expected.profession ||
-      (avatar.sub_element_type !== undefined && avatar.sub_element_type !== 0) ||
+      (avatar.sub_element_type ?? 0) !== (expected.subElement ?? 0) ||
       avatar.level < 1 || avatar.level > 60) {
     throw new ZzzDamageUnavailable("当前没有该角色配置的原版伤害计算规则。");
   }
@@ -120,7 +130,7 @@ function adapt(avatar: ZzzPanelAvatar, gear: { suits: Json; weapons: Json }): Da
   });
   return {
     id: avatar.id, level: avatar.level, rank: avatar.rank, name_mi18n: avatar.name_mi18n,
-    element_type: expected.element, sub_element_type: 0, avatar_profession: expected.profession,
+    element_type: expected.element, sub_element_type: expected.subElement ?? 0, avatar_profession: expected.profession,
     scoreWeight: buildZzzPanelWeights(avatar, model.properties)?.weights ?? {}, weapon, equip, skills,
     get base_properties() { return this._base_properties ?? base; },
     get initial_properties() { return this._initial_properties ?? initial; },
@@ -157,7 +167,6 @@ function applyEquipment(avatar: DamageAvatar, buffs: BuffManager) {
   buffs.setCount = count;
   for (const [name, pieces] of Object.entries(count)) {
     if (pieces < 2) continue;
-    if (unsupportedSetRules.has(name)) throw new ZzzDamageUnavailable("当前没有该配置套装的原版伤害计算规则。");
     if (!Object.hasOwn(setRules, name)) continue;
     const model = setRules[name]!;
     buffs.default("name", name);
@@ -197,8 +206,11 @@ export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, g
   if (!rules?.skills) throw new ZzzDamageUnavailable("当前没有该角色的原版伤害计算规则。");
   if (rules.buffs) buffs.new(cloneRule(rules.buffs.filter(rule => eligibleMindscape(rule, active.rank))));
   calculator.new(cloneRule([...rules.skills]));
+  const visible = calculator.skills.filter(skill =>
+    !skill.isHide && (!skill.check || skill.check({ avatar: active, buffM: buffs, calc: calculator, runtime })),
+  );
   const skills = calculator.calc();
-  if (skills.length !== rules.skills.filter(rule => !rule.isHide).length ||
+  if (!skills.length || skills.length !== visible.length ||
       skills.some(row => !Number.isFinite(row.result.expectDMG) || !Number.isFinite(row.result.critDMG))) {
     throw new ZzzDamageUnavailable("现有角色属性无法完整核验伤害。");
   }
