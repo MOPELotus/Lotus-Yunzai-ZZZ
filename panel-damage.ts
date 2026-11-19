@@ -11,7 +11,16 @@ import { readPanelJson } from "./panel-storage.ts";
 
 type Json = Record<string, unknown>;
 
-const supported: Readonly<Partial<Record<number, {name: string; profession: number; element: number; subElement?: number; sha256: string}>>> = {
+interface VerifiedCharacter {
+  readonly name: string;
+  readonly profession: number;
+  readonly element: number;
+  readonly subElement?: number;
+  readonly legacyMissingSkill?: string;
+  readonly sha256: string;
+}
+
+const supported: Readonly<Partial<Record<number, VerifiedCharacter>>> = {
   1011: { name: "安比", profession: 2, element: 203, sha256: "cffdaa277369cb79d72235b5c2403c58d3562dde94af60b6c5325024efd1d8bc" },
   1021: { name: "猫又", profession: 1, element: 200, sha256: "cfd7e6092b7044b1e104bfa3a8e7cb10f3f8f5c8d46a17c4b44689ee942542d0" },
   1031: { name: "妮可", profession: 4, element: 205, sha256: "4ccfa318856202f7e78465c708a2c0efe94481d93ddf29474aa282169055b12b" },
@@ -23,8 +32,11 @@ const supported: Readonly<Partial<Record<number, {name: string; profession: numb
   1101: { name: "珂蕾妲", profession: 2, element: 201, sha256: "602dfe10cb42af35d31748fd6f887f0edb9058364edfad25a91dc3958dd5d755" },
   1111: { name: "安东", profession: 1, element: 203, sha256: "d1859f381dad54583995223ac9e49ed1a1b6e40d16fb34e778f86fd49cddb6c9" },
   1121: { name: "本", profession: 5, element: 201, sha256: "5df823bd765bee963f6e5f7d52be4f096a9feea43fd12247311c1ca55179c910" },
+  1131: { name: "苍角", profession: 4, element: 202, sha256: "70fda67d406dae16a1437e3299b484fb8338609d13a96a24a4ec101fad6ba69c" },
   1141: { name: "莱卡恩", profession: 2, element: 202, sha256: "cbb4d2c0fcc005ef3d92b39c1d05e0b5d680e16f1550c03ec8111a585c040477" },
   1151: { name: "露西", profession: 4, element: 201, sha256: "0ec5c533da51aafb06d7255809545cc50a08f23d6b75fabd698ac01222c73d06" },
+  // The legacy six-mindscape callback calls an unregistered Burn skill and produces no row.
+  1171: { name: "柏妮思", profession: 3, element: 201, legacyMissingSkill: "Y6灼烧", sha256: "b35c40baccec033c525bf7314b61838715d050adfad174bcd41f452cca9274e8" },
   1181: { name: "格莉丝", profession: 3, element: 203, sha256: "7d93ed13291c0d8810d5c7524aa7d6eefdc7cacf9bf9b5dc0d0ef8d92007d3b1" },
   1191: { name: "艾莲", profession: 1, element: 202, sha256: "75ab8cc43f67ae8fe8757de47aa306f98de71bed1404015ae97f7bbc828e3aa9" },
   1201: { name: "悠真", profession: 1, element: 203, sha256: "31edafe98af2fe7639d60165220483507f82e0e73a093cc441c6a96b1553d307" },
@@ -32,9 +44,15 @@ const supported: Readonly<Partial<Record<number, {name: string; profession: numb
   1221: { name: "月城柳", profession: 3, element: 203, sha256: "4e3277b0e8ef8e80f2513bf52860b4d22102f305dd5293a05ef257857a6d2900" },
   1241: { name: "朱鸢", profession: 1, element: 205, sha256: "0b76e3486861aed30fc1cbde8b57d57272890b1023031bd1f94fc3778771cee5" },
   1251: { name: "青衣", profession: 2, element: 203, sha256: "e1612aa09c050520b73236d6944b49f607ced7ebe4222595b3cb53ffc1b7d2ad" },
+  1261: { name: "简", profession: 3, element: 200, sha256: "8cc18079b1bd74306ec6cb77a95b012df6f939f6cce87c367153d003a695cd7b" },
   1271: { name: "赛斯", profession: 5, element: 203, sha256: "6380d522e7d5be7205e823c54be21a0bb14dcf5896cc73ec6ca50716b39e836b" },
   1281: { name: "派派", profession: 3, element: 200, sha256: "a72db07ab60f133e7057ef19db45e1d934d0ddbd2af9e932a9c57cfd9fe8d29a" },
+  1311: { name: "耀嘉音", profession: 4, element: 205, sha256: "a97f027e2a22ad2323b6e6b64a01ac634151fea384c3f220860882222ce14615" },
+  1331: { name: "薇薇安", profession: 3, element: 205, sha256: "66620bc682849691eb97147fbb0d9b35b9a45047364a3622b0763ec08e70bb68" },
+  1351: { name: "波可娜", profession: 2, element: 200, sha256: "bb4b4e8076322f257f737808ff0193fe73cfba562773714768cb901f220e580d" },
   1371: { name: "仪玄", profession: 6, element: 205, subElement: 2, sha256: "a1edd11459ec6b0d3bf3d73cded60539b396001a85e9b33155f40ae8cffd2757" },
+  1411: { name: "柚叶", profession: 4, element: 200, sha256: "3c3a8333740bd84dfee39960f714be84f39e6f8cb36b3ca85ff86218b916cd6a" },
+  1421: { name: "潘引壶", profession: 5, element: 200, sha256: "a0793e76b2146bacc679d4e412d94b68a96a79e10046de8182a7db0bbd1eb9b4" },
   1441: { name: "狛野真斗", profession: 6, element: 201, sha256: "4c6218d95e5cb447a26364c35cc229d80ae51db30eb583c9a72b5508882f6912" },
 };
 const maps = {
@@ -202,12 +220,14 @@ export interface PanelDamage {
   readonly selected: damage;
   readonly substats: readonly (readonly PanelDamageCell[])[];
   readonly mainstats: readonly (readonly PanelDamageCell[])[];
+  readonly unavailableSkills: readonly string[];
 }
 
 export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, gear: { suits: Json; weapons: Json },
   requestedSkill?: number): PanelDamage {
   const active = adapt(avatar, gear);
-  const rules = characterRules[supported[avatar.id]!.name];
+  const character = supported[avatar.id]!;
+  const rules = characterRules[character.name];
   const buffs = new BuffManager(active);
   const calculator = new Calculator(buffs, data);
   applyEquipment(active, buffs);
@@ -218,7 +238,8 @@ export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, g
     !skill.isHide && (!skill.check || skill.check({ avatar: active, buffM: buffs, calc: calculator, runtime })),
   );
   const skills = calculator.calc();
-  if (!skills.length || skills.length !== visible.length ||
+  const missing = visible.filter(skill => !skills.some(row => row.skill.name === skill.name && row.skill.type === skill.type));
+  if (!skills.length || missing.some(skill => skill.type !== character.legacyMissingSkill) ||
       skills.some(row => !Number.isFinite(row.result.expectDMG) || !Number.isFinite(row.result.critDMG))) {
     throw new ZzzDamageUnavailable("现有角色属性无法完整核验伤害。");
   }
@@ -234,7 +255,7 @@ export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, g
   if ([...substats, ...mainstats].some(row => row.some(cell => !Number.isFinite(cell.difference)))) {
     throw new ZzzDamageUnavailable("现有角色属性无法完整核验词条变化。");
   }
-  return { skills, skillIndex, selected, substats, mainstats };
+  return { skills, skillIndex, selected, substats, mainstats, unavailableSkills: missing.map(skill => skill.name) };
 }
 
 export function createPanelDamageReader() {

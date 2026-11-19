@@ -52,7 +52,8 @@ export function panelDamageSections(model: PanelDamage, name: string, level: num
       ...model.skills.map((item, index) => row([String(index + 1), item.skill.name,
         ...(item.result.critDMG === 0 ? [] : [value(item.result.critDMG, 0)]), value(item.result.expectDMG, 0)]))],
     notes: [`敌人等级 ${level}，1 级基础防御力 50，有属性弱点。计算不含失衡易伤区。`,
-      `当前指令 ${command}`, `词条计算目标 ${selected.skill.name}`, `可通过 %${name}伤害加序号切换技能。`],
+      `当前指令 ${command}`, `词条计算目标 ${selected.skill.name}`, `可通过 %${name}伤害加序号切换技能。`,
+      ...model.unavailableSkills.map(skill => `${skill}暂无原版计算结果。`)],
   }, {
     english: "AREA", title: "乘区数据", columns: [1, 1, 1, 1, 1, 1],
     rows: [row(["基础区", "暴击区", "增伤区", "易伤区", "抗性区", selected.skill.isSheerDMG ? "贯穿增伤区" : "防御区"]),
