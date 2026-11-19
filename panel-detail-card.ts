@@ -7,6 +7,7 @@ import { box, cover, label, openZzzCardTheme, zzzCardFooter, zzzScoreColors, typ
 import { contain, fillRound, frame } from "./challenge-card.ts";
 import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
 import { buildZzzPanelDetail, panelObject, type PanelStat } from "./panel-detail.ts";
+import { loadZzzPanelOriginal } from "./panel-original.ts";
 import { buildZzzPanelScore } from "./panel-score.ts";
 
 type Local = Awaited<ReturnType<typeof openZzzCardTheme>>;
@@ -37,7 +38,7 @@ const propertyWeightIds: Readonly<Record<string, number>> = {
   "暴击伤害": 21103, "异常掌控": 31402, "异常精通": 31203, "穿透率": 23103, "能量自动回复": 30502,
 };
 
-async function customPortrait(root: string | undefined, names: readonly unknown[], local: Local) {
+async function customPortrait(root: string | undefined, names: readonly unknown[]) {
   if (!root) return;
   const actual = await realpath(root).catch(() => undefined);
   if (!actual) return;
@@ -50,8 +51,8 @@ async function customPortrait(root: string | undefined, names: readonly unknown[
       .filter(file => file.isFile() && /\.(?:png|jpe?g|webp)$/iu.test(file.name));
     if (!files.length) continue;
     const selected = files[Math.floor(Math.random() * files.length)]!;
-    const image = await local(`${path}/${selected.name}`);
-    if (image) return image;
+    const artwork = await loadZzzPanelOriginal(root, [`${path}/${selected.name}`]);
+    if (artwork) return artwork;
   }
 }
 
@@ -74,7 +75,6 @@ async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options
     ...(skin ? [`images/hakush/role/${skin}.webp`, `images/nanoka/role/${skin}.webp`] : []),
     ...(role ? [`images/role/IconRole${role}.png`, `images/hakush/role/IconRole${role}.webp`,
       `images/nanoka/role/IconRole${role}.webp`] : []),
-    `images/square_avatar/role_square_avatar_${avatar.id}.png`,
   ];
   const paths = new Set([
     "common/images/bg.jpg", "panel/images/CurseBG04.png", "panel/images/CurseBG08.png",
@@ -90,10 +90,10 @@ async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options
     const path = propertyImage(stat);
     if (path) paths.add(path);
   }
-  const [entries, portrait, weapon, discs] = await Promise.all([
+  const [entries, fullPortrait, weapon, discs] = await Promise.all([
     Promise.all([...paths].map(async path => [path, await local(path)] as const)),
-    customPortrait(options.legacyResources, [avatar.name_mi18n, avatar.full_name_mi18n, partner.name, partner.full_name], local)
-      .then(custom => custom ?? firstCachedPanelImage(local, portraitPaths)),
+    customPortrait(options.legacyResources, [avatar.name_mi18n, avatar.full_name_mi18n, partner.name, partner.full_name])
+      .then(custom => custom ?? loadZzzPanelOriginal(options.legacyResources, portraitPaths)),
     cachedPanelWeaponImage(local, weapons?.[model.weapon?.id ?? 0]),
     Promise.all(model.discs.map(item => {
       const disc = panelSpriteName(panelObject(suits?.[item?.suitId ?? 0]).sprite_file);
@@ -101,7 +101,8 @@ async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options
         `images/nanoka/suit/${disc}.webp`]);
     })),
   ]);
-  return { images: new Map(entries), portrait, weapon, discs };
+  const portrait = fullPortrait?.image ?? await local(`images/square_avatar/role_square_avatar_${avatar.id}.png`);
+  return { images: new Map(entries), portrait, original: fullPortrait?.original, weapon, discs };
 }
 
 function icon(context: Context, image: Image | undefined, x: number, y: number, w: number, h: number) {
@@ -242,7 +243,7 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
   const topHeight = 565;
   const scoreHeight = score ? 179 : 0;
   const height = topHeight + 510 + scoreHeight;
-  return renderPng(width * 2, height * 2, context => {
+  const rendered = await renderPng(width * 2, height * 2, context => {
     context.scale(2, 2);
     box(context, "#1d1b20", 0, 0, width, height);
     const background = images.get("common/images/bg.jpg");
@@ -308,4 +309,5 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
     }
     label(context, zzzCardFooter, width / 2, height - 22, 17, { color: muted, align: "center" });
   }, "gpu");
+  return { ...rendered, original: art.original };
 }

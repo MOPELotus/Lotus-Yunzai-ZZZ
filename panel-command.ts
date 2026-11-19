@@ -10,6 +10,7 @@ import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
 import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
 import { renderZzzPanelDetail } from "./panel-detail-card.ts";
 import { renderZzzPanelList } from "./panel-list-card.ts";
+import { createZzzPanelOriginalLedger, readZzzPanelOriginal } from "./panel-original.ts";
 import { createZzzPanelStorage, createZzzShowcaseStorage, readPanelJson, zzzPanelRegion } from "./panel-storage.ts";
 import { renderZzzProficiency } from "./proficiency-card.ts";
 import { buildZzzProficiency } from "./proficiency.ts";
@@ -27,6 +28,7 @@ const safeName = (name: string) => name.normalize("NFKC").trim().toLowerCase();
 export function zzzPanelCommand(raw: string) {
   const command = raw.replace(prefix, "");
   if (command === raw) return;
+  if (command === "原图") return { kind: "original" as const };
   const proficiency = proficiencyCommand.exec(command);
   if (proficiency) {
     const profileId = Number(proficiency[2] ?? 1);
@@ -90,9 +92,15 @@ async function settings(resources: string | undefined) {
 }
 
 interface PanelContext {
+  readonly adapter?: string;
   readonly user_id?: number;
+  readonly self_id?: number;
+  readonly group_id?: number;
   readonly message_type?: string;
   readonly isDelegated?: boolean;
+  readonly privateCredentialSignal?: AbortSignal;
+  readonly reply_id?: string | number;
+  readonly lookupReply?: () => Promise<{ readonly user_id: number; readonly message: readonly { readonly type: string }[] } | undefined>;
   reply(message: string): unknown;
 }
 
@@ -101,9 +109,41 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   const archive = createZzzPanelStorage(lock);
   const showcaseArchive = createZzzShowcaseStorage(lock);
   const requestShowcase = createZzzShowcaseClient();
+  const originals = createZzzPanelOriginalLedger({
+    async get(key) { return globalThis.redis?.get(key); },
+    async set(key, value, lifetime) { return globalThis.redis?.set(key, value, { EX: lifetime }); },
+  }, signal);
   const atlas = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
   const running = new Set<string>();
   const lastSuccess = new Map<string, number>();
+
+  async function verifyRole(qq: string, profileId: number, expected: { uid: string; region: string }) {
+    const current = await profiles.savedRole(qq, profileId, "zzz");
+    if (current.uid !== expected.uid || zzzPanelRegion(current.uid, current.region, current.gameBiz) !== expected.region) {
+      throw new ProfileError("changed", "绝区零档案角色已变化。");
+    }
+    signal.throwIfAborted();
+  }
+
+  async function originalPicture(context: PanelContext, qq: string, resources: string | undefined) {
+    if (context.reply_id === undefined || !context.lookupReply) return "未找到消息源，请引用要查看的图片。";
+    try {
+      const record = await originals.find(context, context.reply_id);
+      if (!record) return "未找到原图。";
+      const quote = await context.lookupReply();
+      if (!quote || quote.user_id !== context.self_id || !quote.message.some(part => part.type === "image")) {
+        return "未找到原图。";
+      }
+      await verifyRole(qq, record.profileId, record);
+      const file = await readZzzPanelOriginal(resources, record.original);
+      await verifyRole(qq, record.profileId, record);
+      if (!file || context.privateCredentialSignal?.aborted) return "未找到原图。";
+      return { type: "image" as const, file };
+    } catch {
+      if (signal.aborted) return [];
+      return "未找到原图。";
+    }
+  }
 
   async function targets(names: readonly string[], resources: string | undefined, rows: readonly ZzzPanelAvatar[] = []) {
     const ids = new Set<number>();
@@ -139,8 +179,9 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       return "请从登录档案对应的 QQ 会话使用绝区零面板。";
     }
     const qq = String(user);
-    const { profileId } = command;
     const resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+    if (command.kind === "original") return originalPicture(context, qq, resources);
+    const { profileId } = command;
     try {
       const role = await profiles.savedRole(qq, profileId, "zzz");
       const region = zzzPanelRegion(role.uid, role.region, role.gameBiz);
@@ -148,13 +189,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       const identity = { qq, uid: role.uid, region };
       const display: GameRole = { ...role, region };
       const theme = { qq, signal, legacyResources: resources };
-      async function sameRole() {
-        const current = await profiles.savedRole(qq, profileId, "zzz");
-        if (current.uid !== identity.uid || zzzPanelRegion(current.uid, current.region, current.gameBiz) !== region) {
-          throw new ProfileError("changed", "绝区零档案角色已变化。");
-        }
-        signal.throwIfAborted();
-      }
+      const sameRole = () => verifyRole(qq, profileId, identity);
 
       if (command.kind === "proficiency") {
         const local = command.showcase ? [] : await archive.read(identity);
@@ -194,9 +229,17 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         if (!row) return command.kind === "showcase-detail"
           ? `暂无角色${command.name}的公开展柜数据，请先%更新展柜面板。`
           : `暂无角色${command.name}面板数据，请先%更新面板。`;
-        const { png } = await renderZzzPanelDetail(row, identity.uid, { ...theme, showcase: !privateIds.has(row.id) });
+        const { png, original } = await renderZzzPanelDetail(row, identity.uid, { ...theme, showcase: !privateIds.has(row.id) });
         await sameRole();
-        return { type: "image" as const, file: png };
+        const message = { type: "image" as const, file: png };
+        if (!original || context.self_id === undefined) return message;
+        return {
+          type: "delivery" as const, message,
+          async onDelivered(id: number) {
+            await sameRole();
+            await originals.delivered(context, id, { profileId, uid: identity.uid, region }, original);
+          },
+        };
       }
 
       if (command.kind === "showcase-update") {

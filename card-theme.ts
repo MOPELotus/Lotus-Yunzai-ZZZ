@@ -36,6 +36,11 @@ async function localArtwork(root: string | undefined, path: string): Promise<Buf
   }
 }
 
+export async function readZzzCardLocalArtwork(directory: string | undefined, path: string) {
+  const root = directory ? await realpath(directory).catch(() => undefined) : undefined;
+  return localArtwork(root, path);
+}
+
 export async function artwork(bytes: Promise<Buffer | undefined> | undefined) {
   try {
     const source = await bytes;
