@@ -3,58 +3,14 @@ import type { ZzzShiyuPortrait, ZzzShiyuSnapshot, ZzzShiyuTeam } from "@lotus-yu
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, type ZzzCardOptions } from "./card-theme.ts";
+import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBand, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 840;
 const names = ["", "一", "二", "三", "四", "五"] as const;
 const numberWords = ["一", "二", "三"] as const;
 type Layer = ZzzShiyuSnapshot["layers"][number];
-type Art = { readonly local: ReadonlyMap<string, Image | undefined>; readonly portraits: ReadonlyMap<ZzzShiyuPortrait, Image | undefined>; readonly monsters: ReadonlyMap<string, Image | undefined> };
-
-function fillRound(context: Context, color: string, x: number, y: number, w: number, h: number, radius: number, border?: string) {
-  context.beginPath();
-  context.roundRect(x, y, w, h, radius);
-  context.fillStyle = color;
-  context.fill();
-  if (border) {
-    context.lineWidth = 3;
-    context.strokeStyle = border;
-    context.stroke();
-  }
-}
-
-function contain(context: Context, image: Image, x: number, y: number, w: number, h: number) {
-  const scale = Math.min(w / image.width, h / image.height);
-  const imageWidth = image.width * scale;
-  const imageHeight = image.height * scale;
-  context.drawImage(image, x + (w - imageWidth) / 2, y + (h - imageHeight) / 2, imageWidth, imageHeight);
-}
-
-function frame(context: Context, texture: Image | undefined, x: number, y: number, w: number, h: number) {
-  if (!texture || texture.width < 381 || texture.height < 271) {
-    fillRound(context, "#242326", x + 12, y + 4, w - 24, h - 10, 12, "#333");
-    return;
-  }
-  const sourceX = [0, 280, texture.width - 100, texture.width];
-  const sourceY = [0, 200, texture.height - 70, texture.height];
-  const destX = [x, x + 67.2, x + w - 24, x + w];
-  const destY = [y, y + 48, y + h - 16.8, y + h];
-  for (let row = 0; row < 3; row++) {
-    for (let column = 0; column < 3; column++) {
-      const sx = sourceX[column]!, sy = sourceY[row]!, dx = destX[column]!, dy = destY[row]!;
-      context.drawImage(texture, sx, sy, sourceX[column + 1]! - sx, sourceY[row + 1]! - sy,
-        dx, dy, destX[column + 1]! - dx, destY[row + 1]! - dy);
-    }
-  }
-}
-
-function rankBand(points: number) {
-  if (points < 100) return 1;
-  if (points < 500) return 2;
-  if (points < 1_000) return 3;
-  if (points < 5_000) return 4;
-  return 5;
-}
+type Art = ZzzChallengeArt & { readonly monsters: ReadonlyMap<string, Image | undefined> };
 
 function duration(seconds: number) {
   return [Math.floor(seconds / 60), seconds % 60].map(value => String(value).padStart(2, "0")).join(":");
@@ -78,37 +34,6 @@ function scoreText(context: Context, art: Art, score: number | undefined, cap: 5
   label(context, String(score ?? "—"), x + 2, y + 3, size, { color: "#353237", weight: 700 });
   label(context, String(score ?? "—"), x, y, size, { color: "#e6e6e6", weight: 700 });
   return context.measureText(String(score ?? "—")).width;
-}
-
-function drawPortrait(context: Context, art: Art, entry: ZzzShiyuPortrait | undefined, x: number, y: number, size: number, buddy = false) {
-  if (!entry) return;
-  const image = art.portraits.get(entry);
-  fillRound(context, "#151517", x, y, size, size, 11, "#343534");
-  context.save();
-  context.beginPath();
-  context.roundRect(x + 3, y + 3, size - 6, size - 6, 9);
-  context.clip();
-  if (image) {
-    if (buddy) cover(context, image, x - size * 0.32, y - size * 0.2, size * 2.1, size * 2);
-    else {
-      const scale = Math.max(size / image.width, size / image.height);
-      const scaledWidth = image.width * scale;
-      context.drawImage(image, x - (scaledWidth - size) / 2, y, scaledWidth, image.height * scale);
-    }
-  } else if (entry.name) {
-    label(context, entry.name, x + size / 2, y + size / 2, 15, { color: "#ada9af", align: "center", maxWidth: size - 10 });
-  }
-  if (entry.rarity) {
-    const badge = art.local.get(`common/images/RANK_${entry.rarity}.png`);
-    fillRound(context, "#09090b", x, y, 27, 27, 5);
-    if (badge) contain(context, badge, x + 3, y + 3, 22, 22);
-    else label(context, entry.rarity, x + 14, y + 14, 14, { align: "center", weight: 700 });
-  }
-  if (entry.rank) {
-    fillRound(context, "#0008", x + size - 24, y, 24, 25, 5);
-    label(context, String(entry.rank), x + size - 13, y + 13, 16, { weight: 800, align: "center" });
-  }
-  context.restore();
 }
 
 function teamLabel(context: Context, art: Art, teamIndex: number, x: number, y: number) {
@@ -202,25 +127,14 @@ async function loadArt(snapshot: ZzzShiyuSnapshot, local: Awaited<ReturnType<typ
     return image;
   }
 
-  async function loadPortrait(entry: ZzzShiyuPortrait | undefined, buddy: boolean) {
-    if (!entry) return;
-    const href = entry.icon;
-    const img = href && await official(href);
-    if (img) { portraits.set(entry, img); return; }
-    if (!entry.itemId || !/^\d{1,6}$/u.test(entry.itemId)) return;
-    const path = buddy ? `images/bangboo_square_avatar/bangboo_rectangle_avatar_${entry.itemId}.png`
-      : `images/square_avatar/role_square_avatar_${entry.itemId}.png`;
-    portraits.set(entry, await local(path));
-  }
-
   const loadTeams = async () => {
     const teams = snapshot.layers.flatMap(layer => layer.teams);
     for (let index = 0; index < teams.length && !signal?.aborted; index += 2) {
       await Promise.all(teams.slice(index, index + 2).map(async team => {
         const monster = team.monster;
         await Promise.all([
-          ...team.avatars.map(entry => loadPortrait(entry, false)),
-          loadPortrait(team.buddy, true),
+          ...team.avatars.map(entry => loadChallengePortrait(entry, false, local, official, portraits)),
+          loadChallengePortrait(team.buddy, true, local, official, portraits),
           monster && official(monster).then(image => monsters.set(monster, image)),
         ]);
       }));

@@ -10,6 +10,10 @@
 
 发送 `%式舆防卫战`、`%式舆`、`%深渊`、`%防卫战` 或 `%防卫` 查询本期，前置「上期」或「往期」查询上一期，例如 `%上期深渊2`。账号、前缀和档案编号规则与个人战绩相同。卡片按官方记录展示第五至第一防线，包括统计周期、总分、评级、百分比、通关时间、增益及对应队伍。以相同的旧资源目录读取 `abyss/images/` 主题和 `common/images/` 图标。
 
+## 危局强袭战
+
+发送 `%危局强袭战`、`%危局`、`%强袭战` 或 `%强袭` 查询本期。前置「上期」或「往期」查询上一期，例如 `%上期危局2`。战绩卡用一张图展示试炼总分、星级、排名百分比及各首领的得分、通关时间和队伍。官方返回绝境记录时，同一张卡先展示绝境详情。原主题从旧资源目录的 `deadly/images/` 与 `common/images/` 读取。
+
 ## 来源
 
-个人战绩和式舆防卫战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss}.js`、`resources/{card,abyss}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。
+个人战绩、式舆防卫战和危局强袭战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss,deadly}.js`、`resources/{card,abyss,deadly}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。

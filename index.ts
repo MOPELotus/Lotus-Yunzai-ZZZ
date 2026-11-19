@@ -10,6 +10,7 @@ import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
 import { renderZzzGameRecord } from "./game-record-card.ts";
+import { renderZzzDeadly } from "./deadly-card.ts";
 import { renderZzzShiyu } from "./shiyu-card.ts";
 import { createZzzLegacyGachaArtwork, createZzzTuningArtwork } from "./tuning-artwork.ts";
 import { buildZzzTuningDetail, buildZzzTuningInventoryReply } from "./tuning-detail.ts";
@@ -25,7 +26,8 @@ const generateLinkCommand = /^#绝区零获取抽卡链接([1-9]\d{0,2})?$/u;
 const helpCommand = /^#绝区零抽卡帮助$/u;
 const gameRecordCommand = /^#绝区零(?:card|卡片|个人信息|角色)\s*([1-9]\d{0,2})?$/iu;
 const shiyuCommand = /^#绝区零(本期|当期|上期|往期)?(?:式舆防卫战|式舆防卫|式舆|深渊|防卫战|防卫)\s*([1-9]\d{0,2})?$/u;
-const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫))/iu;
+const deadlyCommand = /^#绝区零(本期|当期|上期|往期)?(?:危局强袭战|危局|强袭战|强袭)\s*([1-9]\d{0,2})?$/u;
+const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭))/iu;
 const help = [
   "绝区零抽卡记录",
   "%更新抽卡记录 同步国服米游社的六个频段。",
@@ -134,29 +136,40 @@ export function createModule({ signal, lockFile }: {
     }
   }
 
-  async function shiyu(context: GachaContext, profileId: number, scheduleType: 1 | 2) {
+  async function battleRecord(context: GachaContext, profileId: number, scheduleType: 1 | 2, mode: "shiyu" | "deadly") {
+    const name = mode === "shiyu" ? "式舆防卫战" : "危局强袭战";
     const { user_id: user } = context;
     if ((context.message_type !== "private" && context.message_type !== "group") ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
-      return "请从登录档案对应的 QQ 会话查询式舆防卫战。";
+      return `请从登录档案对应的 QQ 会话查询${name}。`;
     }
     const qq = String(user);
     const period = scheduleType === 2 ? "上期" : "本期";
     try {
       const source = await profiles.requestContext(qq, profileId, "zzz");
-      const snapshot = await client.fetchZzzShiyu(source, { scheduleType, signal });
-      if (snapshot.status === "older-format") return `${period}式舆防卫战使用旧版深渊战绩格式。`;
-      if (snapshot.status === "empty") return `${period}暂无式舆防卫战战绩。`;
-      const result = await renderZzzShiyu(snapshot, source.role, {
-        qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
-      }).catch(() => undefined);
+      const request = { scheduleType, signal };
+      const snapshot = await (mode === "shiyu" ? client.fetchZzzShiyu(source, request) : client.fetchZzzDeadly(source, request));
+      if (snapshot.status === "older-format") return `${period}${name}使用旧版深渊战绩格式。`;
+      if (snapshot.status === "empty") return `${period}暂无${name}战绩。`;
+      const theme = { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
+      const result = await ("trial" in snapshot ? renderZzzDeadly(snapshot, source.role.nickname, theme) :
+        renderZzzShiyu(snapshot, source.role, theme)).catch(() => undefined);
       if (signal.aborted) return [];
       const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return [];
       if (active?.revision !== snapshot.revision || active.role.uid !== snapshot.uid) {
-        return "绝区零档案已变化，请重新查询式舆防卫战。";
+        return `绝区零档案已变化，请重新查询${name}。`;
       }
       if (result) return { type: "image" as const, file: result.png };
+      if ("trial" in snapshot) {
+        return [
+          `危局强袭战 · ${period}`,
+          snapshot.totalScore === undefined ? undefined : `试炼总分 ${snapshot.totalScore}`,
+          snapshot.totalStars === undefined ? undefined : `试炼总星级 ${snapshot.totalStars}`,
+          ...snapshot.hard.map(room => `绝境 · ${room.name ?? "首领"} · ${room.score ?? "—"}`),
+          ...snapshot.trial.map(room => `试炼 · ${room.name ?? "首领"} · ${room.score ?? "—"}`),
+        ].filter(Boolean).join("\n");
+      }
       const score = snapshot.overall?.score;
       const rating = snapshot.overall?.rating;
       return [`式舆防卫战 · ${period}`, score !== undefined ? `总分 ${score}${rating ? ` · ${rating}` : ""}` : undefined,
@@ -172,10 +185,10 @@ export function createModule({ signal, lockFile }: {
         return error.message;
       }
       if (error instanceof HoyoRequestError) {
-        if (error.code === "profile-changed") return "绝区零档案已变化，请重新查询式舆防卫战。";
+        if (error.code === "profile-changed") return `绝区零档案已变化，请重新查询${name}。`;
         if (error.code === "invalid-input") return error.message;
       }
-      return "式舆防卫战暂时无法查询。";
+      return `${name}暂时无法查询。`;
     }
   }
 
@@ -258,10 +271,14 @@ export function createModule({ signal, lockFile }: {
         if (profileId <= MAX_PROFILE_ID) return gameRecord(context, profileId);
         return;
       }
-      const battle = shiyuCommand.exec(command);
+      const shiyu = shiyuCommand.exec(command);
+      const battle = shiyu ?? deadlyCommand.exec(command);
       if (battle) {
         const profileId = Number(battle[2] ?? 1);
-        if (profileId <= MAX_PROFILE_ID) return shiyu(context, profileId, battle[1] === "上期" || battle[1] === "往期" ? 2 : 1);
+        if (profileId <= MAX_PROFILE_ID) {
+          const scheduleType = battle[1] === "上期" || battle[1] === "往期" ? 2 : 1;
+          return battleRecord(context, profileId, scheduleType, shiyu ? "shiyu" : "deadly");
+        }
         return;
       }
       if (helpCommand.test(command)) return help;
