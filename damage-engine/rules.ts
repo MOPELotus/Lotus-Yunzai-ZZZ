@@ -18,6 +18,14 @@ import * as character13 from "./rules/character/仪玄.js";
 import character14 from "./rules/character/狛野真斗.js";
 import * as character15 from "./rules/character/丽娜.js";
 import * as character16 from "./rules/character/星见雅.js";
+import * as character17 from "./rules/character/11号.js";
+import * as character18 from "./rules/character/凯撒.js";
+import * as character19 from "./rules/character/珂蕾妲.js";
+import * as character20 from "./rules/character/本.js";
+import * as character21 from "./rules/character/悠真.js";
+import * as character22 from "./rules/character/月城柳.js";
+import * as character23 from "./rules/character/青衣.js";
+import * as character24 from "./rules/character/赛斯.js";
 import * as weapon1 from "./rules/weapon/「月相」-晦.js";
 import * as weapon2 from "./rules/weapon/「月相」-望.js";
 import * as weapon3 from "./rules/weapon/人为刀俎.js";
@@ -58,6 +66,12 @@ import * as weapon37 from "./rules/weapon/雨林饕客.js";
 import * as weapon38 from "./rules/weapon/霰落星殿.js";
 import * as weapon39 from "./rules/weapon/青溟笼舍.js";
 import * as weapon40 from "./rules/weapon/青漪灵鼎.js";
+import * as weapon41 from "./rules/weapon/「恒等式」-本格.js";
+import * as weapon42 from "./rules/weapon/兔能环.js";
+import * as weapon43 from "./rules/weapon/奔袭獠牙.js";
+import * as weapon44 from "./rules/weapon/时流贤者.js";
+import * as weapon45 from "./rules/weapon/残心青囊.js";
+import * as weapon46 from "./rules/weapon/玉壶青冰.js";
 import * as set1 from "./rules/set/云岿如我.js";
 import * as set2 from "./rules/set/原始朋克.js";
 import * as set3 from "./rules/set/啄木鸟电音.js";
@@ -103,6 +117,14 @@ export const characterRules: Readonly<Partial<Record<string, Rule>>> = {
   "狛野真斗": character14 as Rule,
   "丽娜": character15 as Rule,
   "星见雅": character16 as Rule,
+  "11号": character17 as Rule,
+  "凯撒": character18 as Rule,
+  "珂蕾妲": character19 as Rule,
+  "本": character20 as Rule,
+  "悠真": character21 as Rule,
+  "月城柳": character22 as Rule,
+  "青衣": character23 as Rule,
+  "赛斯": character24 as Rule,
 };
 
 export const weaponRules: Readonly<Partial<Record<string, Rule>>> = {
@@ -146,6 +168,12 @@ export const weaponRules: Readonly<Partial<Record<string, Rule>>> = {
   "霰落星殿": weapon38 as Rule,
   "青溟笼舍": weapon39 as Rule,
   "青漪灵鼎": weapon40 as Rule,
+  "「恒等式」-本格": weapon41 as Rule,
+  "兔能环": weapon42 as Rule,
+  "奔袭獠牙": weapon43 as Rule,
+  "时流贤者": weapon44 as Rule,
+  "残心青囊": weapon45 as Rule,
+  "玉壶青冰": weapon46 as Rule,
 };
 
 export const setRules: Readonly<Partial<Record<string, Rule>>> = {
@@ -173,24 +201,18 @@ export const setRules: Readonly<Partial<Record<string, Rule>>> = {
 };
 
 export const unsupportedWeaponRules = new Set([
-  "「恒等式」-本格",
   "「湍流」-斧型",
   "云霓孤光",
-  "兔能环",
   "十方锻星",
-  "奔袭獠牙",
   "心弦夜响",
   "怒目金刚",
   "思络成歌",
-  "时流贤者",
   "机巧心种",
-  "残心青囊",
   "淬锋钳刺",
   "灼心摇壶",
   "焰心桂冠",
   "牺牲洁纯",
   "狸法七变化",
-  "玉壶青冰",
   "玲珑妆匣",
   "电波漫步",
   "禁罪囚笼",
