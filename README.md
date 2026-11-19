@@ -28,6 +28,8 @@
 
 发送 `%琉音面板` 或 `%客服面板2` 查看同档案的角色详情。图卡显示角色等级、影画、六项技能、属性、音擎以及各槽位驱动盘的主副词条，保留真实的升级次数、零值和未装备状态。详情直接读取已保存的米游社及旧展柜面板。保存在旧资源目录的角色立绘和主题素材可继续使用。
 
+发送 `%更新展柜面板` 或 `%展柜面板刷新2`，将对应档案的游戏 UID 提交给第三方 Enka 公开展柜。它只读取游戏内已公开展示的角色，需在 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 对应的 `map/` 提供角色、音擎及驱动盘资料。结果按区服、QQ 与 UID 独立保存到 `data/zzzShowcasePanels/`，可通过 `LOTUS_ZZZ_SHOWCASE_DIR` 改变该目录。`%客服展柜面板2` 查看单个公开角色。`%客服面板2` 优先使用已保存的米游社或旧面板，再查同档案的公开展柜。公开属性根据本地游戏资料计算。
+
 ## 来源
 
 个人战绩、式舆防卫战和危局强袭战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss,deadly}.js`、`resources/{card,abyss,deadly}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。
@@ -37,3 +39,5 @@
 面板名册、官方刷新和角色详情沿用同版本的 `dist/apps/panel.js`、`dist/lib/avatar.js` 和 `resources/panel/{list.html,refresh.html,refresh.css,card.html,card.css}`。
 
 调频详图沿用同版本的 `resources/gachalog/{index.html,index.css}` 和 `resources/common/layout/`。现有图卡由 Lotus-Yunzai 的 Skia 模板绘制。
+
+公开展柜沿用同版本的 `dist/model/Enka/` 数据适配以及 [Enka.Network 绝区零公开接口规范](https://github.com/EnkaNetwork/API-docs/blob/master/docs/zzz/api.md)。

@@ -29,7 +29,7 @@ const propertyNames: Readonly<Record<string, string>> = {
   "贯穿力": "SheerForce", "锐暴伤害": "Laceration.svg",
   "闪能自动累积": "AdrenalineAccumulate.svg", "锐能自动累积": "SharpnessAccumulate.svg",
 };
-const skillNames = ["普攻", "支援", "连携", "闪避", "特殊", "核心"] as const;
+const skillNames = ["普攻", "闪避", "支援", "特殊", "连携", "核心"] as const;
 
 function sprite(value: unknown) {
   if (typeof value === "string" && /^[A-Za-z0-9_]{1,80}$/u.test(value)) return value;
@@ -203,7 +203,8 @@ function drawEngine(context: Context, model: Detail, art: Awaited<ReturnType<typ
 }
 
 // Layout follows resources/panel/card.html and card.css from ZZZure/ZZZ-Plugin 2057599.
-export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string, options: ZzzCardOptions = {}) {
+export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
+  options: ZzzCardOptions & { readonly showcase?: boolean } = {}) {
   const model = buildZzzPanelDetail(avatar);
   const art = await loadPanelDetailArt(avatar, model, options);
   options.signal?.throwIfAborted();
@@ -229,6 +230,10 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string, 
 
     skin(context, images.get("panel/images/CurseBG08.png"), 12, 13, 217, 47);
     label(context, `UID ${uid}`, 118, 37, 23, { align: "center" });
+    if (options.showcase) {
+      fillRound(context, "#18171ddb", 22, 65, 170, 30, 11);
+      label(context, "Enka 公开展柜", 107, 80, 17, { align: "center", color: gold });
+    }
     skin(context, images.get("panel/images/CurseBG04.png"), 404, 18, 436, 71);
     rarity(context, images, avatar.rarity, 441, 26, 34, "RANK");
     if (model.element) icon(context, images.get(`common/images/element/${model.element}.png`), 479, 29, 28, 28);

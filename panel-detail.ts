@@ -20,7 +20,7 @@ function statValue(value: unknown) {
   if (typeof text === "string" && /^[-+]?\d{1,9}(?:\.\d{1,8})?%?$/u.test(text)) return text;
 }
 
-// The old panel places Basic, Assist, Chain, Dodge, Special, Core on the skill strip.
+// The old panel places Basic, Dodge, Assist, Special, Chain, Core on the skill strip.
 const skillTypes = [0, 2, 6, 1, 3, 5] as const;
 const elements: Readonly<Record<number, readonly [string, number]>> = {
   200: ["Physical", 315], 201: ["Fire", 316], 202: ["Ice", 317], 203: ["Electric", 318],

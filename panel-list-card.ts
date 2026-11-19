@@ -50,6 +50,7 @@ async function loadPanelPortraits(rows: readonly ZzzPanelAvatar[], local: Local,
 // ZZZure/ZZZ-Plugin 2057599 resources/panel/{list,refresh}.html and refresh.css.
 export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: GameRole, options: ZzzCardOptions & {
   readonly updatedIds?: ReadonlySet<number>;
+  readonly showcase?: boolean;
 } = {}) {
   const local = await openZzzCardTheme(options);
   const [background, title, frame, ribbon, s, a, b, player, portraits] = await Promise.all([
@@ -76,8 +77,10 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
     drawZzzCardPlayer(context, role, role.regionName || role.region, player);
     context.restore();
 
-    const count = options.updatedIds ? `已为您更新 ${options.updatedIds.size} 个角色` : `共计 ${rows.length} 个角色`;
-    const countWidth = (options.updatedIds ? 251.14 : 180.64) + (String(options.updatedIds?.size ?? rows.length).length - 1) * 14;
+    const count = options.showcase ? `公开展柜已保存 ${rows.length} 个角色` :
+      options.updatedIds ? `已为您更新 ${options.updatedIds.size} 个角色` : `共计 ${rows.length} 个角色`;
+    const countWidth = (options.showcase ? 306 : options.updatedIds ? 251.14 : 180.64) +
+      (String(options.updatedIds?.size ?? rows.length).length - 1) * 14;
     const countLeft = 733.5 - countWidth;
     fillRound(context, "#101315", countLeft, 33.2, countWidth, 46.1, 13, "#302c48");
     context.beginPath();

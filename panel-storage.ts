@@ -7,6 +7,7 @@ import { createRoleJsonArchive, type AcquireRoleArchiveLock } from "@lotus-yunza
 
 const legacyDirectory = fileURLToPath(new URL("../../data/ZZZ-Plugin/", import.meta.url));
 const managedDirectory = fileURLToPath(new URL("../../data/zzzPanels/", import.meta.url));
+const showcaseDirectory = fileURLToPath(new URL("../../data/zzzShowcasePanels/", import.meta.url));
 const maximumBytes = 12 * 1024 * 1024;
 const validUid = /^[1-9]\d{7,9}$/u;
 export const maximumZzzPanelRows = 128;
@@ -96,6 +97,42 @@ export function createZzzPanelStorage(acquireLock: AcquireRoleArchiveLock, optio
           document: { version: 1, uid: identity.uid, region: identity.region, avatars },
           result: avatars,
         };
+      });
+    },
+  };
+}
+
+export function createZzzShowcaseStorage(acquireLock: AcquireRoleArchiveLock,
+  directory = Bun.env.LOTUS_ZZZ_SHOWCASE_DIR || showcaseDirectory) {
+  function archive(identity: PanelIdentity) {
+    if (zzzPanelRegion(identity.uid, identity.region, "") !== identity.region) {
+      throw new Error("绝区零公开展柜归属不明。");
+    }
+    return createRoleJsonArchive(join(directory, identity.region), acquireLock, {
+      subject: "绝区零公开展柜", lockSuffix: "showcase", maxBytes: maximumBytes, rejectNull: true,
+    });
+  }
+  function snapshot(value: unknown, identity: PanelIdentity) {
+    const avatars = managedRows(value, identity);
+    if (avatars === undefined) return;
+    const observedAt = (value as { observedAt?: unknown }).observedAt;
+    if (typeof observedAt !== "number" || !Number.isSafeInteger(observedAt) || observedAt < 1) {
+      throw new Error("绝区零公开展柜归档时间无效。");
+    }
+    return { avatars, observedAt };
+  }
+  return {
+    async read(identity: PanelIdentity) {
+      return snapshot(await archive(identity).read(identity.qq, identity.uid), identity)?.avatars ?? [];
+    },
+    async replace(identity: PanelIdentity, rows: readonly ZzzPanelAvatar[], observedAt: number, verify: () => Promise<void>) {
+      return archive(identity).update(identity, verify, original => {
+        const existing = snapshot(original, identity);
+        if (existing && existing.observedAt > observedAt) {
+          return { result: existing.avatars };
+        }
+        const avatars = decodeZzzPanelRows(rows);
+        return { document: { version: 1, uid: identity.uid, region: identity.region, avatars, observedAt }, result: avatars };
       });
     },
   };

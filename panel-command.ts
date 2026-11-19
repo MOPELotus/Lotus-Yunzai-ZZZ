@@ -6,14 +6,17 @@ import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai
 import { createProfileHoyoClient, GameRecordRequestError, HoyoRequestError } from "@lotus-yunzai/hoyo-client";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import type { AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
+import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
+import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
 import { renderZzzPanelDetail } from "./panel-detail-card.ts";
 import { renderZzzPanelList } from "./panel-list-card.ts";
-import { createZzzPanelStorage, readPanelJson, zzzPanelRegion } from "./panel-storage.ts";
+import { createZzzPanelStorage, createZzzShowcaseStorage, readPanelJson, zzzPanelRegion } from "./panel-storage.ts";
 
 const settingsFile = fileURLToPath(new URL("../../config/zzz-panel.yaml", import.meta.url));
 const atlasRoot = fileURLToPath(new URL("../../data/atlas/", import.meta.url));
 const prefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)/iu;
 const listCommand = /^(?:面板|.*面板列表)\s*([1-9]\d{0,2})?$/u;
+const showcaseCommand = /^(?:(?:刷新|更新)展柜面板|展柜面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const updateCommand = /^(?:(?:刷新|更新)(.*?)面板|面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const detailCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)面板\s*([1-9]\d{0,2})?$/u;
 const safeName = (name: string) => name.normalize("NFKC").trim().toLowerCase();
@@ -21,6 +24,12 @@ const safeName = (name: string) => name.normalize("NFKC").trim().toLowerCase();
 export function zzzPanelCommand(raw: string) {
   const command = raw.replace(prefix, "");
   if (command === raw) return;
+  const showcase = showcaseCommand.exec(command);
+  if (showcase) {
+    const profileId = Number(showcase[1] ?? 1);
+    if (profileId <= MAX_PROFILE_ID) return { kind: "showcase-update" as const, profileId };
+    return;
+  }
   const refresh = updateCommand.exec(command);
   if (refresh) {
     const profileId = Number(refresh[2] ?? 1);
@@ -38,7 +47,11 @@ export function zzzPanelCommand(raw: string) {
   if (!detail) return;
   const name = detail[1]!.trim();
   const profileId = Number(detail[2] ?? 1);
-  if (name && profileId <= MAX_PROFILE_ID) return { kind: "detail" as const, profileId, name };
+  if (!name || profileId > MAX_PROFILE_ID) return;
+  if (name.endsWith("展柜") && name.length > 2) {
+    return { kind: "showcase-detail" as const, profileId, name: name.slice(0, -2).trim() };
+  }
+  return { kind: "detail" as const, profileId, name };
 }
 
 type Json = Readonly<Record<string, unknown>>;
@@ -77,6 +90,8 @@ interface PanelContext {
 export function createZzzPanelCommands(profiles: ReturnType<typeof createProfileStore>, client: ReturnType<typeof createProfileHoyoClient>,
   lock: AcquireRoleArchiveLock, signal: AbortSignal) {
   const archive = createZzzPanelStorage(lock);
+  const showcaseArchive = createZzzShowcaseStorage(lock);
+  const requestShowcase = createZzzShowcaseClient();
   const atlas = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
   const running = new Set<string>();
   const lastSuccess = new Map<string, number>();
@@ -134,21 +149,60 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
 
       if (command.kind === "list") {
         const rows = await archive.read(identity);
+        const publicRows = await showcaseArchive.read(identity).catch(() => []);
+        const known = new Set(rows.map(row => row.id));
+        rows.push(...publicRows.filter(row => !known.has(row.id)));
         if (!rows.length) return `UID:${role.uid}无本地面板数据，请先%更新面板。`;
         const { png } = await renderZzzPanelList(rows, display, theme);
         await sameRole();
         return { type: "image" as const, file: png };
       }
-      if (command.kind === "detail") {
-        const rows = await archive.read(identity);
+      if (command.kind === "detail" || command.kind === "showcase-detail") {
+        const privateRows = command.kind === "detail" ? await archive.read(identity) : [];
+        const publicRows = await showcaseArchive.read(identity).catch(error => {
+          if (command.kind === "showcase-detail") throw error;
+          return [];
+        });
+        const privateIds = new Set(privateRows.map(row => row.id));
+        const rows = [...privateRows, ...publicRows.filter(row => !privateIds.has(row.id))];
         const { ids } = await targets([command.name], resources, rows);
         const row = rows.find(avatar => avatar.id === ids[0]);
         await sameRole();
         if (!ids.length) return `角色${command.name}不存在，请确保角色名称/别称存在。`;
-        if (!row) return `暂无角色${command.name}面板数据，请先%更新面板。`;
-        const { png } = await renderZzzPanelDetail(row, identity.uid, theme);
+        if (!row) return command.kind === "showcase-detail"
+          ? `暂无角色${command.name}的公开展柜数据，请先%更新展柜面板。`
+          : `暂无角色${command.name}面板数据，请先%更新面板。`;
+        const { png } = await renderZzzPanelDetail(row, identity.uid, { ...theme, showcase: !privateIds.has(row.id) });
         await sameRole();
         return { type: "image" as const, file: png };
+      }
+
+      if (command.kind === "showcase-update") {
+        const tables = await loadEnkaPanelTables(resources);
+        if (!tables) return "绝区零公开展柜所需的本地游戏资料不可用。";
+        const requestedAt = Date.now();
+        const result = await requestShowcase(identity, signal, async () => {
+          await sameRole();
+          await context.reply("正在查询第三方 Enka 公开展柜。此请求只发送当前档案的游戏 UID。");
+          await sameRole();
+        });
+        const rows = result.rows.flatMap(data => {
+          const row = formatEnkaPanel(data, tables);
+          return row ? [row] : [];
+        });
+        if (rows.length !== result.rows.length) {
+          return "本地游戏资料无法核验本次公开展柜的全部角色或装备。";
+        }
+        const saved = await showcaseArchive.replace(identity, rows, requestedAt, sameRole);
+        if (!saved.length) return "该 UID 的公开展柜暂无展示角色。";
+        const updatedIds = new Set(saved.map(row => row.id));
+        const publicPlayer = { ...display, nickname: result.nickname || "绳匠", level: result.level, avatar: undefined };
+        const image = await renderZzzPanelList(saved, publicPlayer, {
+          legacyResources: resources, signal, updatedIds, showcase: true,
+        }).catch(() => undefined);
+        await sameRole();
+        if (!image) return `Enka 公开展柜已保存 ${saved.length} 个角色。`;
+        return { type: "image" as const, file: image.png };
       }
 
       const source = await profiles.requestContext(qq, profileId, "zzz", role.uid);
@@ -193,6 +247,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       }
     } catch (error) {
       if (signal.aborted) return [];
+      if (error instanceof ZzzShowcaseError) return error.message;
       if (error instanceof ProfileError) {
         if (error.code === "changed") return "绝区零档案角色已变化，请重新操作。";
         if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
@@ -202,6 +257,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         return error.message;
       }
       if (error instanceof HoyoRequestError && error.code === "profile-changed") return "绝区零档案角色已变化，请重新操作。";
+      if (command.kind === "showcase-update") return "绝区零公开展柜暂时无法更新。";
       return command.kind === "update" ? "绝区零面板暂时无法更新。" : "绝区零面板暂时无法查询。";
     }
   };
