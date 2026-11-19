@@ -20,8 +20,16 @@
 
 群榜使用宿主 Valkey 和协议端实时群成员名单。可通过 `LOTUS_ZZZ_RANK_CONFIG` 指定旧格式的 `rank.yaml`，或置于宿主的 `config/zzz-rank.yaml`。配置支持 `allow_group`、`white_list`、`black_list` 及 1 至 15 名的 `max_display`。有旧 Valkey 榜单时，可将 `LOTUS_ZZZ_LEGACY_DATA_DIR` 指向旧 `data/ZZZ-Plugin`，用同群的旧可见性和 UID 关系续读 `abyss/` 与 `deadly/` 中的战绩。新登记按群保存。
 
+## 面板名册
+
+发送 `%面板` 或 `%面板列表` 查看已绑定角色的本地名册，支持档案号后缀。国服米游社档案可使用 `%更新面板` 或 `%面板刷新` 拉取已拥有角色，也可以发送 `%更新琉音、安比面板2` 只刷新档案 2 的指定角色。新回执用绿点标记本次更新角色，其余角色保留原顺序。刷新间隔可用宿主的 `config/zzz-panel.yaml` 或 `LOTUS_ZZZ_PANEL_CONFIG` 设置，`interval` 以秒计，`roleInterval` 以毫秒计，低于 100 毫秒时沿用旧版的 100 毫秒下限。
+
+名册可从 `LOTUS_ZZZ_LEGACY_DATA_DIR/panel/<UID>.json` 只读续用，刷新后的数据存到 `data/zzzPanels/<区服>/<QQ>/<UID>.json`。可通过 `LOTUS_ZZZ_PANEL_DIR` 配置此目录。原五列主题和旧角色别名沿用 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 对应的旧插件资源与配置。
+
 ## 来源
 
 个人战绩、式舆防卫战和危局强袭战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss,deadly}.js`、`resources/{card,abyss,deadly}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。
 
 挑战群榜沿用同版本的 `dist/apps/rank.js`、`dist/lib/rank.js` 和 `resources/rank/{abyss,deadly,deadlyHard}/`。
+
+面板名册及官方刷新沿用同版本的 `dist/apps/panel.js`、`dist/lib/avatar.js` 和 `resources/panel/{list.html,refresh.html,refresh.css}`。

@@ -13,6 +13,7 @@ import { renderZzzGameRecord } from "./game-record-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
 import { rankCommand } from "./challenge-rank-model.ts";
 import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
+import { createZzzPanelCommands, zzzPanelCommand } from "./panel-command.ts";
 import { renderZzzShiyu } from "./shiyu-card.ts";
 import { createZzzLegacyGachaArtwork, createZzzTuningArtwork } from "./tuning-artwork.ts";
 import { buildZzzTuningDetail, buildZzzTuningInventoryReply } from "./tuning-detail.ts";
@@ -69,6 +70,7 @@ export function createModule({ signal, lockFile }: {
   const profiles = createProfileStore(Bun.env.LOTUS_PROFILE_DIR || undefined);
   const client = createProfileHoyoClient(profiles);
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
+  const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);
   const sync = createZzzTuningSync(profiles, client, historyDirectory, lockFile);
   const syncOfficial = createGachaUpdater((qq, profileId) => sync.sync(qq, profileId, { signal }));
   async function gachaUpdate(qq: string, profileId: number, notify?: () => unknown) {
@@ -276,6 +278,8 @@ export function createModule({ signal, lockFile }: {
     async fallback(_message: string, context: GachaContext) {
       const rank = rankCommand(context.normalizedMessage);
       if (rank) return challengeRanks.handle(context, rank);
+      const panel = zzzPanelCommand(context.normalizedMessage);
+      if (panel) return panelCommands(panel, context);
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
       const card = gameRecordCommand.exec(command);
       if (card) {
