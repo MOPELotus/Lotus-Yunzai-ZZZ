@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import { createProfileStore, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
 import { createGachaUpdater } from "@lotus-yunzai/gacha/update";
 import {
-  createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
+  createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
   ZzzManualGachaLinkRequired, ZzzTuningRateLimitError,
 } from "@lotus-yunzai/hoyo-client";
 import { readZzzLegacyGacha, ZzzLegacyGachaError } from "./gacha-legacy.ts";
@@ -10,6 +10,7 @@ import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
 import { renderZzzGameRecord } from "./game-record-card.ts";
+import { renderZzzShiyu } from "./shiyu-card.ts";
 import { createZzzLegacyGachaArtwork, createZzzTuningArtwork } from "./tuning-artwork.ts";
 import { buildZzzTuningDetail, buildZzzTuningInventoryReply } from "./tuning-detail.ts";
 import { renderZzzTuningDetail } from "./tuning-detail-card.ts";
@@ -23,7 +24,8 @@ const linkCommand = /^#绝区零抽卡链接([1-9]\d{0,2})?$/u;
 const generateLinkCommand = /^#绝区零获取抽卡链接([1-9]\d{0,2})?$/u;
 const helpCommand = /^#绝区零抽卡帮助$/u;
 const gameRecordCommand = /^#绝区零(?:card|卡片|个人信息|角色)\s*([1-9]\d{0,2})?$/iu;
-const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色)/iu;
+const shiyuCommand = /^#绝区零(本期|当期|上期|往期)?(?:式舆防卫战|式舆防卫|式舆|深渊|防卫战|防卫)\s*([1-9]\d{0,2})?$/u;
+const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫))/iu;
 const help = [
   "绝区零抽卡记录",
   "%更新抽卡记录 同步国服米游社的六个频段。",
@@ -132,6 +134,51 @@ export function createModule({ signal, lockFile }: {
     }
   }
 
+  async function shiyu(context: GachaContext, profileId: number, scheduleType: 1 | 2) {
+    const { user_id: user } = context;
+    if ((context.message_type !== "private" && context.message_type !== "group") ||
+        typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
+      return "请从登录档案对应的 QQ 会话查询式舆防卫战。";
+    }
+    const qq = String(user);
+    const period = scheduleType === 2 ? "上期" : "本期";
+    try {
+      const source = await profiles.requestContext(qq, profileId, "zzz");
+      const snapshot = await client.fetchZzzShiyu(source, { scheduleType, signal });
+      if (snapshot.status === "older-format") return `${period}式舆防卫战使用旧版深渊战绩格式。`;
+      if (snapshot.status === "empty") return `${period}暂无式舆防卫战战绩。`;
+      const result = await renderZzzShiyu(snapshot, source.role, {
+        qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
+      }).catch(() => undefined);
+      if (signal.aborted) return [];
+      const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
+      if (signal.aborted) return [];
+      if (active?.revision !== snapshot.revision || active.role.uid !== snapshot.uid) {
+        return "绝区零档案已变化，请重新查询式舆防卫战。";
+      }
+      if (result) return { type: "image" as const, file: result.png };
+      const score = snapshot.overall?.score;
+      const rating = snapshot.overall?.rating;
+      return [`式舆防卫战 · ${period}`, score !== undefined ? `总分 ${score}${rating ? ` · ${rating}` : ""}` : undefined,
+        ...snapshot.layers.map(layer => `第 ${layer.number} 防线 · ${layer.teams.length} 队${layer.rating ? ` · ${layer.rating}` : ""}`)]
+        .filter(Boolean).join("\n");
+    } catch (error) {
+      if (signal.aborted) return [];
+      if (error instanceof ProfileError) {
+        if (error.code === "missing" || error.code === "login-required") return `[荷花插件]请先登录 profile ${profileId}。`;
+        if (error.code === "role-missing") return `[荷花插件]profile ${profileId} 没有同步绝区零 UID。`;
+      }
+      if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
+        return error.message;
+      }
+      if (error instanceof HoyoRequestError) {
+        if (error.code === "profile-changed") return "绝区零档案已变化，请重新查询式舆防卫战。";
+        if (error.code === "invalid-input") return error.message;
+      }
+      return "式舆防卫战暂时无法查询。";
+    }
+  }
+
   async function view(qq: string, profileId: number, context: GachaContext, linkedOnly: boolean) {
     try {
       const role = await profiles.savedRole(qq, profileId, "zzz");
@@ -197,12 +244,24 @@ export function createModule({ signal, lockFile }: {
   return {
     commands: {},
     gachaUpdate,
+    fallbackFeatures(context: Pick<GachaContext, "normalizedMessage">) {
+      const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
+      if ([helpCommand, generateLinkCommand, linkCommand, updateCommand, linkedViewCommand, viewCommand].some(rule => rule.test(command)) ||
+          command.trim() === "取消" || isZzzGachaLinkMessage(command)) return ["[Lotus-Plugin] Gacha Log"];
+      return [];
+    },
     async fallback(_message: string, context: GachaContext) {
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
       const card = gameRecordCommand.exec(command);
       if (card) {
         const profileId = Number(card[1] ?? 1);
         if (profileId <= MAX_PROFILE_ID) return gameRecord(context, profileId);
+        return;
+      }
+      const battle = shiyuCommand.exec(command);
+      if (battle) {
+        const profileId = Number(battle[2] ?? 1);
+        if (profileId <= MAX_PROFILE_ID) return shiyu(context, profileId, battle[1] === "上期" || battle[1] === "往期" ? 2 : 1);
         return;
       }
       if (helpCommand.test(command)) return help;

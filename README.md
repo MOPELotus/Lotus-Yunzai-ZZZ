@@ -6,6 +6,10 @@
 
 如已部署旧版绝区零插件，可将 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 指向其 `resources` 目录。战绩卡从该目录读取旧主题、字体及已经下载的代理人和邦布头像。原主题或头像缺失时，卡片用内置排版和官方或图鉴已有头像继续出图。此目录只需提供读取权限。
 
+## 式舆防卫战
+
+发送 `%式舆防卫战`、`%式舆`、`%深渊`、`%防卫战` 或 `%防卫` 查询本期，前置「上期」或「往期」查询上一期，例如 `%上期深渊2`。账号、前缀和档案编号规则与个人战绩相同。卡片按官方记录展示第五至第一防线，包括统计周期、总分、评级、百分比、通关时间、增益及对应队伍。以相同的旧资源目录读取 `abyss/images/` 主题和 `common/images/` 图标。
+
 ## 来源
 
-个人战绩兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/card.js`、`resources/card/index.html`、`resources/card/index.css` 和 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。
+个人战绩和式舆防卫战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss}.js`、`resources/{card,abyss}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。
