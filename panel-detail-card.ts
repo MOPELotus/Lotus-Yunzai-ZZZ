@@ -3,11 +3,11 @@ import { join, sep } from "node:path";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
+import { box, cover, label, openZzzCardTheme, zzzCardFooter, zzzScoreColors, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound, frame } from "./challenge-card.ts";
+import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
 import { buildZzzPanelDetail, panelObject, type PanelStat } from "./panel-detail.ts";
 import { buildZzzPanelScore } from "./panel-score.ts";
-import { readPanelJson } from "./panel-storage.ts";
 
 type Local = Awaited<ReturnType<typeof openZzzCardTheme>>;
 type Detail = ReturnType<typeof buildZzzPanelDetail>;
@@ -32,23 +32,10 @@ const propertyNames: Readonly<Record<string, string>> = {
   "闪能自动累积": "AdrenalineAccumulate.svg", "锐能自动累积": "SharpnessAccumulate.svg",
 };
 const skillNames = ["普攻", "闪避", "支援", "特殊", "连携", "核心"] as const;
-const gradeColors = { C: "#5ed559", B: "#5ebdf9", A: "#d256ff", S: "#ffdabe", SS: "#ffe174",
-  SSS: "#ffa33b", ACE: "#ff5656", MAX: "#ff5656" } as const;
 const propertyWeightIds: Readonly<Record<string, number>> = {
   "生命值": 11102, "攻击力": 12102, "防御力": 13102, "冲击力": 12202, "暴击率": 20103,
   "暴击伤害": 21103, "异常掌控": 31402, "异常精通": 31203, "穿透率": 23103, "能量自动回复": 30502,
 };
-
-function sprite(value: unknown) {
-  if (typeof value === "string" && /^[A-Za-z0-9_]{1,80}$/u.test(value)) return value;
-}
-
-async function firstImage(local: Local, paths: readonly string[]) {
-  for (const path of paths) {
-    const image = await local(path);
-    if (image) return image;
-  }
-}
 
 async function customPortrait(root: string | undefined, names: readonly unknown[], local: Local) {
   if (!root) return;
@@ -77,21 +64,18 @@ function propertyImage(stat: PanelStat) {
 
 async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options: ZzzCardOptions) {
   const local = await openZzzCardTheme(options);
-  async function map(name: string) {
-    const root = options.legacyResources;
-    return panelObject(root ? await readPanelJson(root, `map/${name}.json`, 8 * 1024 * 1024).catch(() => undefined) : undefined);
-  }
-  const [partners, weapons, suits] = await Promise.all([map("PartnerId2Data"), map("WeaponId2Data"), map("SuitData")]);
-  const partner = panelObject(partners[avatar.id]);
-  const role = sprite(partner.sprite_id);
-  const skin = sprite(panelObject(panelObject(partner.Skin)[model.skinId ?? 0]).Image);
+  const [partners, weapons, suits] = await Promise.all(
+    ["PartnerId2Data", "WeaponId2Data", "SuitData"].map(name => readPanelArtMap(options.legacyResources, name)),
+  );
+  const partner = panelObject(partners?.[avatar.id]);
+  const role = panelSpriteName(partner.sprite_id);
+  const skin = panelSpriteName(panelObject(panelObject(partner.Skin)[model.skinId ?? 0]).Image);
   const portraitPaths = [
     ...(skin ? [`images/hakush/role/${skin}.webp`, `images/nanoka/role/${skin}.webp`] : []),
     ...(role ? [`images/role/IconRole${role}.png`, `images/hakush/role/IconRole${role}.webp`,
       `images/nanoka/role/IconRole${role}.webp`] : []),
     `images/square_avatar/role_square_avatar_${avatar.id}.png`,
   ];
-  const engine = sprite(panelObject(weapons[model.weapon?.id ?? 0]).CodeName);
   const paths = new Set([
     "common/images/bg.jpg", "panel/images/CurseBG04.png", "panel/images/CurseBG08.png",
     "panel/images/skill_bg.png", "panel/images/weapon_bg.png", "panel/images/BgFrame01.png",
@@ -109,12 +93,11 @@ async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options
   const [entries, portrait, weapon, discs] = await Promise.all([
     Promise.all([...paths].map(async path => [path, await local(path)] as const)),
     customPortrait(options.legacyResources, [avatar.name_mi18n, avatar.full_name_mi18n, partner.name, partner.full_name], local)
-      .then(custom => custom ?? firstImage(local, portraitPaths)),
-    engine ? firstImage(local, [`images/weapon/${engine}_High.png`, `images/hakush/weapon/${engine}.webp`,
-      `images/nanoka/weapon/${engine}.webp`]) : undefined,
+      .then(custom => custom ?? firstCachedPanelImage(local, portraitPaths)),
+    cachedPanelWeaponImage(local, weapons?.[model.weapon?.id ?? 0]),
     Promise.all(model.discs.map(item => {
-      const disc = sprite(panelObject(suits[item?.suitId ?? 0]).sprite_file);
-      if (disc) return firstImage(local, [`images/suit/${disc}.png`, `images/hakush/suit/${disc}.webp`,
+      const disc = panelSpriteName(panelObject(suits?.[item?.suitId ?? 0]).sprite_file);
+      if (disc) return firstCachedPanelImage(local, [`images/suit/${disc}.png`, `images/hakush/suit/${disc}.webp`,
         `images/nanoka/suit/${disc}.webp`]);
     })),
   ]);
@@ -187,7 +170,7 @@ function drawDriveDisc(context: Context, art: Awaited<ReturnType<typeof loadPane
   label(context, disc.name, x + 129, y + 52, 21, { align: "center", maxWidth: 245 });
   const scored = score?.discs[index];
   if (scored) {
-    label(context, scored.grade, x + 114, y + 75, 20, { color: gradeColors[scored.grade], align: "right", weight: 700 });
+    label(context, scored.grade, x + 114, y + 75, 20, { color: zzzScoreColors[scored.grade], align: "right", weight: 700 });
     label(context, scored.score.toFixed(2), x + 126, y + 76, 17);
   } else if (score) label(context, "未评分", x + 129, y + 75, 14, { align: "center", color: muted });
   const stats = [...disc.main, ...disc.extra];
@@ -204,7 +187,7 @@ function drawScoreSummary(context: Context, score: Score, y: number) {
   box(context, border, x + gradeWidth, y, 2, 163);
   box(context, border, x, y + 128, width, 2);
   fillRound(context, "#232227", x + 19, y + 24, 75, 75, 17, border);
-  label(context, score.grade, x + 56, y + 62, 27, { align: "center", color: gradeColors[score.grade], weight: 700 });
+  label(context, score.grade, x + 56, y + 62, 27, { align: "center", color: zzzScoreColors[score.grade], weight: 700 });
   label(context, `${score.total.toFixed(2)} 分`, x + 106, y + 63, 21, { weight: 700, maxWidth: 109 });
   label(context, `规则：${score.rule}`, x + gradeWidth / 2, y + 147, 18, { align: "center", color: muted, maxWidth: 208 });
   for (let index = 0; index < 9; index++) {

@@ -11,12 +11,15 @@ import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
 import { renderZzzPanelDetail } from "./panel-detail-card.ts";
 import { renderZzzPanelList } from "./panel-list-card.ts";
 import { createZzzPanelStorage, createZzzShowcaseStorage, readPanelJson, zzzPanelRegion } from "./panel-storage.ts";
+import { renderZzzProficiency } from "./proficiency-card.ts";
+import { buildZzzProficiency } from "./proficiency.ts";
 
 const settingsFile = fileURLToPath(new URL("../../config/zzz-panel.yaml", import.meta.url));
 const atlasRoot = fileURLToPath(new URL("../../data/atlas/", import.meta.url));
 const prefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)/iu;
 const listCommand = /^(?:面板|.*面板列表)\s*([1-9]\d{0,2})?$/u;
 const showcaseCommand = /^(?:(?:刷新|更新)展柜面板|展柜面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
+const proficiencyCommand = /^(展柜)?练度(?:统计)?\s*([1-9]\d{0,2})?$/u;
 const updateCommand = /^(?:(?:刷新|更新)(.*?)面板|面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const detailCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)面板\s*([1-9]\d{0,2})?$/u;
 const safeName = (name: string) => name.normalize("NFKC").trim().toLowerCase();
@@ -24,6 +27,12 @@ const safeName = (name: string) => name.normalize("NFKC").trim().toLowerCase();
 export function zzzPanelCommand(raw: string) {
   const command = raw.replace(prefix, "");
   if (command === raw) return;
+  const proficiency = proficiencyCommand.exec(command);
+  if (proficiency) {
+    const profileId = Number(proficiency[2] ?? 1);
+    if (profileId <= MAX_PROFILE_ID) return { kind: "proficiency" as const, profileId, showcase: Boolean(proficiency[1]) };
+    return;
+  }
   const showcase = showcaseCommand.exec(command);
   if (showcase) {
     const profileId = Number(showcase[1] ?? 1);
@@ -147,6 +156,19 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         signal.throwIfAborted();
       }
 
+      if (command.kind === "proficiency") {
+        const local = command.showcase ? [] : await archive.read(identity);
+        const rows = local.length ? local : await showcaseArchive.read(identity);
+        await sameRole();
+        if (!rows.length) return command.showcase ? "本档案暂无公开展柜记录，请先%更新展柜面板。" :
+          "未找到面板数据，请先%更新面板或%更新展柜面板。";
+        const { png } = await renderZzzProficiency(buildZzzProficiency(rows), display, {
+          legacyResources: resources, signal, source: local.length ? "local" : "showcase",
+        });
+        await sameRole();
+        return { type: "image" as const, file: png };
+      }
+
       if (command.kind === "list") {
         const rows = await archive.read(identity);
         const publicRows = await showcaseArchive.read(identity).catch(() => []);
@@ -258,6 +280,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       }
       if (error instanceof HoyoRequestError && error.code === "profile-changed") return "绝区零档案角色已变化，请重新操作。";
       if (command.kind === "showcase-update") return "绝区零公开展柜暂时无法更新。";
+      if (command.kind === "proficiency") return "绝区零练度统计暂时无法查询。";
       return command.kind === "update" ? "绝区零面板暂时无法更新。" : "绝区零面板暂时无法查询。";
     }
   };

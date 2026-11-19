@@ -7,6 +7,8 @@ import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
 const font = '"LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
 export const zzzCardFooter = "Lotus-Yunzai · ZZZ";
+export const zzzScoreColors = { C: "#5ed559", B: "#5ebdf9", A: "#d256ff", S: "#ffdabe", SS: "#ffe174",
+  SSS: "#ffa33b", ACE: "#ff5656", MAX: "#ff5656" } as const;
 
 export interface ZzzCardOptions {
   readonly legacyResources?: string;
