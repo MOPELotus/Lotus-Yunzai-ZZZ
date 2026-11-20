@@ -8,11 +8,23 @@ const day = 24 * 60 * 60 * 1000;
 const chinaOffset = 8 * 60 * 60 * 1000;
 const maximumBytes = 2 * 1024 * 1024;
 
+interface PoolSummary {
+  readonly rank: "S" | "A";
+  readonly type: "角色" | "武器";
+}
+
 export function zzzPoolHistoryCommand(raw: string) {
   const command = raw.replace(prefix, "");
   if (command === raw) return;
   const name = /^([^\p{Cc}\p{Cf}]{1,80}?)(?:复刻|卡池)(?:统计|记录|历史)$/u.exec(command)?.[1]?.trim();
-  if (!name || /^(?:(?:[sa]级?|[五四]星)?(?:角色|代理人|武器|音擎))$/iu.test(name)) return;
+  if (!name) return;
+  const category = /^(s级?|a级?|五星|四星)?(角色|代理人|武器|音擎)$/iu.exec(name);
+  if (category) {
+    const type = category[2] === "武器" || category[2] === "音擎" ? "武器" : "角色";
+    if (type === "武器" && !category[1]) return;
+    const rank = /^(?:a|四星)/iu.test(category[1] ?? "") ? "A" : "S";
+    return { type, rank } satisfies PoolSummary;
+  }
   return name;
 }
 
@@ -70,6 +82,28 @@ export function decodeZzzPoolHistory(raw: unknown) {
   });
 }
 
+function poolSummary(rows: ReturnType<typeof decodeZzzPoolHistory>, request: PoolSummary, now: number) {
+  const lastEnd = rows.at(-1)!.end;
+  const snapshot = Math.min(now, lastEnd);
+  const newest = new Map<string, number>();
+  for (const row of rows) {
+    if (row.type !== request.type) continue;
+    const names = request.rank === "S" ? [row.headliner] : row.items;
+    for (const item of names) {
+      if (item && (newest.get(item) ?? 0) < row.end) newest.set(item, row.end);
+    }
+  }
+  const ages = [...newest].filter(([, end]) => end < snapshot)
+    .map(([item, end]) => ({ item, days: Math.floor((snapshot - end) / day) }))
+    .sort((left, right) => right.days - left.days);
+  const kind = request.type === "武器" ? "音擎" : "代理人";
+  return [
+    `【 ${request.rank}级${kind}复刻统计 】`,
+    ...ages.map(row => `${row.item}: ${String(row.days).padStart(3, " ")}天未复刻`),
+    `按 ${calendar(snapshot).slice(0, 10)} 统计。来源所载频段截至 ${calendar(lastEnd).slice(0, 10)}。`,
+  ].join("\n");
+}
+
 async function readResponse(response: Response) {
   if (!response.ok || !response.body || Number(response.headers.get("content-length")) > maximumBytes) {
     await response.body?.cancel().catch(() => undefined);
@@ -117,8 +151,13 @@ export function createZzzPoolHistory(signal: AbortSignal,
     return cached;
   }
 
-  return async (query: string, resources: string | undefined) => {
+  return async (query: string | PoolSummary, resources: string | undefined) => {
     if (signal.aborted) return [];
+    if (typeof query !== "string") {
+      const rows = await read();
+      if (signal.aborted) return [];
+      return rows ? poolSummary(rows, query, now()) : "卡池历史记录数据获取失败";
+    }
     const [rows, aliases, catalog] = await Promise.all([
       read(),
       readZzzRoleAliases(resources).catch(() => undefined),

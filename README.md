@@ -54,6 +54,8 @@
 
 发送 `%鲨鱼卡池历史` 或 `%深海访客复刻记录` 查看特定代理人或音擎出现在限定频段的历史。保留旧角色别名、S/A 级和按期次的国服日期，回执注明公开资料所载的截止日。此查询无需登录，匿名读取原版使用的公开 JSON，数据源故障时继续使用进程内最后一次成功读取的数据。 [GachaClock 绝区零历史数据](https://github.com/iaoongin/GachaClock/blob/main/spider/data/zzz/history.json)
 
+发送 `%S级角色复刻统计`、`%A级角色复刻统计`、`%S级音擎复刻统计` 或 `%A级音擎复刻统计` 查看该类别的历史快照。`%角色复刻统计` 默认查询 S 级角色。等待天数按来源覆盖内的日期计算，回执标明统计日和来源截止日。
+
 ## 来源
 
 个人战绩、式舆防卫战和危局强袭战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss,deadly}.js`、`resources/{card,abyss,deadly}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。

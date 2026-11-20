@@ -10,13 +10,26 @@ const rows = [
   { type: "角色", version: "1.0下半", timer: "2024/07/24 12:00:00 ~ 2024/08/13 14:59:59", s: "朱鸢", a: ["妮可"] },
 ];
 
-test("单项卡池历史接旧前缀和尾词，保留卡池类别给各自入口", () => {
+test("历史查询识别旧前缀、名称和 S/A 分类", () => {
   expect(zzzPoolHistoryCommand("%鲨鱼卡池历史")).toBe("鲨鱼");
   expect(zzzPoolHistoryCommand("/ZZZ深海访客复刻记录")).toBe("深海访客");
   expect(zzzPoolHistoryCommand("#绝区零妮可复刻统计")).toBe("妮可");
-  for (const command of ["艾莲卡池历史", "%卡池历史", "%角色卡池历史", "#zzzA级音擎复刻统计", "%本期卡池", "%抽卡记录"]) {
+  expect(zzzPoolHistoryCommand("%角色卡池历史")).toEqual({ type: "角色", rank: "S" });
+  expect(zzzPoolHistoryCommand("#zzz四星代理人复刻记录")).toEqual({ type: "角色", rank: "A" });
+  expect(zzzPoolHistoryCommand("％S音擎复刻统计")).toEqual({ type: "武器", rank: "S" });
+  expect(zzzPoolHistoryCommand("#zzzA级音擎复刻统计")).toEqual({ type: "武器", rank: "A" });
+  for (const command of ["艾莲卡池历史", "%卡池历史", "%音擎卡池历史", "%本期卡池", "%抽卡记录"]) {
     expect(zzzPoolHistoryCommand(command)).toBeUndefined();
   }
+});
+
+test("分类复刻只统计到资料末期并排除当时还在调频的对象", async () => {
+  const now = Date.parse("2026-11-20T05:00:00+08:00");
+  const query = createZzzPoolHistory(new AbortController().signal, async () => Response.json(rows), () => now);
+  const roles = await query({ type: "角色", rank: "S" }, undefined);
+  expect(roles).toBe("【 S级代理人复刻统计 】\n朱鸢:  21天未复刻\n按 2024/09/04 统计。来源所载频段截至 2024/09/04。");
+  const engines = await query({ type: "武器", rank: "A" }, undefined);
+  expect(engines).toBe("【 A级音擎复刻统计 】\n含羞恶面:  42天未复刻\n旋钻机-赤轴:  42天未复刻\n按 2024/09/04 统计。来源所载频段截至 2024/09/04。");
 });
 
 test("国服日期按原开始修正和上期结束排序，拒绝非法日期", () => {
