@@ -1,12 +1,45 @@
 import { expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createAtlasCatalog } from "@lotus-yunzai/atlas/catalog";
 import { buildZzzPanelDetail } from "./panel-detail.ts";
-import { createZzzAtlasPortraitReader, loadZzzAtlasPanelOriginal, readZzzPanelOriginal } from "./panel-original.ts";
+import { createZzzAtlasPortraitReader, loadZzzAtlasPanelOriginal, loadZzzRandomGalleryPortrait, readZzzPanelOriginal } from "./panel-original.ts";
 
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQIW2P8/x8AAwMCAO+a2e8AAAAASUVORK5CYII=", "base64");
+
+test("图库仅从给定角色文件夹取可读图，回执区分图库挂载与安装副本", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lotus-zzz-random-gallery-"));
+  try {
+    const gallery = join(root, "zzz-character");
+    const resources = join(root, "resources");
+    const role = "角色甲";
+    await mkdir(join(gallery, role), { recursive: true });
+    await mkdir(join(gallery, "角色乙"));
+    await mkdir(join(resources, "images", "panel", role), { recursive: true });
+    await writeFile(join(gallery, role, "损坏.webp"), "damaged");
+    const valid = join(gallery, role, "立绘.png");
+    await writeFile(valid, png);
+    await writeFile(join(gallery, "角色乙", "立绘.png"), png);
+    await symlink(join(gallery, "角色乙"), join(gallery, "错误目录"), "dir");
+    await symlink(join(gallery, "角色乙", "立绘.png"), join(gallery, role, "跨角色.png"));
+    await writeFile(join(resources, "images", "panel", role, "立绘.png"), png);
+    const selected = await loadZzzRandomGalleryPortrait(gallery, [role]);
+    expect(selected?.original).toMatchObject({ path: `${role}/立绘.png`, gallery: true });
+    expect(await readZzzPanelOriginal(resources, selected!.original, undefined, gallery)).toEqual(png);
+    expect(await readZzzPanelOriginal(resources, selected!.original)).toBeUndefined();
+    expect(await loadZzzRandomGalleryPortrait(gallery, ["错误目录", "../角色乙"])).toBeUndefined();
+    await rm(valid);
+    await symlink(join(gallery, "角色乙", "立绘.png"), valid);
+    expect(await loadZzzRandomGalleryPortrait(gallery, [role])).toBeUndefined();
+    expect(await readZzzPanelOriginal(resources, selected!.original, undefined, gallery)).toBeUndefined();
+    const installed = await loadZzzRandomGalleryPortrait(resources, [role], true);
+    expect(installed?.original.path).toBe(`images/panel/${role}/立绘.png`);
+    expect(await readZzzPanelOriginal(resources, installed!.original)).toEqual(png);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 test("图鉴回退按角色编号核对，并按送达时的图鉴路径与哈希读取原字节", async () => {
   const root = await mkdtemp(join(tmpdir(), "lotus-zzz-panel-gallery-"));

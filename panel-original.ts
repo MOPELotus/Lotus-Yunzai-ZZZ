@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { readdir, realpath } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import type { createAtlasRuntimeCatalog } from "@lotus-yunzai/atlas/catalog";
 import { readAtlasGalleryImage } from "@lotus-yunzai/atlas/gallery";
@@ -10,6 +12,7 @@ export interface PanelOriginal {
   readonly path: string;
   readonly sha256: string;
   readonly atlasRole?: number;
+  readonly gallery?: true;
 }
 
 export type ZzzAtlasPortraitReader = (roleId: number, preferIcon?: boolean) =>
@@ -44,12 +47,22 @@ interface OriginalStorage {
 const lifetime = 3 * 3600;
 const capacity = 4096;
 
-function originalPath(path: unknown): path is string {
+function imagePath(path: unknown): path is string {
   if (typeof path !== "string" || !path.isWellFormed() || Buffer.byteLength(path) > 512 ||
       /[\\\p{Cc}\p{Cf}]/u.test(path)) return false;
   const parts = path.split("/");
   if (parts.some(value => !value || value === "." || value === "..")) return false;
-  if (parts[0] !== "images" || !/\.(?:png|jpe?g|webp)$/iu.test(parts.at(-1) ?? "")) return false;
+  return /\.(?:png|jpe?g|webp)$/iu.test(parts.at(-1) ?? "");
+}
+
+function galleryPath(path: unknown): path is string {
+  return imagePath(path) && path.split("/").length === 2;
+}
+
+function originalPath(path: unknown): path is string {
+  if (!imagePath(path)) return false;
+  const parts = path.split("/");
+  if (parts[0] !== "images") return false;
   return parts.length === 4 && parts[1] === "panel" ||
     parts.length === 3 && parts[1] === "role" && /^IconRole[A-Za-z0-9_]+\.png$/u.test(parts[2]!) ||
     parts.length === 4 && (parts[1] === "hakush" || parts[1] === "nanoka") &&
@@ -68,6 +81,9 @@ function originalDescriptor(value: unknown): value is PanelOriginal {
   if (!value || typeof value !== "object") return false;
   const descriptor = value as Partial<PanelOriginal>;
   if (typeof descriptor.sha256 !== "string" || !/^[0-9a-f]{64}$/u.test(descriptor.sha256)) return false;
+  if (descriptor.gallery !== undefined) {
+    return descriptor.gallery === true && descriptor.atlasRole === undefined && galleryPath(descriptor.path);
+  }
   if (descriptor.atlasRole === undefined) return originalPath(descriptor.path);
   return positive(descriptor.atlasRole) && descriptor.atlasRole <= 999_999 && atlasPortraitPath(descriptor.path);
 }
@@ -82,12 +98,55 @@ export async function loadZzzPanelOriginal(directory: string | undefined, paths:
   }
 }
 
+async function roleDirectory(root: string | undefined, relative: string) {
+  if (!root) return;
+  const resolved = await realpath(root).catch(() => undefined);
+  if (!resolved) return;
+  const directory = join(resolved, relative);
+  if (await realpath(directory).catch(() => undefined) === directory) return directory;
+}
+
+async function readGalleryImage(root: string | undefined, path: string) {
+  const folder = dirname(path);
+  const directory = await roleDirectory(root, folder);
+  return readZzzCardLocalArtwork(directory, path.slice(folder.length + 1)).catch(() => undefined);
+}
+
+export async function loadZzzRandomGalleryPortrait(root: string | undefined, names: readonly unknown[], installed = false) {
+  if (!root) return;
+  const paths: string[] = [];
+  for (const name of new Set(names)) {
+    if (typeof name !== "string" || !galleryPath(`${name}/a.png`)) continue;
+    const folder = installed ? `images/panel/${name}` : name;
+    const directory = await roleDirectory(root, folder);
+    if (!directory) continue;
+    for (const file of await readdir(directory, { withFileTypes: true }).catch(() => [])) {
+      const path = `${folder}/${file.name}`;
+      if (file.isFile() && (installed ? originalPath(path) : galleryPath(path))) paths.push(path);
+    }
+  }
+  while (paths.length) {
+    const index = Math.floor(Math.random() * paths.length);
+    const path = paths.splice(index, 1)[0]!;
+    const bytes = await readGalleryImage(root, path);
+    const image = bytes && await loadImage(bytes).catch(() => undefined);
+    if (bytes && image) {
+      const original: PanelOriginal = { path, sha256: hash(bytes), ...(installed ? {} : { gallery: true }) };
+      return { image, original };
+    }
+  }
+}
+
+export async function findZzzAtlasCharacter(atlas: ReturnType<typeof createAtlasRuntimeCatalog>, roleId: number) {
+  if (!positive(roleId) || roleId > 999_999) return;
+  const snapshot = await atlas.read().catch(() => undefined);
+  const entries = snapshot?.pages.find(page => page.game === "zzz" && page.kind === "character")?.entries;
+  return entries?.find(character => character.id === String(roleId));
+}
+
 export function createZzzAtlasPortraitReader(atlas: ReturnType<typeof createAtlasRuntimeCatalog>): ZzzAtlasPortraitReader {
   return async (roleId, preferIcon) => {
-    if (!positive(roleId) || roleId > 999_999) return;
-    const snapshot = await atlas.read().catch(() => undefined);
-    const entries = snapshot?.pages.find(page => page.game === "zzz" && page.kind === "character")?.entries;
-    const entry = entries?.find(character => character.id === String(roleId));
+    const entry = await findZzzAtlasCharacter(atlas, roleId);
     if (!entry) return;
     const { artwork, icon } = (await atlas.roleDetails(entry).catch(() => undefined))?.overview ?? {};
     for (const path of new Set(preferIcon ? [icon, artwork] : [artwork, icon])) {
@@ -108,14 +167,16 @@ export async function loadZzzAtlasPanelOriginal(read: ZzzAtlasPortraitReader | u
 }
 
 export async function readZzzPanelOriginal(directory: string | undefined, original: PanelOriginal,
-  atlas?: ZzzAtlasPortraitReader) {
+  atlas?: ZzzAtlasPortraitReader, gallery?: string) {
   if (!originalDescriptor(original)) return;
   if (original.atlasRole !== undefined) {
     const asset = await atlas?.(original.atlasRole).catch(() => undefined);
     if (asset?.path === original.path && hash(asset.bytes) === original.sha256) return asset.bytes;
     return;
   }
-  const bytes = await readZzzCardLocalArtwork(directory, original.path).catch(() => undefined);
+  const bytes = original.gallery ? await readGalleryImage(gallery, original.path)
+    : original.path.startsWith("images/panel/") ? await readGalleryImage(directory, original.path)
+    : await readZzzCardLocalArtwork(directory, original.path).catch(() => undefined);
   if (bytes && hash(bytes) === original.sha256) return bytes;
 }
 

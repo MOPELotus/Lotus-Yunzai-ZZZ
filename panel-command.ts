@@ -11,7 +11,7 @@ import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
 import { createPanelDamageReader, ZzzDamageUnavailable } from "./panel-damage.ts";
 import { renderZzzPanelDetail } from "./panel-detail-card.ts";
 import { renderZzzPanelList } from "./panel-list-card.ts";
-import { createZzzAtlasPortraitReader, createZzzPanelOriginalLedger, readZzzPanelOriginal } from "./panel-original.ts";
+import { createZzzAtlasPortraitReader, createZzzPanelOriginalLedger, findZzzAtlasCharacter, readZzzPanelOriginal } from "./panel-original.ts";
 import { createZzzPanelStorage, createZzzShowcaseStorage, readPanelJson, zzzPanelRegion } from "./panel-storage.ts";
 import { renderZzzProficiency } from "./proficiency-card.ts";
 import { buildZzzProficiency } from "./proficiency.ts";
@@ -146,6 +146,8 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   }, signal);
   const atlas = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
   const atlasPortrait = createZzzAtlasPortraitReader(atlas);
+  const galleryRoot = Bun.env.LOTUS_CHARACTER_GALLERY_DIR;
+  const galleryDirectory = galleryRoot ? join(galleryRoot, "zzz-character") : undefined;
   const running = new Set<string>();
   const lastSuccess = new Map<string, number>();
 
@@ -177,7 +179,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       }
       await verifyRole(qq, record.profileId, record);
       if (session?.aborted) return missing;
-      const file = await readZzzPanelOriginal(resources, record.original, atlasPortrait);
+      const file = await readZzzPanelOriginal(resources, record.original, atlasPortrait, galleryDirectory);
       await verifyRole(qq, record.profileId, record);
       if (!file || session?.aborted) return missing;
       return { type: "image" as const, file };
@@ -272,7 +274,11 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
           : `暂无角色${command.name}面板数据，请先%更新面板。`;
         const damage = command.kind === "damage" ? await readDamage(row, resources, command.skill) : undefined;
         const { png, original } = await renderZzzPanelDetail(row, identity.uid, {
-          ...theme, showcase: !privateIds.has(row.id), damage, profileId,
+          ...theme, showcase: !privateIds.has(row.id), damage, profileId, galleryDirectory,
+          async atlasNames(id) {
+            const entry = await findZzzAtlasCharacter(atlas, id);
+            return entry ? [entry.name, (await atlas.roleDetails(entry))?.overview.name ?? entry.name] : [];
+          },
         });
         await sameRole();
         const message = { type: "image" as const, file: png };

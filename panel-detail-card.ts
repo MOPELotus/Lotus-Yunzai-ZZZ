@@ -1,5 +1,3 @@
-import { readdir, realpath } from "node:fs/promises";
-import { join, sep } from "node:path";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -9,7 +7,8 @@ import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPan
 import { drawPanelDamage, panelDamageHeight, panelDamageSections } from "./panel-damage-card.ts";
 import type { PanelDamage } from "./panel-damage.ts";
 import { buildZzzPanelDetail, panelObject, type PanelStat } from "./panel-detail.ts";
-import { loadZzzAtlasPanelOriginal, loadZzzPanelOriginal, type ZzzAtlasPortraitReader } from "./panel-original.ts";
+import { loadZzzAtlasPanelOriginal, loadZzzPanelOriginal, loadZzzRandomGalleryPortrait,
+  type ZzzAtlasPortraitReader } from "./panel-original.ts";
 import { buildZzzPanelScore } from "./panel-score.ts";
 
 type Local = Awaited<ReturnType<typeof openZzzCardTheme>>;
@@ -21,6 +20,8 @@ type DetailOptions = ZzzCardOptions & {
   readonly damage?: PanelDamage;
   readonly profileId?: number;
   readonly atlasPortrait?: ZzzAtlasPortraitReader;
+  readonly galleryDirectory?: string;
+  readonly atlasNames?: (roleId: number) => Promise<readonly string[]>;
 };
 const width = 840;
 const gold = "#f2d267";
@@ -46,23 +47,11 @@ const propertyWeightIds: Readonly<Record<string, number>> = {
   "暴击伤害": 21103, "异常掌控": 31402, "异常精通": 31203, "穿透率": 23103, "能量自动回复": 30502,
 };
 
-async function customPortrait(root: string | undefined, names: readonly unknown[]) {
-  if (!root) return;
-  const actual = await realpath(root).catch(() => undefined);
-  if (!actual) return;
-  for (const name of new Set(names)) {
-    if (typeof name !== "string" || !name || name === "." || name === ".." || /[/\\\p{Cc}\p{Cf}]/u.test(name)) continue;
-    const path = `images/panel/${name}`;
-    const directory = await realpath(join(actual, path)).catch(() => undefined);
-    if (!directory?.startsWith(join(actual, "images", "panel") + sep)) continue;
-    const files = (await readdir(directory, { withFileTypes: true }).catch(() => []))
-      .filter(file => file.isFile() && /\.(?:png|jpe?g|webp)$/iu.test(file.name));
-    if (!files.length) continue;
-    const selected = Math.floor(Math.random() * files.length);
-    const candidates = [...files.slice(selected), ...files.slice(0, selected)];
-    const artwork = await loadZzzPanelOriginal(root, candidates.map(file => `${path}/${file.name}`));
-    if (artwork) return artwork;
-  }
+async function galleryPortrait(roleId: number, partner: Readonly<Record<string, unknown>>, options: DetailOptions) {
+  const known = [partner.name, partner.full_name].filter(name => typeof name === "string" && name.length > 0);
+  const names = known.length ? known : await options.atlasNames?.(roleId).catch(() => undefined) ?? [];
+  return await loadZzzRandomGalleryPortrait(options.galleryDirectory, names) ??
+    loadZzzRandomGalleryPortrait(options.legacyResources, names, true);
 }
 
 function propertyImage(stat: PanelStat) {
@@ -101,8 +90,8 @@ async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options
   }
   const [entries, fullPortrait, weapon, discs] = await Promise.all([
     Promise.all([...paths].map(async path => [path, await local(path)] as const)),
-    customPortrait(options.legacyResources, [avatar.name_mi18n, avatar.full_name_mi18n, partner.name, partner.full_name])
-      .then(custom => custom ?? loadZzzPanelOriginal(options.legacyResources, portraitPaths))
+    galleryPortrait(avatar.id, partner, options)
+      .then(gallery => gallery ?? loadZzzPanelOriginal(options.legacyResources, portraitPaths))
       .then(legacy => legacy ?? loadZzzAtlasPanelOriginal(options.atlasPortrait, avatar.id)),
     cachedPanelWeaponImage(local, weapons?.[model.weapon?.id ?? 0]),
     Promise.all(model.discs.map(item => {
