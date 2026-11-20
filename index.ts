@@ -11,6 +11,7 @@ import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-his
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
 import { renderZzzGameRecord } from "./game-record-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
+import { createZzzCinema, zzzCinemaCommand } from "./cinema.ts";
 import { rankCommand } from "./challenge-rank-model.ts";
 import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
@@ -73,6 +74,7 @@ export function createModule({ signal, lockFile }: {
   const client = createProfileHoyoClient(profiles);
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);
+  const cinema = createZzzCinema(signal);
   const poolHistory = createZzzPoolHistory(signal);
   const currentPool = createZzzCurrentPool(signal);
   const sync = createZzzTuningSync(profiles, client, historyDirectory, lockFile);
@@ -282,6 +284,8 @@ export function createModule({ signal, lockFile }: {
     async fallback(_message: string, context: GachaContext) {
       const rank = rankCommand(context.normalizedMessage);
       if (rank) return challengeRanks.handle(context, rank);
+      const cinemaQuery = zzzCinemaCommand(context.normalizedMessage);
+      if (cinemaQuery) return cinema(cinemaQuery);
       const panel = zzzPanelCommand(context.normalizedMessage, context.message_type === "group");
       if (panel) return panelCommands(panel, context);
       const panelHint = zzzPanelCommandHint(context.normalizedMessage);
