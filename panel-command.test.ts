@@ -18,3 +18,16 @@ test("旧版指定角色展柜更新收到提示，展柜全量与官方单角�
   }
   expect(zzzPanelCommand("%更新展柜面板2")).toEqual({ kind: "showcase-update", profileId: 2 });
 });
+
+test("旧品牌前缀不再触发面板，现行命令仍保留角色和档案", () => {
+  for (const raw of [
+    "#ZZZ-Plugin面板列表", "%荷花插件面板列表2", "#绝区零荷花面板列表", "%Lotus-Plugin面板列表",
+    "％Ｌｏｔｕｓ－Ｐｌｕｇｉｎ面板列表", "%[Lotus-Plugin]面板列表", "%荷花更新客服展柜面板2",
+  ]) {
+    expect(zzzPanelCommand(raw)).toBeUndefined();
+    expect(zzzPanelCommandHint(raw)).toBeUndefined();
+  }
+  expect(zzzPanelCommand("#zzz面板列表2")).toEqual({ kind: "list", profileId: 2 });
+  expect(zzzPanelCommand("%角色面板列表")).toEqual({ kind: "list", profileId: 1 });
+  expect(zzzPanelCommand("%琉音面板")).toEqual({ kind: "detail", profileId: 1, name: "琉音" });
+});

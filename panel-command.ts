@@ -20,6 +20,7 @@ import { readZzzRoleAliases, zzzRoleAlias, zzzRoleName as safeName } from "./rol
 const settingsFile = fileURLToPath(new URL("../../config/zzz-panel.yaml", import.meta.url));
 const atlasRoot = fileURLToPath(new URL("../../data/atlas/", import.meta.url));
 const prefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)/iu;
+const formerPanelBrand = /^[#/%]?\s*(?:(?:zzz|绝区零)\s*)?[\[【]?(?:zzz[-_ ]*plugin|lotus[-_ ]*plugin|荷花(?:插件)?)/iu;
 const listCommand = /^(?:面板|.*面板列表)\s*([1-9]\d{0,2})?$/u;
 const showcaseCommand = /^(?:(?:刷新|更新)展柜面板|展柜面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const proficiencyCommand = /^(展柜)?练度(?:统计)?\s*([1-9]\d{0,2})?$/u;
@@ -27,9 +28,15 @@ const updateCommand = /^(?:更新全部面板|全部面板更新|(?:刷新|更�
 const detailCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)面板\s*([1-9]\d{0,2})?$/u;
 const damageCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)伤害 *(\d{1,6})?(?: *档案 *([1-9]\d{0,2}))?$/u;
 
-export function zzzPanelCommand(raw: string) {
+function panelText(raw: string) {
+  if (formerPanelBrand.test(raw.normalize("NFKC"))) return;
   const command = raw.replace(prefix, "");
-  if (command === raw) return;
+  if (command !== raw) return command;
+}
+
+export function zzzPanelCommand(raw: string) {
+  const command = panelText(raw);
+  if (!command) return;
   if (command === "原图") return { kind: "original" as const };
   const damage = damageCommand.exec(command);
   if (damage) {
@@ -77,8 +84,8 @@ export function zzzPanelCommand(raw: string) {
 }
 
 export function zzzPanelCommandHint(raw: string) {
-  const command = raw.replace(prefix, "");
-  if (raw === command || showcaseCommand.test(command)) return;
+  const command = panelText(raw);
+  if (!command || showcaseCommand.test(command)) return;
   const refresh = updateCommand.exec(command);
   if (refresh?.[1]?.includes("展柜") && Number(refresh[2] ?? 1) <= MAX_PROFILE_ID) {
     return "展柜更新不支持指定角色，请使用%更新展柜面板";
