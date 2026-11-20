@@ -18,6 +18,8 @@ import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./
 import { createZzzPoolHistory, zzzPoolHistoryCommand } from "./pool-history.ts";
 import { createZzzCurrentPool, zzzCurrentPoolCommand } from "./current-pool.ts";
 import { renderZzzShiyu } from "./shiyu-card.ts";
+import { createZzzSkillReader } from "./skills-command.ts";
+import { zzzSkillCommand } from "./skills-data.ts";
 import { createZzzLegacyGachaArtwork, createZzzTuningArtwork } from "./tuning-artwork.ts";
 import { buildZzzTuningDetail, buildZzzTuningInventoryReply } from "./tuning-detail.ts";
 import { renderZzzTuningDetail } from "./tuning-detail-card.ts";
@@ -75,6 +77,7 @@ export function createModule({ signal, lockFile }: {
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);
   const cinema = createZzzCinema(signal);
+  const skills = createZzzSkillReader(signal);
   const poolHistory = createZzzPoolHistory(signal);
   const currentPool = createZzzCurrentPool(signal);
   const sync = createZzzTuningSync(profiles, client, historyDirectory, lockFile);
@@ -286,6 +289,8 @@ export function createModule({ signal, lockFile }: {
       if (rank) return challengeRanks.handle(context, rank);
       const cinemaQuery = zzzCinemaCommand(context.normalizedMessage);
       if (cinemaQuery) return cinema(cinemaQuery);
+      const skillQuery = zzzSkillCommand(context.normalizedMessage);
+      if (skillQuery) return skills(skillQuery);
       const panel = zzzPanelCommand(context.normalizedMessage, context.message_type === "group");
       if (panel) return panelCommands(panel, context);
       const panelHint = zzzPanelCommandHint(context.normalizedMessage);

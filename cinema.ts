@@ -35,7 +35,7 @@ export function zzzCinemaRanks(ranks: Role["ranks"]) {
   if (ordered.every(({ rank, name, description }, index) => rank === index + 1 && name && description)) return ordered;
 }
 
-function wrapped(context: Context, value: string, limit: number, font: string) {
+export function wrapZzzWikiText(context: Context, value: string, limit: number, font: string) {
   context.font = font;
   return value.split("\n").flatMap(paragraph => {
     const lines = [];
@@ -52,7 +52,7 @@ function wrapped(context: Context, value: string, limit: number, font: string) {
   });
 }
 
-function drawLines(context: Context, lines: readonly string[], x: number, y: number, lineHeight: number, font: string) {
+export function drawZzzWikiLines(context: Context, lines: readonly string[], x: number, y: number, lineHeight: number, font: string) {
   context.font = font;
   context.fillStyle = "white";
   context.textBaseline = "top";
@@ -78,9 +78,9 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
   readonly impressions: readonly string[];
 }) {
   const measurement = new Canvas(1, 1).getContext("2d");
-  const impressions = source.impressions.flatMap(value => wrapped(measurement, value, 642, impressionFont));
+  const impressions = source.impressions.flatMap(value => wrapZzzWikiText(measurement, value, 642, impressionFont));
   const header = Math.max(168, 92 + impressions.length * impressionLineHeight);
-  const panels = ranks.map(rank => ({ rank, lines: wrapped(measurement, rank.description ?? "", column, effectFont) }));
+  const panels = ranks.map(rank => ({ rank, lines: wrapZzzWikiText(measurement, rank.description ?? "", column, effectFont) }));
   const rows = [0, 2, 4].map(index => panels.slice(index, index + 2));
   const rowHeights = rows.map(two => 68 + Math.max(...two.map(({ lines }) => lines.length)) * effectLineHeight);
   const artwork = source.illustration;
@@ -107,7 +107,7 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
       const shortNameWidth = Math.min(360, context.measureText(name).width);
       label(context, fullName, nameX + shortNameWidth + 14, 54, 24, { maxWidth: width - nameX - shortNameWidth - 38 });
     }
-    drawLines(context, impressions, nameX, 82, impressionLineHeight, impressionFont);
+    drawZzzWikiLines(context, impressions, nameX, 82, impressionLineHeight, impressionFont);
     label(context, "意象影画", inset, header + 41, 32);
     label(context, "CINEMA", inset, header + 71, 24, { color: "#6666ff" });
     let y = header + 104;
@@ -115,7 +115,7 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
       for (const [index, { rank, lines }] of two.entries()) {
         const x = inset + index * (column + columnGap);
         label(context, `${rank.rank}. ${rank.name}`, x, y + 14, 24, { ellipsis: false, maxWidth: column });
-        drawLines(context, lines, x, y + 36, effectLineHeight, effectFont);
+        drawZzzWikiLines(context, lines, x, y + 36, effectLineHeight, effectFont);
       }
       y += rowHeights[row]!;
     }
