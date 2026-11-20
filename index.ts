@@ -282,7 +282,7 @@ export function createModule({ signal, lockFile }: {
     async fallback(_message: string, context: GachaContext) {
       const rank = rankCommand(context.normalizedMessage);
       if (rank) return challengeRanks.handle(context, rank);
-      const panel = zzzPanelCommand(context.normalizedMessage);
+      const panel = zzzPanelCommand(context.normalizedMessage, context.message_type === "group");
       if (panel) return panelCommands(panel, context);
       const panelHint = zzzPanelCommandHint(context.normalizedMessage);
       if (panelHint) return panelHint;

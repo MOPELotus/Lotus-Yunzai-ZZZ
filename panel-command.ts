@@ -34,7 +34,8 @@ function panelText(raw: string) {
   if (command !== raw) return command;
 }
 
-export function zzzPanelCommand(raw: string) {
+export function zzzPanelCommand(raw: string, inGroup = false) {
+  if (inGroup && /^#?原图$/u.test(raw)) return { kind: "original" as const, sharedCommand: true as const };
   const command = panelText(raw);
   if (!command) return;
   if (command === "原图") return { kind: "original" as const };
@@ -126,6 +127,8 @@ interface PanelContext {
   readonly message_type?: string;
   readonly isDelegated?: boolean;
   readonly privateCredentialSignal?: AbortSignal;
+  readonly groupOriginalSignal?: AbortSignal;
+  readonly message?: readonly { readonly type: string; readonly id?: unknown }[];
   readonly reply_id?: string | number;
   readonly lookupReply?: () => Promise<{ readonly user_id: number; readonly message: readonly { readonly type: string }[] } | undefined>;
   reply(message: string): unknown;
@@ -153,23 +156,33 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     signal.throwIfAborted();
   }
 
-  async function originalPicture(context: PanelContext, qq: string, resources: string | undefined) {
-    if (context.reply_id === undefined || !context.lookupReply) return "未找到消息源，请引用要查看的图片。";
+  async function originalPicture(context: PanelContext, qq: string, resources: string | undefined, sharedCommand: boolean) {
+    const session = sharedCommand ? context.groupOriginalSignal : context.privateCredentialSignal;
+    if (sharedCommand && (!session || session.aborted)) return;
+    const sources = context.message?.filter(part => part.type === "reply");
+    const sourceId = sources?.[0]?.id;
+    if (context.reply_id === undefined || !context.lookupReply || sources?.length !== 1 ||
+        (typeof sourceId !== "string" && typeof sourceId !== "number") || String(sourceId) !== String(context.reply_id)) {
+      return sharedCommand ? undefined : "未找到消息源，请引用要查看的一张图片。";
+    }
+    const missing = sharedCommand ? undefined : "未找到原图。";
     try {
       const record = await originals.find(context, context.reply_id);
-      if (!record) return "未找到原图。";
+      if (!record || session?.aborted) return missing;
       const quote = await context.lookupReply();
-      if (!quote || quote.user_id !== context.self_id || !quote.message.some(part => part.type === "image")) {
-        return "未找到原图。";
+      if (!quote || session?.aborted || quote.user_id !== context.self_id ||
+          quote.message.filter(part => part.type === "image").length !== 1) {
+        return missing;
       }
       await verifyRole(qq, record.profileId, record);
+      if (session?.aborted) return missing;
       const file = await readZzzPanelOriginal(resources, record.original);
       await verifyRole(qq, record.profileId, record);
-      if (!file || context.privateCredentialSignal?.aborted) return "未找到原图。";
+      if (!file || session?.aborted) return missing;
       return { type: "image" as const, file };
     } catch {
-      if (signal.aborted) return [];
-      return "未找到原图。";
+      if (signal.aborted && !sharedCommand) return [];
+      return missing;
     }
   }
 
@@ -202,11 +215,12 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     const user = context.user_id;
     if ((context.message_type !== "group" && context.message_type !== "private") || context.isDelegated ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
+      if (command.kind === "original" && command.sharedCommand) return;
       return "请从登录档案对应的 QQ 会话使用绝区零面板。";
     }
     const qq = String(user);
     const resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
-    if (command.kind === "original") return originalPicture(context, qq, resources);
+    if (command.kind === "original") return originalPicture(context, qq, resources, command.sharedCommand === true);
     const { profileId } = command;
     try {
       const role = await profiles.savedRole(qq, profileId, "zzz");
