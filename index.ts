@@ -13,7 +13,7 @@ import { renderZzzGameRecord } from "./game-record-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
 import { rankCommand } from "./challenge-rank-model.ts";
 import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
-import { createZzzPanelCommands, zzzPanelCommand } from "./panel-command.ts";
+import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
 import { createZzzPoolHistory, zzzPoolHistoryCommand } from "./pool-history.ts";
 import { createZzzCurrentPool, zzzCurrentPoolCommand } from "./current-pool.ts";
 import { renderZzzShiyu } from "./shiyu-card.ts";
@@ -284,6 +284,8 @@ export function createModule({ signal, lockFile }: {
       if (rank) return challengeRanks.handle(context, rank);
       const panel = zzzPanelCommand(context.normalizedMessage);
       if (panel) return panelCommands(panel, context);
+      const panelHint = zzzPanelCommandHint(context.normalizedMessage);
+      if (panelHint) return panelHint;
       if (zzzCurrentPoolCommand.test(context.normalizedMessage)) return currentPool();
       const historyQuery = zzzPoolHistoryCommand(context.normalizedMessage);
       if (historyQuery) return poolHistory(historyQuery, Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR);

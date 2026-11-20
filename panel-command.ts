@@ -23,7 +23,7 @@ const prefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区�
 const listCommand = /^(?:面板|.*面板列表)\s*([1-9]\d{0,2})?$/u;
 const showcaseCommand = /^(?:(?:刷新|更新)展柜面板|展柜面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const proficiencyCommand = /^(展柜)?练度(?:统计)?\s*([1-9]\d{0,2})?$/u;
-const updateCommand = /^(?:(?:刷新|更新)(.*?)面板|面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
+const updateCommand = /^(?:更新全部面板|全部面板更新|(?:刷新|更新)(.*?)面板|面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const detailCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)面板\s*([1-9]\d{0,2})?$/u;
 const damageCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)伤害 *(\d{1,6})?(?: *档案 *([1-9]\d{0,2}))?$/u;
 
@@ -74,6 +74,15 @@ export function zzzPanelCommand(raw: string) {
     return { kind: "showcase-detail" as const, profileId, name: name.slice(0, -2).trim() };
   }
   return { kind: "detail" as const, profileId, name };
+}
+
+export function zzzPanelCommandHint(raw: string) {
+  const command = raw.replace(prefix, "");
+  if (raw === command || showcaseCommand.test(command)) return;
+  const refresh = updateCommand.exec(command);
+  if (refresh?.[1]?.includes("展柜") && Number(refresh[2] ?? 1) <= MAX_PROFILE_ID) {
+    return "展柜更新不支持指定角色，请使用%更新展柜面板";
+  }
 }
 
 type Json = Readonly<Record<string, unknown>>;
