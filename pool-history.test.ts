@@ -18,9 +18,31 @@ test("历史查询识别旧前缀、名称和 S/A 分类", () => {
   expect(zzzPoolHistoryCommand("#zzz四星代理人复刻记录")).toEqual({ type: "角色", rank: "A" });
   expect(zzzPoolHistoryCommand("％S音擎复刻统计")).toEqual({ type: "武器", rank: "S" });
   expect(zzzPoolHistoryCommand("#zzzA级音擎复刻统计")).toEqual({ type: "武器", rank: "A" });
+  expect(zzzPoolHistoryCommand("%2.7下半卡池")).toEqual({ version: "2.7", phase: "下半" });
+  expect(zzzPoolHistoryCommand("#zzzv2.7卡池")).toEqual({ version: "2.7", phase: undefined });
   for (const command of ["艾莲卡池历史", "%卡池历史", "%音擎卡池历史", "%本期卡池", "%抽卡记录"]) {
     expect(zzzPoolHistoryCommand(command)).toBeUndefined();
   }
+});
+
+test("分版本精确区分期次和资料范围，采用官方证实的唯一版本修正", async () => {
+  const correction = {
+    type: "武器", version: "2.6下半", timer: "2026/04/15 12:00:00 ~ 2026/05/05 14:59:59", s: "机巧心种", a: ["比格气缸", "裁纸刀"],
+  };
+  const query = createZzzPoolHistory(new AbortController().signal, async () => Response.json([
+    ...rows, correction,
+    { ...correction, version: "1.10", s: "其他版本", timer: "2024/10/01 00:00:00 ~ 2024/10/10 00:00:00" },
+  ]));
+  const old = await query({ version: "1.0" }, undefined);
+  expect(old).toContain("【 1.0上半 】");
+  expect(old).toContain("【 1.0下半 】");
+  expect(await query({ version: "1.1" }, undefined)).not.toContain("其他版本");
+  expect(await query({ version: "1.0", phase: "上半" }, undefined)).not.toContain("朱鸢");
+  expect(await query({ version: "2.7", phase: "下半" }, undefined)).toBe(
+    "【 绝区零 v2.7下半 卡池 】\n⏱️ 2026/04/15 ~ 2026/05/05\n◈ 音擎：S-机巧心种 | A-比格气缸，裁纸刀\n来源所载频段截至 2026/05/05。",
+  );
+  expect(await query({ version: "2.6", phase: "下半" }, undefined)).toContain("未查询到绝区零2.6下半版本");
+  expect(await query("机巧心种", undefined)).toContain("1. 2.7下半");
 });
 
 test("分类复刻只统计到资料末期并排除当时还在调频的对象", async () => {

@@ -13,9 +13,19 @@ interface PoolSummary {
   readonly type: "角色" | "武器";
 }
 
+interface PoolVersion {
+  readonly version: string;
+  readonly phase?: "上半" | "下半";
+}
+
 export function zzzPoolHistoryCommand(raw: string) {
   const command = raw.replace(prefix, "");
   if (command === raw) return;
+  const edition = /^v?(\d{1,2}\.\d{1,2})(上半|下半)?卡池$/u.exec(command);
+  if (edition) return {
+    version: edition[1]!,
+    phase: edition[2] === "上半" || edition[2] === "下半" ? edition[2] : undefined,
+  } satisfies PoolVersion;
   const name = /^([^\p{Cc}\p{Cf}]{1,80}?)(?:复刻|卡池)(?:统计|记录|历史)$/u.exec(command)?.[1]?.trim();
   if (!name) return;
   const category = /^(s级?|a级?|五星|四星)?(角色|代理人|武器|音擎)$/iu.exec(name);
@@ -62,7 +72,11 @@ export function decodeZzzPoolHistory(raw: unknown) {
         !headliner || !items || items.some(item => item === undefined) || end === undefined) {
       throw new Error("绝区零卡池历史格式异常");
     }
-    return { type, version, headliner, items, startText: dates[0]!, end };
+    // The official 2.7 notice confirms the April–May 机巧心种 row; the public archive labels it 2.6.
+    // https://zzz.mihoyo.com/news/163519
+    const mislabeled = type === "武器" && version === "2.6下半" && headliner === "机巧心种" &&
+      dates[0] === "2026/04/15 12:00:00" && dates[1] === "2026/05/05 14:59:59";
+    return { type, version: mislabeled ? "2.7下半" : version, headliner, items, startText: dates[0]!, end };
   }).sort((left, right) => left.end - right.end);
 
   let lastEnd: number | undefined, previousEnd: number | undefined;
@@ -102,6 +116,35 @@ function poolSummary(rows: ReturnType<typeof decodeZzzPoolHistory>, request: Poo
     ...ages.map(row => `${row.item}: ${String(row.days).padStart(3, " ")}天未复刻`),
     `按 ${calendar(snapshot).slice(0, 10)} 统计。来源所载频段截至 ${calendar(lastEnd).slice(0, 10)}。`,
   ].join("\n");
+}
+
+function versionHistory(rows: ReturnType<typeof decodeZzzPoolHistory>, request: PoolVersion) {
+  const stages = request.phase ? [request.version + request.phase] :
+    [request.version, request.version + "上半", request.version + "下半"];
+  const selected = stages.flatMap(stage => {
+    const entries = rows.filter(row => row.version === stage);
+    return entries.length ? [{ stage, entries }] : [];
+  });
+  const coverage = `来源所载频段截至 ${calendar(rows.at(-1)!.end).slice(0, 10)}。`;
+  if (!selected.length) {
+    return `未查询到绝区零${request.version}${request.phase ?? ""}版本的卡池历史数据。${coverage}`;
+  }
+  const title = selected.length === 1 ? selected[0]!.stage : request.version;
+  const lines = [`【 绝区零 v${title} 卡池 】`];
+  for (const { stage, entries } of selected) {
+    if (selected.length > 1) lines.push(`【 ${stage} 】`);
+    const ranges = new Set(entries.map(row => row.dateRange));
+    for (const range of ranges) {
+      lines.push(`⏱️ ${range}`);
+      for (const type of ["角色", "武器"] as const) {
+        for (const row of entries) {
+          if (row.type !== type || row.dateRange !== range) continue;
+          lines.push(`◈ ${type === "角色" ? type : "音擎"}：S-${row.headliner} | A-${row.items.join("，")}`);
+        }
+      }
+    }
+  }
+  return [...lines, coverage].join("\n");
 }
 
 async function readResponse(response: Response) {
@@ -151,12 +194,13 @@ export function createZzzPoolHistory(signal: AbortSignal,
     return cached;
   }
 
-  return async (query: string | PoolSummary, resources: string | undefined) => {
+  return async (query: string | PoolSummary | PoolVersion, resources: string | undefined) => {
     if (signal.aborted) return [];
     if (typeof query !== "string") {
       const rows = await read();
       if (signal.aborted) return [];
-      return rows ? poolSummary(rows, query, now()) : "卡池历史记录数据获取失败";
+      if (!rows) return "卡池历史记录数据获取失败";
+      return "version" in query ? versionHistory(rows, query) : poolSummary(rows, query, now());
     }
     const [rows, aliases, catalog] = await Promise.all([
       read(),
