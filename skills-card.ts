@@ -9,14 +9,41 @@ const width = 840;
 const xInset = 12;
 const skillWidth = width - 2 * xInset;
 const padding = 12;
+const iconSize = 96;
+const infoX = xInset + padding + iconSize + 12;
+const infoWidth = width - infoX - xInset - padding;
+const skillNameSize = 33.6;
+const skillNameLine = 45;
+const skillNameMargin = 16.8;
+const descriptionTitleSize = 28.8;
+const descriptionTitleLine = 39;
+const descriptionMargin = 7.2;
+const levelTitleSize = 26.4;
+const levelTitleLine = 36;
+const levelTitleMargin = 13.2;
+const tableNameSize = 21.6;
+const tableNameLine = 29;
+const tableNameMargin = 6.48;
+const rateMargin = 10.8;
+const detailMargin = 21.6;
+const tablePaddingX = 9.72;
+const tablePaddingY = 3.888;
+const tableInset = xInset + padding + 21.6;
+const tableWidth = width - tableInset - xInset - padding;
+const outerBorder = 2;
+const innerBorder = 1;
 const bodyFont = '24px "Noto Sans CJK SC", sans-serif';
 const emphasisFont = '24px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
 const tableFont = '19.44px "Noto Sans CJK SC", sans-serif';
 const impressionFont = '19.2px "Noto Sans CJK SC", sans-serif';
-const lineHeight = 34;
-const tableHeight = 37;
+const tableNameFont = `${tableNameSize}px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif`;
+const descriptionTitleFont = `${descriptionTitleSize}px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif`;
+const sectionGap = 48;
+const footerHeight = 183.6;
 const areaHeight = 10_000;
 const gold = "#f6ca45";
+const border = "#ffffff33";
+const stripe = "#ffffff1a";
 const kindTitles = {
   basic: "普通攻击", dodge: "闪避", assist: "支援技", special: "特殊技", chain: "连携技", core: "核心技",
 } as const;
@@ -62,134 +89,209 @@ function effectLines(ctx: Context, raw: string, icons: SkillCardSource["icons"])
     const icon = kind && icons[kind];
     const text = button ? zzzSkillText(token) : token;
     ctx.font = color ? emphasisFont : bodyFont;
-    const width = icon ? 33 : ctx.measureText(text).width;
-    if (used && used + width > 682) {
+    const width = icon ? 28.8 : ctx.measureText(text).width;
+    if (used && used + width > infoWidth) {
       lines.push([]);
       used = 0;
     }
     lines.at(-1)!.push({ width, text, color, icon });
     used += width;
   }
-  return lines;
+  return lines.map(tokens => ({
+    tokens, height: tokens.length && tokens.every(({ color, text, icon }) => !icon && (color || !text.trim())) ? 32 : 35,
+  }));
 }
 
-function drawEffects(context: Context, lines: readonly (readonly EffectToken[])[], x: number, y: number) {
+function drawEffects(context: Context, lines: ReturnType<typeof effectLines>, x: number, y: number) {
   context.textAlign = "left";
   context.textBaseline = "top";
-  for (const [index, line] of lines.entries()) {
+  for (const { tokens, height } of lines) {
     let left = x;
-    const top = y + index * lineHeight;
-    for (const { width, text, color, icon } of line) {
+    for (const { width, text, color, icon } of tokens) {
       if (icon) {
-        context.drawImage(icon, left + 3, top + 3, 27, 27);
+        context.drawImage(icon, left, y + 4, 28.8, 28.8);
       } else {
         context.font = color ? emphasisFont : bodyFont;
         context.fillStyle = color ?? "white";
-        context.fillText(text, left, top);
+        context.fillText(text, left, y);
       }
       left += width;
     }
+    y += height;
   }
 }
 
-function blockHeight(textLines: readonly (readonly EffectToken[])[]) {
-  return 39 + textLines.length * lineHeight;
+type TableCell = { readonly lines: readonly string[]; readonly lineHeight: number };
+
+function cells(ctx: Context, values: readonly string[], widths: readonly number[]) {
+  return values.map((value, index) => ({
+    lines: wrapZzzWikiText(ctx, value, widths[index]! - tablePaddingX * 2 - innerBorder, tableFont),
+    lineHeight: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(value) ? 29 : 23,
+  }));
+}
+
+function cellHeight(row: readonly TableCell[]) {
+  return Math.max(...row.map(cell => cell.lineHeight * cell.lines.length)) + tablePaddingY * 2;
+}
+
+function rateWidths(right: boolean) {
+  const inner = tableWidth / 2 - outerBorder * (right ? 1 : 2);
+  return [inner * 2 / 3, inner / 3];
+}
+
+function rateRows(ctx: Context, rates: readonly SkillRate[]) {
+  const rows = [];
+  for (let index = 0; index < rates.length; index += 2) {
+    const pair = rates.slice(index, index + 2).map(({ label, value }, column) => ({
+      cells: cells(ctx, [label, value], rateWidths(column === 1)),
+      bottom: index + column >= rates.length - 2,
+    }));
+    const height = Math.max(...pair.map(({ cells, bottom }) => cellHeight(cells) + outerBorder * (bottom ? 2 : 1)));
+    rows.push({ pair, height });
+  }
+  return rows;
+}
+
+const detailWidths = Array<number>(8).fill(tableWidth / 8);
+const detailHeadings = ["#", "A", "B", "C", "D", "E", "F", "G"];
+
+function detailRows(ctx: Context, rates: readonly SkillRate[]) {
+  const amounts = rates.flatMap(row => row.details ? [row.details] : []);
+  const rows = [detailHeadings, ...amounts.map((items, index) => [String(index + 1), ...items.map(String), ""])];
+  return rows.map((values, index) => {
+    const columns = cells(ctx, values, detailWidths);
+    return { columns, height: cellHeight(columns) + outerBorder * (index === 0 ? 2 : 1) };
+  });
+}
+
+function heightOf(rows: readonly { readonly height: number }[]) {
+  return rows.reduce((sum, row) => sum + row.height, 0);
 }
 
 function layout(ctx: Context, section: SkillSection, icons: SkillCardSource["icons"]) {
-  const descriptions = section.descriptions.map(({ name, markup }) => ({
-    name, lines: effectLines(ctx, markup, icons),
-  }));
-  const tables = section.tables.map(table => {
-    const details = table.rates.flatMap(rate => rate.details ? [rate.details] : []);
-    return { ...table, details, height: 56 + (Math.ceil(table.rates.length / 2) + details.length + 1) * tableHeight };
+  const descriptions = section.descriptions.map(({ name, markup }) => {
+    const title = wrapZzzWikiText(ctx, name, infoWidth, descriptionTitleFont);
+    const lines = effectLines(ctx, markup, icons);
+    return { title, lines, height: title.length * descriptionTitleLine + heightOf(lines) + descriptionMargin };
   });
-  const contentHeight = descriptions.reduce((sum, row) => sum + blockHeight(row.lines), 0);
-  const topHeight = Math.max(101, (section.kind === "core" ? 96 : 62) + contentHeight);
-  const height = topHeight + (section.kind === "core" ? 0 : 42 + tables.reduce((sum, table) => sum + table.height, 0)) + 20;
-  return { section, descriptions, tables, topHeight, height };
+  const tables = section.tables.map(({ name, rates }) => {
+    const title = wrapZzzWikiText(ctx, name, skillWidth - 2 * padding, tableNameFont);
+    const rate = rateRows(ctx, rates);
+    const details = detailRows(ctx, rates);
+    const height = title.length * tableNameLine + tableNameMargin + heightOf(rate) + rateMargin + heightOf(details);
+    return { title, rate, details, height };
+  });
+  const core = section.kind === "core";
+  const firstDescription = padding + 2 * skillNameMargin + skillNameLine + (core ? levelTitleLine + 24 : 0);
+  const firstDetail = Math.max(padding + iconSize, firstDescription + heightOf(descriptions)) + levelTitleMargin;
+  const height = core ? firstDescription + heightOf(descriptions) + padding :
+    firstDetail + levelTitleLine + levelTitleMargin + heightOf(tables) + Math.max(0, tables.length - 1) * detailMargin + 24 + padding;
+  return { section, descriptions, tables, firstDescription, firstDetail, height };
 }
 
-function tableRow(context: Context, x: number, y: number, values: readonly string[], widths: readonly number[], shaded: boolean) {
-  for (const [index, value] of values.entries()) {
+function drawCells(context: Context, x: number, y: number, row: readonly TableCell[], widths: readonly number[], height: number, edge: boolean) {
+  context.font = tableFont;
+  context.textBaseline = "middle";
+  context.textAlign = "center";
+  for (const [index, { lines, lineHeight }] of row.entries()) {
     const size = widths[index]!;
-    if (shaded) box(context, "#ffffff19", x, y, size, tableHeight);
-    context.strokeStyle = "#ffffff33";
-    context.lineWidth = 1;
-    context.strokeRect(x, y, size, tableHeight);
-    context.font = tableFont;
+    const bordered = edge || index < row.length - 1;
+    if (bordered) box(context, border, x + size - innerBorder, y, innerBorder, height);
     context.fillStyle = "white";
-    context.textBaseline = "middle";
-    context.textAlign = "center";
-    context.fillText(value, x + size / 2, y + tableHeight / 2, size - 10);
+    const center = x + (size - (bordered ? innerBorder : 0)) / 2;
+    lines.forEach((line, index) => context.fillText(line, center, y + tablePaddingY + (index + 0.5) * lineHeight));
     x += size;
   }
 }
 
-function drawRateGrid(context: Context, rates: readonly SkillRate[], y: number) {
-  for (const [index, rate] of rates.entries()) {
-    tableRow(context, 47 + (index % 2) * 385, y + Math.floor(index / 2) * tableHeight, [rate.label, rate.value],
-      [257, 128], Math.floor(index / 2) % 2 === 1);
+function drawRateGrid(context: Context, rows: ReturnType<typeof rateRows>, y: number) {
+  const width = tableWidth / 2;
+  for (const [index, { pair, height }] of rows.entries()) {
+    for (const [column, { cells, bottom }] of pair.entries()) {
+      const x = tableInset + column * width;
+      const cell = index * 2 + column + 1;
+      if (cell % 3 === 0 || cell % 4 === 0) box(context, stripe, x, y, width, height);
+      box(context, border, x, y, width, outerBorder);
+      box(context, border, x, y + outerBorder, outerBorder, height - outerBorder);
+      if (column === 0) box(context, border, x + width - outerBorder, y + outerBorder, outerBorder, height - outerBorder);
+      if (bottom) box(context, border, x, y + height - outerBorder, width, outerBorder);
+      const innerHeight = height - (bottom ? 2 : 1) * outerBorder;
+      drawCells(context, x + outerBorder, y + outerBorder, cells, rateWidths(column === 1), innerHeight, true);
+    }
+    y += height;
   }
-  return y + Math.ceil(rates.length / 2) * tableHeight + 9;
+  return y;
+}
+
+function drawDetailGrid(context: Context, rows: ReturnType<typeof detailRows>, y: number) {
+  for (const [index, { columns, height }] of rows.entries()) {
+    if (index % 2 === 0) box(context, stripe, tableInset, y, tableWidth, height);
+    if (index === 0) box(context, border, tableInset, y, tableWidth, outerBorder);
+    box(context, border, tableInset, y + height - outerBorder, tableWidth, outerBorder);
+    const top = index === 0 ? y + outerBorder : y;
+    drawCells(context, tableInset, top, columns, detailWidths, y + height - top - outerBorder, false);
+    y += height;
+  }
+  return y;
 }
 
 function drawSection(context: Context, block: ReturnType<typeof layout>, top: number, icon: Image | undefined) {
-  const { section, descriptions, tables, height, topHeight } = block;
+  const { section, descriptions, tables, height, firstDescription, firstDetail } = block;
   fillRound(context, "#000c", xInset, top, skillWidth, height, 24);
-  if (icon) cover(context, icon, xInset + padding, top + padding, 96, 96);
-  const infoX = xInset + padding + 108;
-  label(context, kindTitles[section.kind], infoX, top + 38, 33.6, { color: gold });
+  if (icon) cover(context, icon, xInset + padding, top + padding, iconSize, iconSize);
+  const nameY = padding + skillNameMargin + skillNameLine / 2;
+  label(context, kindTitles[section.kind], infoX, top + nameY, skillNameSize, { color: gold });
   function level(x: number, y: number) {
-    label(context, "详细属性", x, y, 26.4, { color: gold });
-    fillRound(context, gold, x + 111, y - 13, 69, 26, 5);
-    label(context, `Lv.${section.level}`, x + 146, y, 19, { align: "center" });
+    label(context, "详细属性", x, y + levelTitleLine / 2, levelTitleSize, { color: gold });
+    const left = x + context.measureText("详细属性").width + 10.56;
+    const text = `Lv.${section.level}`;
+    context.font = '400 21.12px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
+    const width = context.measureText(text).width + 2 * 6.336;
+    fillRound(context, gold, left, y + 3.888, width, 32.224, 6.336);
+    label(context, text, left + width / 2, y + 20, 21.12, { align: "center" });
   }
-  if (section.kind === "core") level(infoX, top + 74);
-  let current = top + (section.kind === "core" ? 98 : 63);
+  if (section.kind === "core") level(infoX, top + padding + skillNameLine + skillNameMargin * 2);
+  let current = top + firstDescription;
   for (const row of descriptions) {
-    label(context, row.name, infoX, current + 13, 28.8, { maxWidth: 675 });
-    drawEffects(context, row.lines, infoX, current + 30);
-    current += blockHeight(row.lines);
+    row.title.forEach((line, index) => label(context, line, infoX, current + (index + 0.5) * descriptionTitleLine, descriptionTitleSize));
+    drawEffects(context, row.lines, infoX, current + row.title.length * descriptionTitleLine);
+    current += row.height;
   }
   if (section.kind === "core") return;
-  current = top + topHeight;
-  level(xInset + padding, current + 17);
-  current += 44;
-  const columns = Array<string>(8).fill("").map((_, index) => index === 0 ? "#" : String.fromCharCode(64 + index));
-  const widths = Array<number>(8).fill(96.25);
+  current = top + firstDetail;
+  level(xInset + padding, current);
+  current += levelTitleLine + levelTitleMargin;
   for (const table of tables) {
-    label(context, table.name, xInset + padding, current + 13, 21.6, { maxWidth: skillWidth - 24 });
-    const rowsTop = drawRateGrid(context, table.rates, current + 30);
-    tableRow(context, 47, rowsTop, columns, widths, true);
-    for (const [index, details] of table.details.entries()) {
-      tableRow(context, 47, rowsTop + (index + 1) * tableHeight, [String(index + 1), ...details.map(String), ""], widths, index % 2 === 1);
-    }
-    current += table.height;
+    table.title.forEach((line, index) => label(context, line, xInset + padding, current + (index + 0.5) * tableNameLine, tableNameSize));
+    const rateTop = current + table.title.length * tableNameLine + tableNameMargin;
+    const detailsTop = drawRateGrid(context, table.rate, rateTop) + rateMargin;
+    current = drawDetailGrid(context, table.details, detailsTop) + detailMargin;
   }
 }
 
-// Follows the ZZZure 2057599 skills/index.html and index.css card.
+// Box sizes follow Chromium's computed layout of ZZZure 2057599 skills/index.html and index.css.
 export async function renderZzzSkills(sections: readonly SkillSection[], source: SkillCardSource) {
   const measurement = new Canvas(1, 1).getContext("2d");
-  const impressions = source.impressions.flatMap(value => wrapZzzWikiText(measurement, value, 642, impressionFont));
-  const header = Math.max(180, 105 + impressions.length * 25);
+  const nameX = source.avatar ? 168 : 24;
+  const impressions = source.impressions.flatMap(value => wrapZzzWikiText(measurement, value, width - nameX - 24, impressionFont));
+  const header = Math.max(168, 108 + impressions.length * 28) + 12;
   const blocks = sections.map(section => layout(measurement, section, source.icons));
   const pages: (typeof blocks)[] = [[]];
-  let running = header + 104;
+  let running = header + footerHeight;
   for (const block of blocks) {
     let page = pages.at(-1)!;
-    if (page.length && running + block.height > areaHeight) {
+    if (page.length && running + sectionGap + block.height > areaHeight) {
       page = [];
       pages.push(page);
-      running = header + 104;
+      running = header + footerHeight;
     }
+    running += (page.length ? sectionGap : 0) + block.height;
     page.push(block);
-    running += block.height + 48;
   }
   const result = [];
   for (const page of pages) {
-    const height = Math.ceil(header + page.reduce((sum, block) => sum + block.height + 48, 0) + 96);
+    const end = header + heightOf(page) + Math.max(0, page.length - 1) * sectionGap;
+    const height = Math.ceil(end + footerHeight);
     const scale = height <= 4000 ? 2 : 1;
     result.push(await renderPng(width * scale, height * scale, context => {
       context.scale(scale, scale);
@@ -204,20 +306,19 @@ export async function renderZzzSkills(sections: readonly SkillSection[], source:
         cover(context, source.avatar, 24, 24, 120, 120);
         context.restore();
       }
-      const nameX = source.avatar ? 168 : 24;
       label(context, source.name, nameX, 50, 36, { maxWidth: 340 });
       if (source.fullName && source.fullName !== source.name) {
         const offset = Math.min(340, context.measureText(source.name).width) + 14;
         label(context, source.fullName, nameX + offset, 54, 24, { maxWidth: width - nameX - offset - 24 });
       }
-      drawZzzWikiLines(context, impressions, nameX, 82, 25, impressionFont);
+      drawZzzWikiLines(context, impressions, nameX, 84, 28, impressionFont);
       let y = header;
       for (const block of page) {
         drawSection(context, block, y, source.icons[block.section.kind]);
-        y += block.height + 48;
+        y += block.height + sectionGap;
       }
-      label(context, "数据来源于 Nanoka", width / 2, height - 68, 24, { color: "#a09ca3", align: "center" });
-      label(context, zzzCardFooter, width / 2, height - 24, 18, { color: "#a09ca3", align: "center" });
+      label(context, "数据来源于 Nanoka", width / 2, end + 64, 24, { color: "#a09ca3", align: "center" });
+      label(context, zzzCardFooter, width / 2, end + 139, 16.8, { color: "#a09ca3", align: "center" });
     }));
   }
   return result;
