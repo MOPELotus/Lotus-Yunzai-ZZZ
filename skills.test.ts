@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { buildZzzSkills, skillKinds, zzzSkillCommand, zzzSkillText } from "./skills-data.ts";
+import { wrapZzzSkillEffect } from "./skills-card.ts";
 
 test("旧技能可按顺序选等级，裸天赋保留图鉴分派", () => {
   expect(zzzSkillCommand("%星见雅技能")).toEqual({ name: "星见雅", levels: [12, 12, 12, 12, 12, 6] });
@@ -43,4 +44,24 @@ test("倍率采用旧首值和各原列，核心同等级后项覆盖，缺字�
     { name: "无记录的倍率", param: [{ name: "倍率", param: { 1: { ...parameter, growth: undefined } } }] },
   ] } } };
   expect(buildZzzSkills(incomplete, [3, 4, 5, 6, 7, 0])).toBeUndefined();
+});
+
+test("技能效果自动折行时让句末标点跟随原字词，并保留强调样式", () => {
+  const tokens = ["进", "入", "压", "制", "。", "蓄", "力", "；"].map(text => ({
+    text, width: 1, color: text === "制" ? "#F6CA45" : undefined,
+  }));
+  const lines = wrapZzzSkillEffect(tokens, 4);
+  expect(lines.map(line => line.map(({ text }) => text).join(""))).toEqual(["进入压", "制。蓄", "力；"]);
+  expect(lines[1]?.[0]).toBe(tokens[3]);
+  expect(lines.flat()).toEqual(tokens);
+});
+
+test("引号、括号和空格不把禁则标点挤到错误的行边界", () => {
+  const tokens = [..."前缀「内容」 后续"].map(text => ({ text, width: 1 }));
+  expect(wrapZzzSkillEffect(tokens, 3).map(line => line.map(({ text }) => text).join("")))
+    .toEqual(["前缀", "「内", "容」 ", "后续"]);
+  const source = [..."前缀 后续 ；结尾"].map(text => ({ text, width: 1 }));
+  const lines = wrapZzzSkillEffect(source, 7);
+  expect(lines.every(line => line.find(({ text }) => text.trim())?.text !== "；")).toBe(true);
+  expect(lines.flat()).toEqual(source);
 });

@@ -68,16 +68,47 @@ interface EffectToken {
   readonly icon?: Image;
 }
 
+const noLineStart = /^[\p{Pe}\p{Pf}，。．、！？：；…％,.!?:;%]/u;
+const noLineEnd = /[\p{Ps}\p{Pi}]$/u;
+
+export function wrapZzzSkillEffect<T extends EffectToken>(paragraph: readonly T[], width: number): T[][] {
+  if (!paragraph.length) return [[]];
+  const lines: T[][] = [];
+  for (let start = 0; start < paragraph.length;) {
+    let end = start + 1;
+    let used = paragraph[start]!.width;
+    while (end < paragraph.length && used + paragraph[end]!.width <= width) {
+      used += paragraph[end++]!.width;
+    }
+    if (end < paragraph.length) {
+      let allowed = end;
+      while (allowed > start) {
+        let before = allowed - 1;
+        while (before > start && !paragraph[before]!.icon && !paragraph[before]!.text.trim()) before--;
+        let after = allowed;
+        while (after < paragraph.length - 1 && !paragraph[after]!.icon && !paragraph[after]!.text.trim()) after++;
+        const previous = paragraph[before]!;
+        const next = paragraph[after]!;
+        if ((previous.icon || !noLineEnd.test(previous.text)) && (next.icon || !noLineStart.test(next.text))) break;
+        allowed--;
+      }
+      // If the paragraph has no legal boundary within the width, still keep it readable.
+      if (allowed > start) end = allowed;
+    }
+    lines.push(paragraph.slice(start, end));
+    start = end;
+  }
+  return lines;
+}
+
 function effectLines(ctx: Context, raw: string, icons: SkillCardSource["icons"]) {
   const source = raw.replace(/<\/?(?:term|unbreak|b|i)\b[^<>]*>/giu, "").replace(/\\n/gu, "\n");
   const tokens = source.match(/<\/?color(?:=#[a-f0-9]{6,8})?>|<IconMap:Icon_\w+>|\n|[A-Za-z0-9%+.,-]+|./giu) ?? [];
-  const lines: EffectToken[][] = [[]];
+  const paragraphs: EffectToken[][] = [[]];
   let color: string | undefined;
-  let used = 0;
   for (const token of tokens) {
     if (token === "\n") {
-      lines.push([]);
-      used = 0;
+      paragraphs.push([]);
       continue;
     }
     if (/^<\/?color/iu.test(token)) {
@@ -90,13 +121,9 @@ function effectLines(ctx: Context, raw: string, icons: SkillCardSource["icons"])
     const text = button ? zzzSkillText(token) : token;
     ctx.font = color ? emphasisFont : bodyFont;
     const width = icon ? 28.8 : ctx.measureText(text).width;
-    if (used && used + width > infoWidth) {
-      lines.push([]);
-      used = 0;
-    }
-    lines.at(-1)!.push({ width, text, color, icon });
-    used += width;
+    paragraphs.at(-1)!.push({ width, text, color, icon });
   }
+  const lines = paragraphs.flatMap(paragraph => wrapZzzSkillEffect(paragraph, infoWidth));
   return lines.map(tokens => ({
     tokens, height: tokens.length && tokens.every(({ color, text, icon }) => !icon && (color || !text.trim())) ? 32 : 35,
   }));
