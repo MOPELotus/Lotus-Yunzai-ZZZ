@@ -1,4 +1,7 @@
 import { expect, test } from "bun:test";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createProfileStore } from "@lotus-yunzai/account";
 import { createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
@@ -19,6 +22,33 @@ test("旧版指定角色展柜更新收到提示，展柜全量与官方单角�
     expect(zzzPanelCommandHint(raw)).toBeUndefined();
   }
   expect(zzzPanelCommand("%更新展柜面板2")).toEqual({ kind: "showcase-update", profileId: 2 });
+});
+
+test("仅有绑定 UID 的旧档可按普通全量更新读取公开展柜，指定角色仍先登录", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "lotus-zzz-bound-update-"));
+  const before = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+  const profileFile = join(directory, "42.yaml");
+  const profiles = createProfileStore(directory);
+  const update = createZzzPanelCommands(profiles, createProfileHoyoClient(profiles),
+    async () => { throw new Error("缺少公开展柜游戏资料时不写入"); }, new AbortController().signal);
+  const context = { message_type: "group", user_id: 42, reply: () => { throw new Error("不应发送请求提示"); } };
+  try {
+    Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR = directory;
+    const write = (credential = "") => writeFile(profileFile, [
+      "version: 1", "user: {qq: 42}", "profile: {id: 1}", "account:",
+      '  current_uid: {zzz: "12345678"}', credential,
+    ].join("\n"));
+    await write();
+    expect(await update(zzzPanelCommand("%更新面板")!, context)).toBe("绝区零公开展柜所需的本地游戏资料不可用。");
+    expect(await update(zzzPanelCommand("%更新艾莲面板")!, context)).toMatch(/指定角色更新需要登录档案/u);
+    expect(await update(zzzPanelCommand("%更新面板")!, { ...context, user_id: 43 })).toMatch(/请先登录/u);
+    await write("  cookie: 'ltoken=fixture;ltuid=42'");
+    expect(await update(zzzPanelCommand("%更新面板")!, context)).toMatch(/请先登录/u);
+  } finally {
+    if (before === undefined) delete Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+    else Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR = before;
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("旧品牌前缀不再触发面板，现行命令仍保留角色和档案", () => {

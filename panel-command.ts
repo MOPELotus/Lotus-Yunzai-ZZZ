@@ -292,14 +292,14 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         };
       }
 
-      if (command.kind === "showcase-update") {
+      async function refreshShowcase(verify: () => Promise<void>) {
         const tables = await loadEnkaPanelTables(resources);
         if (!tables) return "绝区零公开展柜所需的本地游戏资料不可用。";
         const requestedAt = Date.now();
         const result = await requestShowcase(identity, signal, async () => {
-          await sameRole();
+          await verify();
           await context.reply("正在查询第三方 Enka 公开展柜。此请求只发送当前档案的游戏 UID。");
-          await sameRole();
+          await verify();
         });
         const rows = result.rows.flatMap(data => {
           const row = formatEnkaPanel(data, tables);
@@ -308,19 +308,33 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         if (rows.length !== result.rows.length) {
           return "本地游戏资料无法核验本次公开展柜的全部角色或装备。";
         }
-        const saved = await showcaseArchive.replace(identity, rows, requestedAt, sameRole);
+        const saved = await showcaseArchive.replace(identity, rows, requestedAt, verify);
         if (!saved.length) return "该 UID 的公开展柜暂无展示角色。";
         const updatedIds = new Set(saved.map(row => row.id));
         const publicPlayer = { ...display, nickname: result.nickname || "绳匠", level: result.level, avatar: undefined };
         const image = await renderZzzPanelList(saved, publicPlayer, {
           legacyResources: resources, signal, atlasPortrait, updatedIds, showcase: true,
         }).catch(() => undefined);
-        await sameRole();
+        await verify();
         if (!image) return `Enka 公开展柜已保存 ${saved.length} 个角色。`;
         return { type: "image" as const, file: image.png };
       }
 
-      const source = await profiles.requestContext(qq, profileId, "zzz", role.uid);
+      if (command.kind === "showcase-update") return await refreshShowcase(sameRole);
+
+      const source = await profiles.requestContext(qq, profileId, "zzz", role.uid).catch(async (error: unknown) => {
+        if (!(error instanceof ProfileError) || error.code !== "login-required") throw error;
+        const { hasCookie, hasStoken } = await profiles.describe(qq, profileId);
+        if (hasCookie || hasStoken) throw error;
+      });
+      if (!source) {
+        if (command.names.length) return "指定角色更新需要登录档案。也可以用%更新展柜面板读取公开展示角色。";
+        return await refreshShowcase(async () => {
+          await sameRole();
+          const { hasCookie, hasStoken } = await profiles.describe(qq, profileId);
+          if (hasCookie || hasStoken) throw new ProfileError("changed", "绝区零档案登录状态已变化。");
+        });
+      }
       if (region !== "prod_gf_cn" && region !== "prod_qd_cn") return "米游社面板更新目前支持国服绝区零角色。";
       const key = `${region}:${role.uid}`;
       if (running.has(key)) return "该角色的绝区零面板正在更新，请稍后再试。";
