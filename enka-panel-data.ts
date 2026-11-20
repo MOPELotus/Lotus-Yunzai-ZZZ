@@ -200,7 +200,7 @@ export function formatEnkaPanel(raw: Json, { partners, weapons, suits }: { partn
   return normalizeZzzPanelAvatar({
     id, level, rank, rarity: partner.Rarity, name_mi18n: partner.name, full_name_mi18n: partner.full_name,
     element_type: panelInteger(partner.ElementType, 1, 999), sub_element_type: subElement[id] ?? 0,
-    avatar_profession: profession, skin_id: panelInteger(raw.SkinId, 0, 999_999),
+    avatar_profession: profession, skin_id: panelInteger(raw.SkinId, 0, 9_999_999),
     equip: discs, weapon: engine, skills, properties: totals(raw, partner, id, level, profession, engine, discs, suits),
   });
 }

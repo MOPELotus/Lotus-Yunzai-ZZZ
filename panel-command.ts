@@ -11,7 +11,7 @@ import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
 import { createPanelDamageReader, ZzzDamageUnavailable } from "./panel-damage.ts";
 import { renderZzzPanelDetail } from "./panel-detail-card.ts";
 import { renderZzzPanelList } from "./panel-list-card.ts";
-import { createZzzPanelOriginalLedger, readZzzPanelOriginal } from "./panel-original.ts";
+import { createZzzAtlasPortraitReader, createZzzPanelOriginalLedger, readZzzPanelOriginal } from "./panel-original.ts";
 import { createZzzPanelStorage, createZzzShowcaseStorage, readPanelJson, zzzPanelRegion } from "./panel-storage.ts";
 import { renderZzzProficiency } from "./proficiency-card.ts";
 import { buildZzzProficiency } from "./proficiency.ts";
@@ -145,6 +145,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     async set(key, value, lifetime) { return globalThis.redis?.set(key, value, { EX: lifetime }); },
   }, signal);
   const atlas = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
+  const atlasPortrait = createZzzAtlasPortraitReader(atlas);
   const running = new Set<string>();
   const lastSuccess = new Map<string, number>();
 
@@ -176,7 +177,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       }
       await verifyRole(qq, record.profileId, record);
       if (session?.aborted) return missing;
-      const file = await readZzzPanelOriginal(resources, record.original);
+      const file = await readZzzPanelOriginal(resources, record.original, atlasPortrait);
       await verifyRole(qq, record.profileId, record);
       if (!file || session?.aborted) return missing;
       return { type: "image" as const, file };
@@ -228,7 +229,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       if (!region) return "绝区零档案的角色与区服信息不一致。";
       const identity = { qq, uid: role.uid, region };
       const display: GameRole = { ...role, region };
-      const theme = { qq, signal, legacyResources: resources };
+      const theme = { qq, signal, legacyResources: resources, atlasPortrait };
       const sameRole = () => verifyRole(qq, profileId, identity);
 
       if (command.kind === "proficiency") {
@@ -238,7 +239,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         if (!rows.length) return command.showcase ? "本档案暂无公开展柜记录，请先%更新展柜面板。" :
           "未找到面板数据，请先%更新面板或%更新展柜面板。";
         const { png } = await renderZzzProficiency(buildZzzProficiency(rows), display, {
-          legacyResources: resources, signal, source: local.length ? "local" : "showcase",
+          legacyResources: resources, signal, atlasPortrait, source: local.length ? "local" : "showcase",
         });
         await sameRole();
         return { type: "image" as const, file: png };
@@ -306,7 +307,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         const updatedIds = new Set(saved.map(row => row.id));
         const publicPlayer = { ...display, nickname: result.nickname || "绳匠", level: result.level, avatar: undefined };
         const image = await renderZzzPanelList(saved, publicPlayer, {
-          legacyResources: resources, signal, updatedIds, showcase: true,
+          legacyResources: resources, signal, atlasPortrait, updatedIds, showcase: true,
         }).catch(() => undefined);
         await sameRole();
         if (!image) return `Enka 公开展柜已保存 ${saved.length} 个角色。`;

@@ -4,12 +4,18 @@ import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, zzzScoreColors } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
 import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
+import type { ZzzAtlasPortraitReader } from "./panel-original.ts";
 import { panelObject } from "./panel-detail.ts";
 import type { buildZzzProficiency } from "./proficiency.ts";
 
 type Proficiency = ReturnType<typeof buildZzzProficiency>;
 type Row = Proficiency["rows"][number];
-type Options = { readonly source: "local" | "showcase"; readonly legacyResources?: string; readonly signal?: AbortSignal };
+type Options = {
+  readonly source: "local" | "showcase";
+  readonly legacyResources?: string;
+  readonly signal?: AbortSignal;
+  readonly atlasPortrait?: ZzzAtlasPortraitReader;
+};
 type RowArtwork = { portrait?: Image; weapon?: Image };
 const width = 840;
 const listTop = 427.1;
@@ -40,7 +46,7 @@ async function loadProficiencyArt(model: Proficiency, options: Options) {
           ...(sprite ? [`images/hakush/role_general/IconRoleGeneral${sprite}.webp`, `images/role_general/IconRoleGeneral${sprite}.png`,
             `images/nanoka/role_general/IconRoleGeneral${sprite}.webp`] : []),
           `images/square_avatar/role_square_avatar_${avatar.id}.png`,
-        ]),
+        ]).then(async cached => cached ?? (await options.atlasPortrait?.(avatar.id, true))?.image),
         weapon ? cachedPanelWeaponImage(local, weapons[weapon.id]) : undefined,
       ]);
       return { portrait, weapon: icon };

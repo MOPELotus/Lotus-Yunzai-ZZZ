@@ -9,13 +9,19 @@ import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPan
 import { drawPanelDamage, panelDamageHeight, panelDamageSections } from "./panel-damage-card.ts";
 import type { PanelDamage } from "./panel-damage.ts";
 import { buildZzzPanelDetail, panelObject, type PanelStat } from "./panel-detail.ts";
-import { loadZzzPanelOriginal } from "./panel-original.ts";
+import { loadZzzAtlasPanelOriginal, loadZzzPanelOriginal, type ZzzAtlasPortraitReader } from "./panel-original.ts";
 import { buildZzzPanelScore } from "./panel-score.ts";
 
 type Local = Awaited<ReturnType<typeof openZzzCardTheme>>;
 type Detail = ReturnType<typeof buildZzzPanelDetail>;
 type Score = NonNullable<ReturnType<typeof buildZzzPanelScore>>;
 type Images = ReadonlyMap<string, Image | undefined>;
+type DetailOptions = ZzzCardOptions & {
+  readonly showcase?: boolean;
+  readonly damage?: PanelDamage;
+  readonly profileId?: number;
+  readonly atlasPortrait?: ZzzAtlasPortraitReader;
+};
 const width = 840;
 const gold = "#f2d267";
 const muted = "#a09ca3";
@@ -52,8 +58,9 @@ async function customPortrait(root: string | undefined, names: readonly unknown[
     const files = (await readdir(directory, { withFileTypes: true }).catch(() => []))
       .filter(file => file.isFile() && /\.(?:png|jpe?g|webp)$/iu.test(file.name));
     if (!files.length) continue;
-    const selected = files[Math.floor(Math.random() * files.length)]!;
-    const artwork = await loadZzzPanelOriginal(root, [`${path}/${selected.name}`]);
+    const selected = Math.floor(Math.random() * files.length);
+    const candidates = [...files.slice(selected), ...files.slice(0, selected)];
+    const artwork = await loadZzzPanelOriginal(root, candidates.map(file => `${path}/${file.name}`));
     if (artwork) return artwork;
   }
 }
@@ -65,18 +72,18 @@ function propertyImage(stat: PanelStat) {
   if (name) return `common/images/property/Icon${name.includes(".") ? name : name + ".png"}`;
 }
 
-async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options: ZzzCardOptions) {
+async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options: DetailOptions) {
   const local = await openZzzCardTheme(options);
   const [partners, weapons, suits] = await Promise.all(
     ["PartnerId2Data", "WeaponId2Data", "SuitData"].map(name => readPanelArtMap(options.legacyResources, name)),
   );
   const partner = panelObject(partners?.[avatar.id]);
-  const role = panelSpriteName(partner.sprite_id);
+  const sprite = panelSpriteName(partner.sprite_id);
+  const role = sprite && `IconRole${sprite}`;
   const skin = panelSpriteName(panelObject(panelObject(partner.Skin)[model.skinId ?? 0]).Image);
   const portraitPaths = [
-    ...(skin ? [`images/hakush/role/${skin}.webp`, `images/nanoka/role/${skin}.webp`] : []),
-    ...(role ? [`images/role/IconRole${role}.png`, `images/hakush/role/IconRole${role}.webp`,
-      `images/nanoka/role/IconRole${role}.webp`] : []),
+    ...(skin && skin !== role ? [`images/hakush/role/${skin}.webp`, `images/nanoka/role/${skin}.webp`, `images/role/${skin}.png`] : []),
+    ...(role ? [`images/role/${role}.png`, `images/hakush/role/${role}.webp`, `images/nanoka/role/${role}.webp`] : []),
   ];
   const paths = new Set([
     "common/images/bg.jpg", "panel/images/CurseBG04.png", "panel/images/CurseBG08.png",
@@ -95,7 +102,8 @@ async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options
   const [entries, fullPortrait, weapon, discs] = await Promise.all([
     Promise.all([...paths].map(async path => [path, await local(path)] as const)),
     customPortrait(options.legacyResources, [avatar.name_mi18n, avatar.full_name_mi18n, partner.name, partner.full_name])
-      .then(custom => custom ?? loadZzzPanelOriginal(options.legacyResources, portraitPaths)),
+      .then(custom => custom ?? loadZzzPanelOriginal(options.legacyResources, portraitPaths))
+      .then(legacy => legacy ?? loadZzzAtlasPanelOriginal(options.atlasPortrait, avatar.id)),
     cachedPanelWeaponImage(local, weapons?.[model.weapon?.id ?? 0]),
     Promise.all(model.discs.map(item => {
       const disc = panelSpriteName(panelObject(suits?.[item?.suitId ?? 0]).sprite_file);
@@ -236,7 +244,7 @@ function drawEngine(context: Context, model: Detail, art: Awaited<ReturnType<typ
 
 // Layout follows resources/panel/card.html and card.css from ZZZure/ZZZ-Plugin 2057599.
 export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
-  options: ZzzCardOptions & { readonly showcase?: boolean; readonly damage?: PanelDamage; readonly profileId?: number } = {}) {
+  options: DetailOptions = {}) {
   const model = buildZzzPanelDetail(avatar);
   const score = buildZzzPanelScore(avatar, model);
   const damage = options.damage && panelDamageSections(options.damage, avatar.name_mi18n, avatar.level, options.profileId ?? 1);

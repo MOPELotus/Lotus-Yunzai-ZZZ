@@ -1,13 +1,19 @@
 import { createHash } from "node:crypto";
 import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
-import { loadImage } from "skia-canvas";
+import type { createAtlasRuntimeCatalog } from "@lotus-yunzai/atlas/catalog";
+import { readAtlasGalleryImage } from "@lotus-yunzai/atlas/gallery";
+import { loadImage, type Image } from "skia-canvas";
 import { readZzzCardLocalArtwork } from "./card-theme.ts";
 import { zzzPanelRegion } from "./panel-storage.ts";
 
 export interface PanelOriginal {
   readonly path: string;
   readonly sha256: string;
+  readonly atlasRole?: number;
 }
+
+export type ZzzAtlasPortraitReader = (roleId: number, preferIcon?: boolean) =>
+  Promise<{ readonly path: string; readonly bytes: Uint8Array; readonly image: Image } | undefined>;
 
 interface OriginalContext {
   readonly adapter?: string;
@@ -54,10 +60,16 @@ function hash(bytes: Uint8Array) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+function atlasPortraitPath(path: unknown): path is string {
+  return typeof path === "string" && /^gallery\/zzz\/[A-Za-z0-9_]{1,120}\.(?:png|jpe?g|webp)$/iu.test(path);
+}
+
 function originalDescriptor(value: unknown): value is PanelOriginal {
   if (!value || typeof value !== "object") return false;
   const descriptor = value as Partial<PanelOriginal>;
-  return originalPath(descriptor.path) && typeof descriptor.sha256 === "string" && /^[0-9a-f]{64}$/u.test(descriptor.sha256);
+  if (typeof descriptor.sha256 !== "string" || !/^[0-9a-f]{64}$/u.test(descriptor.sha256)) return false;
+  if (descriptor.atlasRole === undefined) return originalPath(descriptor.path);
+  return positive(descriptor.atlasRole) && descriptor.atlasRole <= 999_999 && atlasPortraitPath(descriptor.path);
 }
 
 export async function loadZzzPanelOriginal(directory: string | undefined, paths: readonly string[]) {
@@ -70,8 +82,39 @@ export async function loadZzzPanelOriginal(directory: string | undefined, paths:
   }
 }
 
-export async function readZzzPanelOriginal(directory: string | undefined, original: PanelOriginal) {
+export function createZzzAtlasPortraitReader(atlas: ReturnType<typeof createAtlasRuntimeCatalog>): ZzzAtlasPortraitReader {
+  return async (roleId, preferIcon) => {
+    if (!positive(roleId) || roleId > 999_999) return;
+    const snapshot = await atlas.read().catch(() => undefined);
+    const entries = snapshot?.pages.find(page => page.game === "zzz" && page.kind === "character")?.entries;
+    const entry = entries?.find(character => character.id === String(roleId));
+    if (!entry) return;
+    const { artwork, icon } = (await atlas.roleDetails(entry).catch(() => undefined))?.overview ?? {};
+    for (const path of new Set(preferIcon ? [icon, artwork] : [artwork, icon])) {
+      if (!atlasPortraitPath(path)) continue;
+      const bytes = await readAtlasGalleryImage(atlas.assetRoot(entry), "zzz", path, 8 * 1024 * 1024).catch(() => undefined);
+      const image = bytes && await loadImage(bytes).catch(() => undefined);
+      if (bytes && image) return { path, bytes, image };
+    }
+  };
+}
+
+export async function loadZzzAtlasPanelOriginal(read: ZzzAtlasPortraitReader | undefined, roleId: number) {
+  const asset = await read?.(roleId).catch(() => undefined);
+  if (!asset) return;
+  const original: PanelOriginal = { path: asset.path, sha256: hash(asset.bytes), atlasRole: roleId };
   if (!originalDescriptor(original)) return;
+  return { image: asset.image, original };
+}
+
+export async function readZzzPanelOriginal(directory: string | undefined, original: PanelOriginal,
+  atlas?: ZzzAtlasPortraitReader) {
+  if (!originalDescriptor(original)) return;
+  if (original.atlasRole !== undefined) {
+    const asset = await atlas?.(original.atlasRole).catch(() => undefined);
+    if (asset?.path === original.path && hash(asset.bytes) === original.sha256) return asset.bytes;
+    return;
+  }
   const bytes = await readZzzCardLocalArtwork(directory, original.path).catch(() => undefined);
   if (bytes && hash(bytes) === original.sha256) return bytes;
 }

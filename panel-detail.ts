@@ -5,7 +5,8 @@ export function panelObject(value: unknown): Record<string, unknown> {
 }
 
 export function panelInteger(value: unknown, minimum: number, maximum: number) {
-  const parsed = typeof value === "string" && /^\d{1,6}$/u.test(value) ? Number(value) : value;
+  const parsed = typeof value === "string" && value.length <= Math.max(6, String(maximum).length) &&
+    /^\d+$/u.test(value) ? Number(value) : value;
   if (typeof parsed === "number" && Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= maximum) return parsed;
 }
 
@@ -105,12 +106,12 @@ export function buildZzzPanelDetail(avatar: ZzzPanelAvatar) {
     }
   }
   const paintingSuffix = typeof avatar.role_vertical_painting_url === "string"
-    ? new RegExp(`/role_vertical_painting_${avatar.id}_(\\d{1,6})\\.png$`, "u").exec(avatar.role_vertical_painting_url)?.[1]
+    ? new RegExp(`/role_vertical_painting_${avatar.id}_(\\d{1,7})\\.png$`, "u").exec(avatar.role_vertical_painting_url)?.[1]
     : undefined;
   return {
     name: avatar.full_name_mi18n ?? avatar.name_mi18n,
     element: subElements[`${elementId}:${subId}`] ?? element?.[0],
-    skinId: panelInteger(avatar.skin_id, 1, 999_999) ?? panelInteger(paintingSuffix, 1, 999_999),
+    skinId: panelInteger(avatar.skin_id, 1, 9_999_999) ?? panelInteger(paintingSuffix, 1, 9_999_999),
     properties, skills, weapon, discs: Array.from({ length: 6 }, (_, index) => slots.get(index + 1)),
   };
 }

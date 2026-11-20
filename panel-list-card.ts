@@ -4,13 +4,19 @@ import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
+import type { ZzzAtlasPortraitReader } from "./panel-original.ts";
 import { readPanelJson } from "./panel-storage.ts";
-import { createZzzRecordPortraits } from "./tuning-artwork.ts";
+import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 840;
 const rowHeight = 133.17;
 const rankColors = ["#757575", "#3a742b", "#3d84d6", "#df7676", "#3336a1", "#667f13", "#da3020"];
 type Local = Awaited<ReturnType<typeof openZzzCardTheme>>;
+type ListOptions = ZzzCardOptions & {
+  readonly atlasPortrait?: ZzzAtlasPortraitReader;
+  readonly updatedIds?: ReadonlySet<number>;
+  readonly showcase?: boolean;
+};
 
 function circle(context: Context, color: string, x: number, y: number, r: number) {
   context.beginPath();
@@ -19,15 +25,12 @@ function circle(context: Context, color: string, x: number, y: number, r: number
   context.fill();
 }
 
-async function loadPanelPortraits(rows: readonly ZzzPanelAvatar[], local: Local, options: ZzzCardOptions) {
+async function loadPanelPortraits(rows: readonly ZzzPanelAvatar[], local: Local, options: ListOptions) {
   const variants = options.legacyResources
     ? await readPanelJson(options.legacyResources, "map/PartnerId2Data.json", 8 * 1024 * 1024).catch(() => undefined)
     : undefined;
   const map = variants && typeof variants === "object" && !Array.isArray(variants)
     ? variants as Record<string, { sprite_id?: unknown } | undefined> : {};
-  const { resolveIcon, loadArtwork } = createZzzRecordPortraits<{
-    itemId: string; name: string; icon?: string;
-  }>("character", options.signal);
   const portraits: (Image | undefined)[] = [];
   for (let start = 0; start < rows.length && !options.signal?.aborted; start += 8) {
     portraits.push(...await Promise.all(rows.slice(start, start + 8).map(async row => {
@@ -38,20 +41,16 @@ async function loadPanelPortraits(rows: readonly ZzzPanelAvatar[], local: Local,
       }
       const cached = await local(`images/square_avatar/role_square_avatar_${row.id}.png`);
       if (cached) return cached;
-      const key = resolveIcon({
-        itemId: String(row.id), name: row.name_mi18n, icon: row.role_square_url ?? row.group_icon_path,
-      });
-      return key ? artwork(loadArtwork(key)) : undefined;
+      const icon = row.role_square_url ?? row.group_icon_path;
+      const official = icon ? await artwork(fetchZzzOfficialArtwork(icon, options.signal)) : undefined;
+      return official ?? (await options.atlasPortrait?.(row.id, true))?.image;
     })));
   }
   return portraits;
 }
 
 // ZZZure/ZZZ-Plugin 2057599 resources/panel/{list,refresh}.html and refresh.css.
-export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: GameRole, options: ZzzCardOptions & {
-  readonly updatedIds?: ReadonlySet<number>;
-  readonly showcase?: boolean;
-} = {}) {
+export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: GameRole, options: ListOptions = {}) {
   const local = await openZzzCardTheme(options);
   const [background, title, frame, ribbon, s, a, b, player, portraits] = await Promise.all([
     local("panel/images/bg1.jpg"), local("panel/images/refresh_title.png"), local("panel/images/avatar_box.png"),
