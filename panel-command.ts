@@ -15,6 +15,7 @@ import { createZzzPanelOriginalLedger, readZzzPanelOriginal } from "./panel-orig
 import { createZzzPanelStorage, createZzzShowcaseStorage, readPanelJson, zzzPanelRegion } from "./panel-storage.ts";
 import { renderZzzProficiency } from "./proficiency-card.ts";
 import { buildZzzProficiency } from "./proficiency.ts";
+import { readZzzRoleAliases, zzzRoleAlias, zzzRoleName as safeName } from "./role-alias.ts";
 
 const settingsFile = fileURLToPath(new URL("../../config/zzz-panel.yaml", import.meta.url));
 const atlasRoot = fileURLToPath(new URL("../../data/atlas/", import.meta.url));
@@ -25,7 +26,6 @@ const proficiencyCommand = /^(展柜)?练度(?:统计)?\s*([1-9]\d{0,2})?$/u;
 const updateCommand = /^(?:(?:刷新|更新)(.*?)面板|面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const detailCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)面板\s*([1-9]\d{0,2})?$/u;
 const damageCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)伤害 *(\d{1,6})?(?: *档案 *([1-9]\d{0,2}))?$/u;
-const safeName = (name: string) => name.normalize("NFKC").trim().toLowerCase();
 
 export function zzzPanelCommand(raw: string) {
   const command = raw.replace(prefix, "");
@@ -162,14 +162,12 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     const missing: string[] = [];
     const [map, aliases, index] = await Promise.all([
       resources ? readPanelJson(resources, "map/PartnerId2Data.json", 8 * 1024 * 1024).catch(() => undefined) : undefined,
-      resources ? optionalYaml(join(dirname(resources), "config", "alias.yaml")).catch(() => undefined) : undefined,
+      readZzzRoleAliases(resources).catch(() => undefined),
       atlas.read().catch(() => undefined),
     ]);
     const entries = Object.entries(object(map));
     for (const name of names) {
-      const key = safeName(name);
-      const alias = Object.entries(aliases ?? {}).find(([name, list]) => safeName(name) === key ||
-        (Array.isArray(list) && list.some(item => typeof item === "string" && safeName(item) === key)))?.[0];
+      const alias = zzzRoleAlias(aliases, name);
       const legacy = entries.find(([, candidate]) =>
         [object(candidate).name, object(candidate).full_name].some(value =>
           typeof value === "string" && safeName(value) === safeName(alias ?? name)))?.[0];
