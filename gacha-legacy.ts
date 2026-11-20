@@ -118,6 +118,26 @@ function sameDraw(a: ZzzLegacyGachaDraw, b: ZzzLegacyGachaDraw) {
     a.itemType === b.itemType && a.rank === b.rank && (a.gachaId === b.gachaId || a.gachaId === "0" || b.gachaId === "0");
 }
 
+function combineLegacyArchives(archives: readonly ZzzLegacyGachaSnapshot[], uid: string): ZzzLegacyGachaSnapshot {
+  const usedBands = new Map<string, ZzzLegacyGachaPool["type"]>();
+  const pools = legacyBands.map(([type, gachaType]) => {
+    const records = new Map<string, ZzzLegacyGachaDraw>();
+    for (const archive of archives) {
+      for (const draw of archive.pools.find(pool => pool.type === type)!.records) {
+        const previousBand = usedBands.get(draw.id);
+        const previous = records.get(draw.id);
+        if (previousBand !== undefined && previousBand !== type) invalid("重复记录所属频段");
+        if (previous && !sameDraw(previous, draw)) invalid("重复记录内容");
+        usedBands.set(draw.id, type);
+        if (!previous || (previous.gachaId === "0" && draw.gachaId !== "0")) records.set(draw.id, draw);
+      }
+    }
+    return { type, gachaType, name: zzzTuningPools[type].name, records: [...records.values()].sort((a, b) =>
+      b.id.length - a.id.length || (a.id > b.id ? -1 : 1)) };
+  });
+  return { uid, pools };
+}
+
 function parseArchive(value: unknown, uid: string): ZzzLegacyGachaSnapshot {
   const archive = object(value);
   if (!archive || Object.keys(archive).some((name) => !supportedNames.has(name))) invalid("频段结构");
@@ -207,4 +227,12 @@ export async function readZzzLegacyGacha(directory: string, qq: string, uid: str
     invalid("JSON");
   }
   return parseArchive(archive, uid);
+}
+
+export async function readZzzLegacyGachaSources(directory: string, retired: readonly string[], qq: string, uid: string) {
+  const current = await readZzzLegacyGacha(directory, qq, uid);
+  if (current || !retired.length) return current;
+  const archives = (await Promise.all(retired.map(source => readZzzLegacyGacha(source, qq, uid))))
+    .filter(archive => archive !== undefined);
+  return archives.length > 1 ? combineLegacyArchives(archives, uid) : archives[0];
 }

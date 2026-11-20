@@ -5,7 +5,7 @@ import {
   createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
   ZzzManualGachaLinkRequired, ZzzTuningRateLimitError,
 } from "@lotus-yunzai/hoyo-client";
-import { readZzzLegacyGacha, ZzzLegacyGachaError } from "./gacha-legacy.ts";
+import { readZzzLegacyGachaSources, ZzzLegacyGachaError } from "./gacha-legacy.ts";
 import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
@@ -49,6 +49,7 @@ const help = [
 const historyDirectory = fileURLToPath(new URL("../../data/zzzTuningStats/", import.meta.url));
 const legacyHistoryDirectory = fileURLToPath(new URL("../../data/zzzGachaJson/", import.meta.url));
 const linkHistoryDirectory = fileURLToPath(new URL("../../data/zzzGachaRows/", import.meta.url));
+const retiredData = ["Lotus-Plugin", "Lotus-ReFactor"].map(name => new URL(`../${name}/data/`, import.meta.url));
 
 function overseasRegion({ uid, region, gameBiz }: GameRole) {
   if (!/^\d{10}$/u.test(uid)) return;
@@ -80,14 +81,18 @@ export function createModule({ signal, lockFile }: {
   const skills = createZzzSkillReader(signal);
   const poolHistory = createZzzPoolHistory(signal);
   const currentPool = createZzzCurrentPool(signal);
-  const sync = createZzzTuningSync(profiles, client, historyDirectory, lockFile);
+  const sync = createZzzTuningSync(profiles, client, historyDirectory, lockFile,
+    retiredData.map(directory => fileURLToPath(new URL("zzzTuningStats/", directory))));
   const syncOfficial = createGachaUpdater((qq, profileId) => sync.sync(qq, profileId, { signal }));
   async function gachaUpdate(qq: string, profileId: number, notify?: () => unknown) {
     const role = await profiles.savedRole(qq, profileId, "zzz");
     if (overseasRegion(role)) throw new ZzzManualGachaLinkRequired();
     return syncOfficial(qq, profileId, notify);
   }
-  const legacyHistory = Bun.env.LOTUS_ZZZ_LEGACY_HISTORY_DIR || legacyHistoryDirectory;
+  const legacyOverride = Bun.env.LOTUS_ZZZ_LEGACY_HISTORY_DIR;
+  const legacySources = legacyOverride ? [] : retiredData.map(directory => fileURLToPath(new URL("zzzGachaJson/", directory)));
+  const readLegacy = (qq: string, uid: string) =>
+    readZzzLegacyGachaSources(legacyOverride || legacyHistoryDirectory, legacySources, qq, uid);
   const linkHistory = createZzzLinkHistory(linkHistoryDirectory, lockFile);
   const getLink = createGachaUpdater(async (qq, profileId) => {
     const source = await profiles.requestContext(qq, profileId, "zzz");
@@ -104,7 +109,7 @@ export function createModule({ signal, lockFile }: {
     async importLink(qq, profileId, link, verifyProfile) {
       const snapshot = await readZzzGachaLink(link, fetch, { signal }, verifyProfile);
       const identity = { qq, uid: snapshot.uid, region: snapshot.region };
-      const legacy = await readZzzLegacyGacha(legacyHistory, qq, identity.uid);
+      const legacy = await readLegacy(qq, identity.uid);
       mergeZzzLegacyWithLinked(legacy, snapshot);
       const { stats, added } = await linkHistory.merge(identity, snapshot, verifyProfile);
       const records = mergeZzzLegacyWithLinked(legacy, stats)!.pools;
@@ -243,7 +248,7 @@ export function createModule({ signal, lockFile }: {
         ({ png } = await renderZzzTuningDetail(model, { ...display, loadArtwork }));
       } else {
         const [legacy, linked] = await Promise.all([
-          readZzzLegacyGacha(legacyHistory, qq, uid), linkHistory.read(qq, { uid, region }),
+          readLegacy(qq, uid), linkHistory.read(qq, { uid, region }),
         ]);
         const stats = mergeZzzLegacyWithLinked(legacy, linked);
         if (!stats) return linkedOnly ? "该角色还没有绝区零逐抽记录。" : "该角色还没有绝区零旧调频记录。";
