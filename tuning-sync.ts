@@ -11,7 +11,7 @@ export class ZzzTuningHistoryChangedError extends Error {
 }
 
 export function createZzzTuningSync(
-  profiles: Pick<ReturnType<typeof createProfileStore>, "requestContext">,
+  profiles: Pick<ReturnType<typeof createProfileStore>, "requestSelectedContext">,
   client: Pick<ReturnType<typeof createHoyoClient>, "fetchZzzTuning">,
   directory: string,
   acquireLock: AcquireRoleArchiveLock,
@@ -38,17 +38,17 @@ export function createZzzTuningSync(
       return readZzzTuningHistory(current, role) ?? await readRetired(qq, role);
     },
     async sync(qq: string, profileId = 1, options: ZzzTuningOptions = {}) {
-      const original = await profiles.requestContext(qq, profileId, "zzz");
+      const original = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const uid = original.role.uid;
       const current = await history.read(qq, uid);
       const role = { uid, region: resolveZzzTuningRegion(original) };
       const observed = current ?? await readRetired(qq, role);
       const latest = await client.fetchZzzTuning(original, options);
-      if (latest.uid !== uid) throw new Error("绝区零调频快照与请求角色不一致。");
+      if (latest.uid !== uid || latest.region !== role.region) throw new Error("绝区零调频快照与请求角色不一致。");
 
       async function verifyProfile() {
         options.signal?.throwIfAborted();
-        const current = await profiles.requestContext(qq, profileId, "zzz", uid).catch(() => undefined);
+        const current = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
         if (current?.revision !== latest.revision || current?.role.uid !== uid) {
           throw new ProfileError("changed", "保存绝区零调频历史时档案已变更，请重新发起请求。");
         }

@@ -581,7 +581,7 @@ export function createModule({ signal, lockFile }: {
         if (error instanceof ZzzTuningHistoryChangedError) return "该角色的绝区零抽卡记录已由另一条请求更新。";
         if (error instanceof ProfileError) {
           if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
-          if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+          if (error.code === "role-missing") return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
         }
         const reason = error instanceof ZzzTuningRateLimitError ? "rate-limited"
           : (error instanceof ProfileError && error.code === "changed") ||
