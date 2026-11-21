@@ -2,10 +2,12 @@ import { expect, test } from "bun:test";
 import { zzzCinemaCommand, zzzCinemaRanks } from "./cinema.ts";
 
 test("识别旧意象单卡并保留图鉴与其他游戏命座入口", () => {
-  for (const raw of ["%星见雅意象", "%星见雅意象影画", "#绝区零星见雅命座", "％星见雅意象", "/ZZZ星见雅命座"]) {
+  for (const raw of ["%星见雅意象", "%星见雅意象影画", "%星见雅影画", "#绝区零星见雅影画",
+    "#绝区零星见雅命座", "％星见雅意象", "/ZZZ星见雅影画"]) {
     expect(zzzCinemaCommand(raw)).toBe("星见雅");
   }
-  for (const raw of ["%星见雅影画", "%星见雅图鉴", "%星见雅命座2", "#原神钟离命座", "星见雅意象", "%荷花插件星见雅意象"]) {
+  for (const raw of ["%星见雅影画图鉴", "%星见雅图鉴", "%星见雅命座2", "#原神钟离命座",
+    "#星铁安比影画", "星见雅意象", "%荷花插件星见雅意象"]) {
     expect(zzzCinemaCommand(raw)).toBeUndefined();
   }
 });

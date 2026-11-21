@@ -23,7 +23,7 @@ const impressionLineHeight = 25;
 
 export function zzzCinemaCommand(raw: string) {
   const command = zzzPrefixedCommand(raw);
-  const name = command && /^([^\p{Cc}\p{Cf}]{1,80}?)(?:意象影画|意象|命座)$/u.exec(command)?.[1]?.trim();
+  const name = command && /^([^\p{Cc}\p{Cf}]{1,80}?)(?:意象影画|意象|影画|命座)$/u.exec(command)?.[1]?.trim();
   if (name && name !== "角色" && !/^\d+$/u.test(name.normalize("NFKC"))) return name;
 }
 
