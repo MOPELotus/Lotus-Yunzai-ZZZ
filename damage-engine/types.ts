@@ -22,6 +22,7 @@ export interface DamageAvatar {
   readonly sub_element_type: number;
   readonly avatar_profession: number;
   readonly name_mi18n: string;
+  readonly equip_score?: number;
   readonly scoreWeight: Readonly<Partial<Record<number, number>>>;
   readonly weapon: { readonly name: string; readonly star: number; readonly profession?: number } | null;
   readonly equip: readonly {

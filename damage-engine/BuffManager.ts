@@ -5,6 +5,7 @@
 import { logger } from './compat.ts'
 import type { DamageAvatar as ZZZAvatarInfo } from './types.ts'
 import type { Calculator, skill } from './Calculator.ts'
+import type { BuffRule } from './rule-types.ts'
 
 export enum rarityEnum { S, A, B }
 
@@ -91,7 +92,7 @@ export interface buff {
     buffM: BuffManager
     calc: Calculator
     runtime: Runtime
-  }) => number)
+  }) => number | undefined)
   /**
    * Buff增益数值上限
    * - 与buff.value的类型和用法一致
@@ -179,10 +180,10 @@ export class BuffManager {
   }
 
   /** 注册并格式化buff */
-  new(buff: buff): buff[]
+  new(buff: BuffRule): buff[]
   /** 注册并格式化buffs */
-  new(buffs: buff[]): buff[]
-  new(buff: buff | buff[]) {
+  new(buffs: BuffRule[]): buff[]
+  new(buff: BuffRule | BuffRule[]) {
     if (Array.isArray(buff)) {
       buff.forEach(b => this.new(b))
       return this.buffs

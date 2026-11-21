@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// From ZZZure/ZZZ-Plugin bf47b77790aa7540f03a1e3c6866be0876b12b82, weapon/时流贤者.js.
+import type { BuffRule } from "../../rule-types.ts";
+
+export const buffs: BuffRule[] = [
+  {
+    type: '异常精通',
+    value: [75, 85, 95, 105, 115]
+  },
+  {
+    type: '异常增伤',
+    value: [0.25, 0.275, 0.3, 0.325, 0.35],
+    check: ({ calc }) => calc.get_AnomalyProficiency() >= 375,
+    range: ['紊乱']
+  }
+]

@@ -4,9 +4,10 @@
 // Adapted from ZZZure/ZZZ-Plugin bf47b77790aa7540f03a1e3c6866be0876b12b82.
 import { logger, sortBuffs } from './compat.ts'
 import type { DamageData } from './types.ts'
+import type { BuffRule, SkillRule } from './rule-types.ts'
 import type { BuffManager, Runtime, anomaly, buff, buffType, element } from './BuffManager.ts'
 import type { DamageAvatar as ZZZAvatarInfo } from './types.ts'
-import { runtime, elementType2element, anomalyEnum } from './BuffManager.js'
+import { runtime, elementType2element, anomalyEnum } from './BuffManager.ts'
 
 /** 技能类型 */
 export interface skill {
@@ -73,11 +74,11 @@ export interface skill {
   before?: ({ avatar, calc, usefulBuffs, skill, props, areas, runtime }: {
     avatar: ZZZAvatarInfo
     calc: Calculator
-    usefulBuffs: buff[]
+    usefulBuffs: BuffRule[]
     /** 技能自身 */
     skill: skill
     /** 属性数据。设置后不会更改 */
-    props: damage['props']
+    props: NonNullable<damage['props']>
     /** 乘区数据。设置后不会更改 */
     areas: damage['areas']
     runtime: Runtime
@@ -138,6 +139,8 @@ export interface damage {
   add: (damage: string | damage) => void
   del: (damage: string | damage) => void
 }
+
+type SkillTarget = Pick<skill, 'type'> & Partial<skill>
 
 const subBaseValueData = {
   "生命值百分比": [0.03, '3.0%'],
@@ -236,10 +239,10 @@ export class Calculator {
   }
 
   /** 注册并格式化skill */
-  new(skill: skill): skill[]
+  new(skill: SkillRule): skill[]
   /** 注册并格式化skills */
-  new(skills: skill[]): skill[]
-  new(skill: skill | skill[]) {
+  new(skills: SkillRule[]): skill[]
+  new(skill: SkillRule | SkillRule[]) {
     if (Array.isArray(skill)) {
       skill.forEach(s => this.new(s))
       return this.skills
@@ -765,7 +768,7 @@ export class Calculator {
   }
 
   /** 获取属性异常倍率 */
-  get_AnomalyMultiplier(skill: skill, usefulBuffs: buff[], times = 0) {
+  get_AnomalyMultiplier(skill: skill | undefined, usefulBuffs: buff[] | undefined, times = 0) {
     const anomalyData = this.get_AnomalyData(skill?.type.slice(0, 2) as anomaly)
     if (!anomalyData) return
     // 未指定触发次数时，自动计算最大触发次数
@@ -779,7 +782,7 @@ export class Calculator {
   }
 
   /** 获取紊乱倍率 */
-  get_DiscoverMultiplier(skill: skill) {
+  get_DiscoverMultiplier(skill: SkillTarget) {
     const anomalyData = this.get_AnomalyData(skill?.type.slice(0, 2) as anomaly)
     if (!anomalyData) return
     const AnomalyDuration = this.get_AnomalyDuration({
@@ -795,7 +798,7 @@ export class Calculator {
   }
 
   /** 计算buff增益值（可能为百分比） */
-  calc_value(value: buff['value'], buff?: buff) {
+  calc_value(value: buff['value'] | undefined, buff?: buff) {
     switch (typeof value) {
       case 'number': return value
       case 'function': {
@@ -849,7 +852,7 @@ export class Calculator {
   /**
    * 获取局内属性原始值
    */
-  get(type: buff['type'], initial: number, skill: skill = this.skill, usefulBuffs: buff[] = this.buffM.buffs): number {
+  get(type: buff['type'], initial: number, skill: SkillTarget = this.skill, usefulBuffs: buff[] = this.buffM.buffs): number {
     const nonStackableBuffRecord = new Map<string, buff>()
     return this.props[type] ??= this.buffM._filter(usefulBuffs, {
       element: skill?.element,
@@ -882,7 +885,7 @@ export class Calculator {
   }
 
   /** 攻击力 */
-  get_ATK(skill?: skill, usefulBuffs?: buff[]) {
+  get_ATK(skill?: SkillTarget, usefulBuffs?: buff[]) {
     let ATK = this.get('攻击力', this.initial_properties.ATK, skill, usefulBuffs)
     ATK = this.min_max(0, 10000, ATK)
     this.debug(`攻击力：${ATK}`)
@@ -994,7 +997,7 @@ export class Calculator {
   }
 
   /** 异常精通 */
-  get_AnomalyProficiency(skill?: skill, usefulBuffs?: buff[]) {
+  get_AnomalyProficiency(skill?: SkillTarget, usefulBuffs?: buff[]) {
     const AnomalyProficiency = this.get('异常精通', this.initial_properties.AnomalyProficiency, skill, usefulBuffs)
     this.debug(`异常精通：${AnomalyProficiency}`)
     return AnomalyProficiency

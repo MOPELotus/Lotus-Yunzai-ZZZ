@@ -33,7 +33,10 @@ test("叶瞬光按原异常表计算同一角色的强击和明心境技能", ()
   expect(normal.skills[0]?.result.expectDMG).toBeGreaterThan(0);
   expect(() => calculatePanelDamage({ ...avatar, sub_element_type: 0 }, data, gear)).toThrow(/原版伤害/u);
   const fullRank = calculatePanelDamage({ ...avatar, rank: 6 }, data, gear, 11);
-  expect(fullRank.selected.result.expectDMG).toBeGreaterThan(normal.selected.result.expectDMG);
+  // Captured with 58d53c8 before the rule files moved to TypeScript.
+  expect([normal.selected.result, fullRank.selected.result]).toEqual([
+    { critDMG: 99, expectDMG: 72.60000000000001 }, { critDMG: 1920, expectDMG: 1408 },
+  ]);
   expect(fullRank.skills.map(row => row.skill.type)).toEqual(normal.skills.map(row => row.skill.type));
 });
 
@@ -46,6 +49,9 @@ test("零号·安比保留苍光隐藏连段和独立的六影追加攻击", () 
   const fullRank = calculatePanelDamage({ ...zero, rank: 6 }, data, gear, 9);
   expect(fullRank.skills).toHaveLength(initial.skills.length + 1);
   expect(fullRank.selected.skill.name).toBe("6影电磁涡流");
+  expect([initial.selected.result, fullRank.selected.result]).toEqual([
+    { critDMG: 202.5, expectDMG: 145.125 }, { critDMG: 1237.4999999999998, expectDMG: 936.3749999999999 },
+  ]);
   expect(() => calculatePanelDamage({ ...zero, id: 1011 }, data, gear)).toThrow(/原版伤害/u);
 });
 
@@ -59,7 +65,9 @@ test("星徽·比利的六影贯穿附加在原技能，保留普通比利的独
   expect(fullRank.selected.skill.type).toBe("RZ");
   expect(fullRank.selected.skill.isSheerDMG).toBe(true);
   expect(fullRank.skills.map(row => row.skill.type)).toEqual(initial.skills.map(row => row.skill.type));
-  expect(fullRank.selected.result.expectDMG).toBeGreaterThan(initial.selected.result.expectDMG);
+  expect([initial.selected.result, fullRank.selected.result]).toEqual([
+    { critDMG: 425.88, expectDMG: 228.77400000000003 }, { critDMG: 1396.29672, expectDMG: 698.4792360000001 },
+  ]);
   expect(() => calculatePanelDamage({ ...starlight, id: 1081 }, data, gear)).toThrow(/原版伤害/u);
 });
 
@@ -75,7 +83,9 @@ test("赛维里安沿用风属性，隐藏风刃并计入瞬风裂毁", () => {
   expect(initial.selected.skill.type).toBe("EQ1");
   expect(initial.selected.skill.element).toBe("Wind");
   expect(initial.skills.some(row => row.skill.type === "EQ2")).toBe(false);
-  expect(stronger.selected.result.expectDMG).toBeGreaterThan(initial.selected.result.expectDMG);
+  expect([initial.selected.result, stronger.selected.result]).toEqual([
+    { critDMG: 256.5, expectDMG: 175.27499999999998 }, { critDMG: 384.75, expectDMG: 262.91249999999997 },
+  ]);
   expect(() => calculatePanelDamage({ ...severian, element_type: 205 }, data, gear)).toThrow(/原版伤害/u);
 });
 

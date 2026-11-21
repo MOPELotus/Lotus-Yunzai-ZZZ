@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// From ZZZure/ZZZ-Plugin bf47b77790aa7540f03a1e3c6866be0876b12b82, weapon/防暴者Ⅵ型.js.
+import type { BuffRule } from "../../rule-types.ts";
+
+export const buffs: BuffRule[] = [
+  {
+    type: '暴击率',
+    value: [0.15, 0.188, 0.226, 0.264, 0.3]
+  },
+  {
+    type: '增伤',
+    value: [0.35, 0.435, 0.52, 0.605, 0.7],
+    element: 'Ether',
+    range: ['A']
+  }
+]

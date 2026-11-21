@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
-import { BuffManager, elementEnum, runtime, type buff } from "./damage-engine/BuffManager.ts";
+import { BuffManager, elementEnum, runtime } from "./damage-engine/BuffManager.ts";
 import { Calculator, type damage } from "./damage-engine/Calculator.ts";
+import type { BuffRule } from "./damage-engine/rule-types.ts";
 import { characterRules, setRules, weaponRules } from "./damage-engine/rules.ts";
 import type { DamageAvatar, DamageData } from "./damage-engine/types.ts";
 import { buildZzzPanelDetail, panelInteger, panelObject } from "./panel-detail.ts";
@@ -216,9 +217,9 @@ function applyEquipment(avatar: DamageAvatar, buffs: BuffManager) {
   buffs.default({});
 }
 
-function eligibleMindscape(rule: buff, rank: number) {
+function eligibleMindscape(rule: BuffRule, rank: number) {
   return rule.source ? rule.source !== "影画" || typeof rule.check !== "number" || rule.check <= rank :
-    !/^\d影/u.test(rule.name) || Number(rule.name[0]) <= rank;
+    !/^\d影/u.test(rule.name!) || Number(rule.name![0]) <= rank;
 }
 
 export interface PanelDamageCell {
