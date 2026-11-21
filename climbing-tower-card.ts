@@ -2,13 +2,16 @@ import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzClimbingTowerSnapshot, ZzzShiyuPortrait, ZzzTowerSeason } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter,
+import { artwork, box, cover, label, loadZzzCardPlayer, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter,
   type ZzzCardOptions } from "./card-theme.ts";
 import { contain, drawPortrait, fillRound, loadChallengePortrait } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
-const width = 840;
-const top = 162;
+const width = 500;
+const top = 184.8;
+const sectionInset = 33;
+const portraitGap = 28.8;
+const portraitSize = (width - 2 * sectionInset - 2 * portraitGap) / 3;
 const titles = { 1: "拟真鏖战试炼", 2: "鏖战试炼：末路", 3: "鏖战试炼：荣耀", 4: "鏖战试炼：狂澜" } as const;
 
 function percentage(value: number | undefined) {
@@ -38,17 +41,80 @@ export function zzzClimbingTowerText(snapshot: ZzzClimbingTowerSnapshot) {
   }).join("\n\n");
 }
 
-function blockHeight(season: ZzzTowerSeason) {
-  return (season.number < 3 ? 201 : 293) + (season.avatars.length ? 237 : 0);
+function hasMetrics(entries: readonly (readonly [string, string])[]) {
+  return entries.some(([, value]) => value !== "—");
 }
 
-function metrics(context: Context, entries: readonly (readonly [string, string])[], y: number) {
-  for (const [i, [name, value]] of entries.entries()) {
-    const x = width / 2 + (i - (entries.length - 1) / 2) * 228;
-    label(context, name, x, y, 24, { align: "center", color: "#979797" });
-    label(context, value, x + 2, y + 43, 33, { align: "center", color: "#383434", weight: 700 });
-    label(context, value, x, y + 40, 33, { align: "center", color: "#e6e6e6", weight: 700 });
+function metricHeight(entries: readonly (readonly [string, string])[]) {
+  return hasMetrics(entries) ? 75.2 : 36.2;
+}
+
+function blockLayout(season: ZzzTowerSeason) {
+  const main = mainMetrics(season);
+  const mvp = season.number >= 3 ? mvpMetrics(season) : [];
+  const divider = 129 + metricHeight(main) + 24;
+  const afterMetrics = mvp.length ? divider + 26 + metricHeight(mvp) : divider - 24;
+  const portraits = afterMetrics + 24;
+  return { main, mvp, divider, portraits,
+    height: 33 + (season.avatars.length ? portraits + portraitSize : afterMetrics) };
+}
+
+function metrics(context: Context, entries: readonly (readonly [string, string])[], top: number) {
+  const widths = entries.map(([name, value]) => Math.max(measureZzzCardLabel(context, name, 21.6),
+    value === "—" ? 0 : measureZzzCardLabel(context, value, 28.8)));
+  const fullHeight = hasMetrics(entries);
+  let x = (width - widths.reduce((sum, value) => sum + value, 0) - (entries.length - 1) * 48) / 2;
+  for (const [index, [name, value]] of entries.entries()) {
+    const w = widths[index]!;
+    const center = x + w / 2;
+    label(context, name, center, top + (fullHeight && value === "—" ? 33.7 : 14.5), 21.6,
+      { align: "center", color: "#979797" });
+    if (value !== "—") {
+      label(context, value, center + 2, top + 58.7, 28.8, { align: "center", color: "#383434" });
+      label(context, value, center, top + 55.7, 28.8, { align: "center", color: "#e6e6e6" });
+    } else {
+      label(context, value, center, top + (fullHeight ? 61 : 33), 15, { align: "center", color: "#979797" });
+    }
+    x += w + 48;
   }
+}
+
+function drawTowerPlayer(context: Context, role: GameRole, region: string,
+  { frame, uidBar, avatar }: Awaited<ReturnType<typeof loadZzzCardPlayer>>) {
+  const x = 24, y = 64.8, size = 96;
+  const nickname = role.nickname || "绳匠";
+  const level = role.level === undefined ? undefined : `Lv${role.level}`;
+  const nicknameWidth = measureZzzCardLabel(context, nickname, 28.8, 700);
+  const levelWidth = level ? measureZzzCardLabel(context, level, 21.6) + 19.2 : 0;
+  const regionWidth = Math.min(166, measureZzzCardLabel(context, region, 21.6) + 19.2);
+  const tagsWidth = regionWidth + (level ? levelWidth + 12 : 0);
+  const avatarWidth = Math.min(size, Math.max(37, width - x - 24 - 12 - 12 - tagsWidth - Math.min(nicknameWidth, 120) - 18));
+  if (frame) context.drawImage(frame, x - 5, y - 9.6, avatarWidth + 10, 115.2);
+  context.save();
+  context.beginPath();
+  context.ellipse(x + avatarWidth / 2, y + size / 2, avatarWidth / 2, size / 2, 0, 0, 2 * Math.PI);
+  context.clip();
+  if (avatar) contain(context, avatar, x, y, avatarWidth, size);
+  else label(context, "绳", x + avatarWidth / 2, y + size / 2, 25, { align: "center", weight: 700 });
+  context.restore();
+
+  const info = x + avatarWidth + 24;
+  const available = width - 18 - info - 12 - 12 - tagsWidth;
+  label(context, nickname, info + 12, 89.4, 28.8, { weight: 700, maxWidth: available, ellipsis: false });
+  let tagX = info + 24 + Math.min(available, nicknameWidth);
+  if (level) {
+    fillRound(context, "#f3cb45", tagX, 72.1, levelWidth, 34.7, 4.3);
+    label(context, level, tagX + levelWidth / 2, 89.4, 21.6, { align: "center", color: "#2b2628" });
+    tagX += levelWidth + 12;
+  }
+  fillRound(context, "#51b1fd", tagX, 72.1, regionWidth, 34.7, 4.3);
+  label(context, region, tagX + regionWidth / 2, 89.4, 21.6,
+    { align: "center", color: "#2b2628", maxWidth: regionWidth - 8 });
+  const uid = `UID ${role.uid}`;
+  const uidWidth = measureZzzCardLabel(context, uid, 21.6) + 69.1;
+  if (uidBar) context.drawImage(uidBar, info, 113.7, uidWidth, 41.9);
+  else fillRound(context, "#1b1b25", info, 113.7, uidWidth, 41.9, 12);
+  label(context, uid, info + uidWidth / 2, 134.65, 21.6, { align: "center", color: "#ffffff99" });
 }
 
 // Fixed 2057599 personal tower template uses the same page background and player header as the record cards.
@@ -76,41 +142,57 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
   options.signal?.throwIfAborted();
   const visibility = options.towerVisibility;
   const showVisibility = visibility?.some(value => value !== undefined);
-  const height = top + snapshot.seasons.reduce((sum, season) => sum + blockHeight(season) + 22, 0) + (showVisibility ? 118 : 57);
+  const layouts = snapshot.seasons.map(blockLayout);
+  const noteY = top + layouts.reduce((sum, layout) => sum + layout.height + 24, 0);
+  const height = Math.ceil(noteY + 179.6);
   return renderPng(width * 4, height * 4, context => {
     context.scale(4, 4);
     box(context, "#1d1a24", 0, 0, width, height);
     if (background) cover(context, background, 0, 0, width, height);
-    drawZzzCardPlayer(context, role, snapshot.region, player);
+    drawTowerPlayer(context, role, snapshot.region, player);
     let y = top;
-    for (const [i, season] of snapshot.seasons.entries()) {
-      const h = blockHeight(season);
-      fillRound(context, "#0009", 27, y, 786, h, 20, "#444");
-      label(context, titles[season.number], 64, y + 55, 37, { color: "#383434", weight: 700 });
-      label(context, titles[season.number], 62, y + 52, 37, { color: "#e6e6e6", weight: 700 });
-      const medal = medals[i];
-      if (medal) contain(context, medal, 718, y + 19, 55, 62);
-      metrics(context, mainMetrics(season), y + 106);
-      if (season.number >= 3) {
-        box(context, "#444", 51, y + 175, 738, 2);
-        metrics(context, mvpMetrics(season), y + 212);
+    for (const [index, season] of snapshot.seasons.entries()) {
+      const layout = layouts[index]!;
+      fillRound(context, "#0009", 4.5, y + 4.5, width - 9, layout.height - 9, 19.5);
+      context.lineWidth = 9;
+      context.strokeStyle = "#444";
+      context.stroke();
+      label(context, titles[season.number], sectionInset + 2, y + 72, 36, { color: "#383434", weight: 700 });
+      label(context, titles[season.number], sectionInset, y + 69, 36, { color: "#e6e6e6", weight: 700 });
+      const medal = medals[index];
+      if (medal) contain(context, medal, width - sectionInset - 72, y + 33, 72, 72);
+      metrics(context, layout.main, y + 129);
+      if (layout.mvp.length) {
+        box(context, "#444", sectionInset, y + layout.divider, width - 2 * sectionInset, 2);
+        metrics(context, layout.mvp, y + layout.divider + 26);
       }
-      for (const [rank, entry] of season.avatars.entries()) {
-        const x = 72 + rank * 246;
-        const row = y + 288;
-        drawPortrait(context, art, entry, x, row, 204);
-        fillRound(context, "#000b", x + 3, row + 167, 198, 33, 6);
-        label(context, score(entry.score), x + 10, row + 184, 21, { maxWidth: 86 });
-        label(context, percentage(entry.percentile), x + 195, row + 184, 21, { align: "right", maxWidth: 90 });
+      for (const [column, entry] of season.avatars.entries()) {
+        const x = sectionInset + column * (portraitSize + portraitGap);
+        const row = y + layout.portraits;
+        drawPortrait(context, art, entry, x, row, portraitSize);
+        fillRound(context, "#0008", x + 1.5, row + portraitSize - 25, portraitSize - 3, 23.5, 8);
+        label(context, score(entry.score), x + 3, row + portraitSize - 11.5, 14.4, { maxWidth: portraitSize / 2 - 6 });
+        label(context, percentage(entry.percentile), x + portraitSize - 3, row + portraitSize - 11.5, 14.4,
+          { align: "right", maxWidth: portraitSize / 2 - 3 });
       }
-      y += h + 22;
+      y += layout.height + 24;
     }
     if (showVisibility && visibility) {
       const state = (value: boolean | undefined) => value === undefined ? "未登记" : value ? "显示" : "隐藏";
-      const settings = visibility.map((value, index) => `S${index + 1} ${state(value)}`).join(" · ");
-      label(context, `本群爬塔排名 · ${settings}`, 40, y + 9, 20, { color: "#f3cb45" });
-      label(context, "发送 %爬塔排名 查看各季命令", 40, y + 37, 18, { color: "#a09ca3" });
+      label(context, `• 本群爬塔排名 · ${visibility.map((value, index) => `S${index + 1} ${state(value)}`).join(" · ")}`,
+        57, noteY + 37, 19.2, { maxWidth: 386, ellipsis: false });
+      label(context, "发送 %爬塔排名 查看各季命令", 67.2, noteY + 63, 19.2, { color: "#ffd700" });
+    } else {
+      const instruction = "请在群内查询";
+      const command = "%拟真鏖战试炼";
+      const commandX = 67.2 + measureZzzCardLabel(context, instruction, 19.2) + 5.8;
+      const suffixX = commandX + measureZzzCardLabel(context, command, 19.2) + 5.8;
+      label(context, "•", 57, noteY + 37, 19.2);
+      label(context, instruction, 67.2, noteY + 37, 19.2);
+      label(context, command, commandX, noteY + 37, 19.2, { color: "#ffd700" });
+      label(context, "，以参与对", suffixX, noteY + 37, 19.2);
+      label(context, "应群的拟真鏖战试炼排名", 67.2, noteY + 63, 19.2);
     }
-    label(context, zzzCardFooter, width / 2, height - 37, 17, { align: "center", color: "#a09ca3" });
+    label(context, zzzCardFooter, width / 2, height - 44.5, 16.8, { align: "center", color: "#a09ca3" });
   }, "gpu");
 }

@@ -2,7 +2,7 @@ import { constants } from "node:fs";
 import { open, realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
 import type { GameRole } from "@lotus-yunzai/account";
-import { FontLibrary, loadImage, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
+import { FontLibrary, loadImage, type CanvasGradient, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
 const font = '"LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
@@ -79,8 +79,13 @@ function drawTag(context: Context, color: string, x: number, y: number, w: numbe
   context.fill();
 }
 
+export function measureZzzCardLabel(context: Context, text: string, size: number, weight = 400) {
+  context.font = `${weight} ${size}px ${font}`;
+  return context.measureText(text).width;
+}
+
 export function label(context: Context, text: string, x: number, y: number, size: number, settings: {
-  color?: string;
+  color?: string | CanvasGradient;
   weight?: number;
   align?: CanvasTextAlign;
   maxWidth?: number;
