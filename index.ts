@@ -89,6 +89,7 @@ function overseasRegion({ uid, region, gameBiz }: GameRole) {
 interface GachaContext extends ZzzRoleGalleryContext {
   readonly adapter?: string;
   readonly normalizedMessage: string;
+  readonly inlineImageByteLimit?: number;
   readonly self_id?: number;
   readonly user_id?: number;
   readonly message_type?: string;
@@ -306,13 +307,14 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
           "bosses" in snapshot ? "HOLO_BOSS" : "stages" in snapshot ? "VOID_FRONT_BATTLE" : mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive, generation);
       const towerVisibility = "seasons" in snapshot ? await Promise.all(towerRanks.map(type =>
         challengeRanks.remember(context, profileId, source.role, snapshot, type, requestedAt, stillActive))) : undefined;
+      const inlineImageByteLimit = context.adapter === "milky" ? context.inlineImageByteLimit : undefined;
       const theme = { qq, signal, rankVisibility, towerVisibility, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
       const result = await ("hollowMode" in snapshot ? renderZzzHollowZero(snapshot, source.role, theme) :
         "seasons" in snapshot ? renderZzzClimbingTower(snapshot, source.role, theme) :
         "stages" in snapshot ? renderZzzVoidFront(snapshot, source.role, theme) :
         "bosses" in snapshot ? renderZzzHoloBoss(snapshot, source.role, theme) :
-        "trial" in snapshot ? renderZzzDeadly(snapshot, source.role.nickname, theme) :
-        renderZzzShiyu(snapshot, source.role, theme)).catch(() => undefined);
+        "trial" in snapshot ? renderZzzDeadly(snapshot, source.role.nickname, theme, 4, inlineImageByteLimit) :
+        renderZzzShiyu(snapshot, source.role, theme, 4, inlineImageByteLimit)).catch(() => undefined);
       if (signal.aborted) return [];
       const active = await stillActive();
       if (signal.aborted) return [];

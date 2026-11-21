@@ -1,8 +1,7 @@
 import type { ZzzDeadlyRoom, ZzzDeadlySnapshot, ZzzShiyuPortrait } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
-import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBand, type ZzzChallengeArt } from "./challenge-card.ts";
+import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBand, renderZzzBattlePng, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 840;
@@ -157,14 +156,13 @@ async function loadDeadlyArt(snapshot: ZzzDeadlySnapshot, local: Awaited<ReturnT
 }
 
 // Skia adaptation of ZZZure/ZZZ-Plugin 2057599 resources/deadly/index.html and index.css.
-export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: string, options: ZzzCardOptions = {}, scale: 2 | 4 = 4) {
+export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: string, options: ZzzCardOptions = {}, scale: 2 | 4 = 4, inlineImageByteLimit?: number) {
   const themeFiles = await openZzzCardTheme(options);
   const art = await loadDeadlyArt(snapshot, themeFiles, options.signal);
   options.signal?.throwIfAborted();
   const footer = firstRoom + snapshot.hard.length * (hardHeight + 24) + snapshot.trial.length * (trialHeight + 24);
   const height = Math.ceil(footer + 177.6);
-  return renderPng(width * scale, height * scale, (context) => {
-    context.scale(scale, scale);
+  return renderZzzBattlePng(width, height, context => {
     box(context, "#1a181c", 0, 0, width, height);
     const background = art.local.get("common/images/bg.jpg");
     if (background) cover(context, background, 0, 0, width, height);
@@ -189,5 +187,5 @@ export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: str
     label(context, caption,
       width / 2, footer + 49, 19.2, { align: "center", weight: 700 });
     label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
-  }, "gpu");
+  }, scale, inlineImageByteLimit);
 }

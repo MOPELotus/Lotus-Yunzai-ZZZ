@@ -1,9 +1,8 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzShiyuPortrait, ZzzShiyuSnapshot, ZzzShiyuTeam } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
-import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBand, type ZzzChallengeArt } from "./challenge-card.ts";
+import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBand, renderZzzBattlePng, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 840;
@@ -145,14 +144,13 @@ async function loadArt(snapshot: ZzzShiyuSnapshot, local: Awaited<ReturnType<typ
 }
 
 // ZZZure/ZZZ-Plugin 2057599 resources/abyss/index.html and index.css.
-export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole, options: ZzzCardOptions = {}, scale: 2 | 4 = 4) {
+export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole, options: ZzzCardOptions = {}, scale: 2 | 4 = 4, inlineImageByteLimit?: number) {
   const local = await openZzzCardTheme(options);
   const [art, player] = await Promise.all([loadArt(snapshot, local, options.signal), loadZzzCardPlayer(local, options, role.avatar)]);
   options.signal?.throwIfAborted();
   const body = snapshot.layers.reduce((height, layer) => height + layerHeight(layer) + 24, 249);
   const height = Math.ceil(body + 154);
-  return renderPng(width * scale, height * scale, (context) => {
-    context.scale(scale, scale);
+  return renderZzzBattlePng(width, height, context => {
     box(context, "#1a0d0b", 0, 0, width, height);
     const background = art.local.get("abyss/images/bg.png");
     if (background) cover(context, background, 0, 0, width, height);
@@ -175,5 +173,5 @@ export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole,
     label(context, caption,
       420, y + 50, 19.2, { align: "center", weight: 700 });
     label(context, zzzCardFooter, 420, height - 35, 17, { color: "#a09ca3", align: "center" });
-  }, "gpu");
+  }, scale, inlineImageByteLimit);
 }
