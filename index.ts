@@ -5,7 +5,7 @@ import {
   createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
   ZzzManualGachaLinkRequired, ZzzTuningRateLimitError,
 } from "@lotus-yunzai/hoyo-client";
-import { readZzzLegacyGachaSources, ZzzLegacyGachaError } from "./gacha-legacy.ts";
+import { readZzzFlatLegacyGacha, readZzzLegacyGachaSources, ZzzLegacyGachaError } from "./gacha-legacy.ts";
 import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
@@ -50,6 +50,8 @@ const historyDirectory = fileURLToPath(new URL("../../data/zzzTuningStats/", imp
 const legacyHistoryDirectory = fileURLToPath(new URL("../../data/zzzGachaJson/", import.meta.url));
 const linkHistoryDirectory = fileURLToPath(new URL("../../data/zzzGachaRows/", import.meta.url));
 const retiredData = ["Lotus-Plugin", "Lotus-ReFactor"].map(name => new URL(`../${name}/data/`, import.meta.url));
+const flatLegacyDirectories = ["../../data/ZZZ-Plugin/gacha/", "../ZZZ-Plugin/data/gacha/"]
+  .map(path => fileURLToPath(new URL(path, import.meta.url)));
 
 function overseasRegion({ uid, region, gameBiz }: GameRole) {
   if (!/^\d{10}$/u.test(uid)) return;
@@ -236,10 +238,21 @@ export function createModule({ signal, lockFile }: {
         }
       }
 
+      async function flatArchiveRevision() {
+        // A selected UID can come from an unverified field. The account's role catalog is required for flat files.
+        const source = await profiles.requestContext(qq, profileId, "zzz", uid).catch(() => undefined);
+        if (!source) return;
+        const { stuid, ltuid } = source.account;
+        if ((!stuid && !ltuid) || (stuid && ltuid && stuid !== ltuid)) return;
+        if (source.role.region !== region || source.role.gameBiz !== resolveZzzGachaLinkRole(role).gameBiz) return;
+        return source.revision;
+      }
+
       const nickname = role.nickname || "绳匠";
       const level = role.level === undefined ? undefined : Number(role.level);
       const display = { level: Number.isFinite(level) ? level : undefined, regionName: role.regionName || region };
       let png: Uint8Array;
+      let flatRevision: string | undefined;
       if (useOfficial) {
         const cached = await sync.read(qq, { uid, region });
         const stats = cached ?? await client.fetchZzzTuning(await profiles.requestContext(qq, profileId, "zzz", uid), { signal });
@@ -247,9 +260,17 @@ export function createModule({ signal, lockFile }: {
         const model = buildZzzTuningDetail({ stats, player: { nickname, avatar }, resolveIcon });
         ({ png } = await renderZzzTuningDetail(model, { ...display, loadArtwork }));
       } else {
-        const [legacy, linked] = await Promise.all([
+        const [scoped, linked] = await Promise.all([
           readLegacy(qq, uid), linkHistory.read(qq, { uid, region }),
         ]);
+        let legacy = scoped;
+        if (!scoped && !legacyOverride) {
+          const revision = await flatArchiveRevision();
+          if (revision) {
+            legacy = await readZzzFlatLegacyGacha(flatLegacyDirectories, uid);
+            if (legacy) flatRevision = revision;
+          }
+        }
         const stats = mergeZzzLegacyWithLinked(legacy, linked);
         if (!stats) return linkedOnly ? "该角色还没有绝区零逐抽记录。" : "该角色还没有绝区零旧调频记录。";
         const { avatar, resolveIcon, loadArtwork } = createZzzLegacyGachaArtwork(qq, signal);
@@ -257,7 +278,10 @@ export function createModule({ signal, lockFile }: {
         ({ png } = await renderZzzTuningDetail(model, { ...display, loadArtwork }));
       }
       if (signal.aborted) return [];
-      if (!await roleMatches()) return "绝区零档案角色已变化，请重新查询。";
+      if (!await roleMatches() || (flatRevision && await flatArchiveRevision() !== flatRevision)) {
+        return "绝区零档案角色已变化，请重新查询。";
+      }
+      if (signal.aborted) return [];
       if (await context.reply({ type: "image", file: png }) === false) return [];
       if (!useOfficial) return [];
 

@@ -175,7 +175,7 @@ function sameFile(expected: Stats, current: Stats | undefined) {
     expected.size === current.size && expected.mtimeMs === current.mtimeMs && expected.ctimeMs === current.ctimeMs;
 }
 
-async function readFileSnapshot(directory: string, qq: string, uid: string) {
+async function readFileSnapshot(directory: string, uid: string, qq?: string) {
   const rootPath = resolve(directory);
   const root = await statIfPresent(rootPath);
   if (!root) return;
@@ -183,10 +183,10 @@ async function readFileSnapshot(directory: string, qq: string, uid: string) {
   const physicalRoot = await realpath(rootPath);
   const currentRoot = await statIfPresent(rootPath);
   if (!currentRoot?.isDirectory() || currentRoot.dev !== root.dev || currentRoot.ino !== root.ino) changed();
-  const parent = join(physicalRoot, qq);
-  const user = await statIfPresent(parent);
-  if (!user) return;
-  if (!user.isDirectory() || await realpath(parent) !== parent) invalid("QQ 目录");
+  const parent = qq === undefined ? physicalRoot : join(physicalRoot, qq);
+  const parentInfo = qq === undefined ? currentRoot : await statIfPresent(parent);
+  if (!parentInfo) return;
+  if (!parentInfo.isDirectory() || await realpath(parent) !== parent) invalid(qq === undefined ? "根目录" : "QQ 目录");
   const file = join(parent, `${uid}.json`);
   const expected = await statIfPresent(file);
   if (!expected) return;
@@ -204,17 +204,18 @@ async function readFileSnapshot(directory: string, qq: string, uid: string) {
       offset += bytesRead;
     }
     if (!sameFile(info, await statIfPresent(file)) || await realpath(parent) !== parent) changed();
+    const latestParent = await statIfPresent(parent);
+    if (!latestParent?.isDirectory() || latestParent.dev !== parentInfo.dev || latestParent.ino !== parentInfo.ino) changed();
     return bytes;
   } finally {
     await handle.close();
   }
 }
 
-export async function readZzzLegacyGacha(directory: string, qq: string, uid: string): Promise<ZzzLegacyGachaSnapshot | undefined> {
-  if (typeof qq !== "string" || !qqPattern.test(qq) || typeof uid !== "string" || !uidPattern.test(uid)) invalid("QQ 或 UID");
+async function readArchive(directory: string, uid: string, qq?: string): Promise<ZzzLegacyGachaSnapshot | undefined> {
   let bytes: Buffer | undefined;
   try {
-    bytes = await readFileSnapshot(directory, qq, uid);
+    bytes = await readFileSnapshot(directory, uid, qq);
   } catch (error) {
     if (error instanceof ZzzLegacyGachaError) throw error;
     throw new ZzzLegacyGachaError("io", "无法读取绝区零旧逐抽档案。");
@@ -229,10 +230,25 @@ export async function readZzzLegacyGacha(directory: string, qq: string, uid: str
   return parseArchive(archive, uid);
 }
 
+export async function readZzzLegacyGacha(directory: string, qq: string, uid: string) {
+  if (typeof qq !== "string" || !qqPattern.test(qq) || typeof uid !== "string" || !uidPattern.test(uid)) invalid("QQ 或 UID");
+  return readArchive(directory, uid, qq);
+}
+
+async function readArchives(directories: readonly string[], uid: string, qq?: string) {
+  const archives = (await Promise.all(directories.map(directory => readArchive(directory, uid, qq))))
+    .filter(archive => archive !== undefined);
+  return archives.length > 1 ? combineLegacyArchives(archives, uid) : archives[0];
+}
+
 export async function readZzzLegacyGachaSources(directory: string, retired: readonly string[], qq: string, uid: string) {
   const current = await readZzzLegacyGacha(directory, qq, uid);
   if (current || !retired.length) return current;
-  const archives = (await Promise.all(retired.map(source => readZzzLegacyGacha(source, qq, uid))))
-    .filter(archive => archive !== undefined);
-  return archives.length > 1 ? combineLegacyArchives(archives, uid) : archives[0];
+  return readArchives(retired, uid, qq);
+}
+
+/** Flat archives have no QQ metadata. Verify the caller's account binding before using this reader. */
+export async function readZzzFlatLegacyGacha(directories: readonly string[], uid: string) {
+  if (typeof uid !== "string" || !uidPattern.test(uid)) invalid("UID");
+  return readArchives(directories, uid);
 }
