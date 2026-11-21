@@ -10,6 +10,7 @@ import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
 import { renderZzzClimbingTower, zzzClimbingTowerText } from "./climbing-tower-card.ts";
+import { renderZzzExploration, zzzExplorationText } from "./exploration-card.ts";
 import { renderZzzGameRecord } from "./game-record-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
 import { renderZzzHollowZero, zzzHollowText, zzzHollowTitles } from "./hollow-zero-card.ts";
@@ -46,7 +47,8 @@ const climbingTowerCommand = /^#绝区零(?:拟真鏖战试炼|鏖战|爬塔)\s*
 const hollowHelp = /^#绝区零(?:零号空洞|零号|空洞)$/u;
 const hollowCommand = /^#绝区零(枯萎苗圃|枯萎|苗圃|迷失之地|迷失)\s*([1-9]\d{0,2})?$/u;
 const zenkovCommand = /^#绝区零(?:迷宫诡域|迷宫|诡域|搜打撤|塔科夫|塔可夫|塔克夫|鸭科夫|绝科夫)(战绩|记录|详情|回顾)?\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,5}))?$/u;
-const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|拟真鏖战试炼|鏖战|爬塔|枯萎|苗圃|迷失|零号|空洞|迷宫|诡域|搜打撤|塔[科可克]夫|鸭科夫|绝科夫|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
+const explorationCommand = /^#绝区零(?:区域收集|收集|探索度|探索)\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,5}))?$/u;
+const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|拟真鏖战试炼|鏖战|爬塔|枯萎|苗圃|迷失|零号|空洞|迷宫|诡域|搜打撤|塔[科可克]夫|鸭科夫|绝科夫|区域收集|收集|探索|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
 const help = [
   "绝区零抽卡记录",
   "%更新抽卡记录 同步国服米游社的六个频段。",
@@ -210,6 +212,44 @@ export function createModule({ signal, lockFile }: {
         if (error.code === "invalid-input") return error.message;
       }
       return "迷宫诡域暂时无法查询。";
+    }
+  }
+
+  async function exploration(context: GachaContext, profileId: number, page?: number) {
+    const user = context.user_id;
+    if ((context.message_type !== "private" && context.message_type !== "group") || context.isDelegated ||
+        typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
+      return "请从登录档案对应的 QQ 会话查询绝区零区域收集。";
+    }
+    const qq = String(user);
+    const changed = "绝区零档案已变化，请重新查询区域收集。";
+    try {
+      const source = await profiles.requestContext(qq, profileId, "zzz");
+      const record = await client.fetchZzzExploration(source, { page, signal });
+      if (record.status === "empty") return "暂无探索详情数据";
+      const command = `%区域收集${profileId === 1 ? "" : profileId}`;
+      if (record.page > record.pageCount) return `区域收集共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
+      const result = await renderZzzExploration(record, source.role, command,
+        { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR }).catch(() => undefined);
+      if (signal.aborted) return [];
+      const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
+      if (signal.aborted) return [];
+      if (active?.revision !== record.revision || active.role.uid !== record.uid) return changed;
+      return result ? { type: "image" as const, file: result.png } : zzzExplorationText(record, command);
+    } catch (error) {
+      if (signal.aborted) return [];
+      if (error instanceof ProfileError) {
+        if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
+        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+      }
+      if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
+        return error.message;
+      }
+      if (error instanceof HoyoRequestError) {
+        if (error.code === "profile-changed") return changed;
+        if (error.code === "invalid-input") return error.message;
+      }
+      return "绝区零区域收集暂时无法查询。";
     }
   }
 
@@ -417,6 +457,13 @@ export function createModule({ signal, lockFile }: {
       if (card) {
         const profileId = Number(card[1] ?? 1);
         if (profileId <= MAX_PROFILE_ID) return gameRecord(context, profileId);
+        return;
+      }
+      const collection = explorationCommand.exec(command);
+      if (collection) {
+        const profileId = Number(collection[1] ?? 1);
+        const page = collection[2] === undefined ? undefined : Number(collection[2]);
+        if (profileId <= MAX_PROFILE_ID) return exploration(context, profileId, page);
         return;
       }
       const expedition = zenkovCommand.exec(command);
