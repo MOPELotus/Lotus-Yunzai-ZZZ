@@ -157,14 +157,14 @@ async function loadDeadlyArt(snapshot: ZzzDeadlySnapshot, local: Awaited<ReturnT
 }
 
 // Skia adaptation of ZZZure/ZZZ-Plugin 2057599 resources/deadly/index.html and index.css.
-export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: string, options: ZzzCardOptions = {}) {
+export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: string, options: ZzzCardOptions = {}, scale: 2 | 4 = 4) {
   const themeFiles = await openZzzCardTheme(options);
   const art = await loadDeadlyArt(snapshot, themeFiles, options.signal);
   options.signal?.throwIfAborted();
   const footer = firstRoom + snapshot.hard.length * (hardHeight + 24) + snapshot.trial.length * (trialHeight + 24);
   const height = Math.ceil(footer + 177.6);
-  return renderPng(width * 4, height * 4, (context) => {
-    context.scale(4, 4);
+  return renderPng(width * scale, height * scale, (context) => {
+    context.scale(scale, scale);
     box(context, "#1a181c", 0, 0, width, height);
     const background = art.local.get("common/images/bg.jpg");
     if (background) cover(context, background, 0, 0, width, height);

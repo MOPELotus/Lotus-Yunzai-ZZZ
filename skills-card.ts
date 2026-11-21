@@ -319,8 +319,8 @@ export async function renderZzzSkills(sections: readonly SkillSection[], source:
   for (const page of pages) {
     const end = header + heightOf(page) + Math.max(0, page.length - 1) * sectionGap;
     const height = Math.ceil(end + footerHeight);
-    result.push(await renderPng(width * 4, height * 4, context => {
-      context.scale(4, 4);
+    const renderPage = (scale: 2 | 4, mode: "auto" | "gpu") => renderPng(width * scale, height * scale, context => {
+      context.scale(scale, scale);
       box(context, "#191722", 0, 0, width, height);
       if (source.background) cover(context, source.background, 0, 0, width, height);
       if (source.avatar) {
@@ -345,7 +345,8 @@ export async function renderZzzSkills(sections: readonly SkillSection[], source:
       }
       label(context, "数据来源于 Nanoka", width / 2, end + 64, 24, { color: "#a09ca3", align: "center" });
       label(context, zzzCardFooter, width / 2, end + 139, 16.8, { color: "#a09ca3", align: "center" });
-    }));
+    }, mode);
+    result.push(await renderPage(4, "gpu").catch(() => renderPage(2, "auto")));
   }
   return result;
 }

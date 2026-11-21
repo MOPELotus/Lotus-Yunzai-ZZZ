@@ -145,14 +145,14 @@ async function loadArt(snapshot: ZzzShiyuSnapshot, local: Awaited<ReturnType<typ
 }
 
 // ZZZure/ZZZ-Plugin 2057599 resources/abyss/index.html and index.css.
-export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole, options: ZzzCardOptions = {}) {
+export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole, options: ZzzCardOptions = {}, scale: 2 | 4 = 4) {
   const local = await openZzzCardTheme(options);
   const [art, player] = await Promise.all([loadArt(snapshot, local, options.signal), loadZzzCardPlayer(local, options, role.avatar)]);
   options.signal?.throwIfAborted();
   const body = snapshot.layers.reduce((height, layer) => height + layerHeight(layer) + 24, 249);
   const height = Math.ceil(body + 154);
-  return renderPng(width * 4, height * 4, (context) => {
-    context.scale(4, 4);
+  return renderPng(width * scale, height * scale, (context) => {
+    context.scale(scale, scale);
     box(context, "#1a0d0b", 0, 0, width, height);
     const background = art.local.get("abyss/images/bg.png");
     if (background) cover(context, background, 0, 0, width, height);
