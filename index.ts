@@ -12,6 +12,7 @@ import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
 import { renderZzzGameRecord } from "./game-record-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
 import { holoBossDuration, renderZzzHoloBoss } from "./holo-boss-card.ts";
+import { renderZzzVoidFront } from "./void-front-card.ts";
 import { createZzzCinema, zzzCinemaCommand } from "./cinema.ts";
 import { rankCommand } from "./challenge-rank-model.ts";
 import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
@@ -37,7 +38,8 @@ const gameRecordCommand = /^#绝区零(?:card|卡片|个人信息|角色)\s*([1-
 const shiyuCommand = /^#绝区零(本期|当期|上期|往期)?(?:式舆防卫战|式舆防卫|式舆|深渊|防卫战|防卫)\s*([1-9]\d{0,2})?$/u;
 const deadlyCommand = /^#绝区零(本期|当期|上期|往期)?(?:危局强袭战|危局|强袭战|强袭)\s*([1-9]\d{0,2})?$/u;
 const holoBossCommand = /^#绝区零(本期|当期|上期|往期)?(?:拟境湮灭战|拟境|湮灭战|湮灭)\s*([1-9]\d{0,2})?$/u;
-const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭))/iu;
+const voidFrontCommand = /^#绝区零(本期|当期|上期|往期)?(?:临界推演|临界|推演)\s*([1-9]\d{0,2})?$/u;
+const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
 const help = [
   "绝区零抽卡记录",
   "%更新抽卡记录 同步国服米游社的六个频段。",
@@ -159,11 +161,13 @@ export function createModule({ signal, lockFile }: {
     }
   }
 
-  async function battleRecord(context: GachaContext, profileId: number, scheduleType: 1 | 2, mode: "shiyu" | "deadly" | "holoBoss") {
-    const name = mode === "shiyu" ? "式舆防卫战" : mode === "deadly" ? "危局强袭战" : "拟境湮灭战";
+  async function battleRecord(context: GachaContext, profileId: number, scheduleType: 1 | 2,
+    mode: "shiyu" | "deadly" | "holoBoss" | "voidFront") {
+    const name = { shiyu: "式舆防卫战", deadly: "危局强袭战", holoBoss: "拟境湮灭战", voidFront: "临界推演" }[mode];
     const { user_id: user } = context;
     if ((context.message_type !== "private" && context.message_type !== "group") ||
-        (mode === "holoBoss" && context.isDelegated) || typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
+        ((mode === "holoBoss" || mode === "voidFront") && context.isDelegated) ||
+        typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
       return `请从登录档案对应的 QQ 会话查询${name}。`;
     }
     const qq = String(user);
@@ -173,17 +177,20 @@ export function createModule({ signal, lockFile }: {
       const request = { scheduleType, signal };
       const requestedAt = Date.now();
       const snapshot = await (mode === "shiyu" ? client.fetchZzzShiyu(source, request) :
-        mode === "deadly" ? client.fetchZzzDeadly(source, request) : client.fetchZzzHoloBoss(source, request));
+        mode === "deadly" ? client.fetchZzzDeadly(source, request) :
+          mode === "holoBoss" ? client.fetchZzzHoloBoss(source, request) : client.fetchZzzVoidFront(source, request));
       if (snapshot.status === "older-format") return `${period}${name}使用旧版深渊战绩格式。`;
       if (snapshot.status === "empty") return `${period}暂无${name}战绩。`;
       async function stillActive() {
         const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
         return active?.revision === snapshot.revision && active.role.uid === snapshot.uid;
       }
-      const rankVisibility = "bosses" in snapshot ? undefined : await challengeRanks.remember(context, profileId, source.role, snapshot,
-        mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive);
+      const rankVisibility = "bosses" in snapshot || "stages" in snapshot ? undefined :
+        await challengeRanks.remember(context, profileId, source.role, snapshot,
+          mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive);
       const theme = { qq, signal, rankVisibility, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
-      const result = await ("bosses" in snapshot ? renderZzzHoloBoss(snapshot, source.role, theme) :
+      const result = await ("stages" in snapshot ? renderZzzVoidFront(snapshot, source.role, theme) :
+        "bosses" in snapshot ? renderZzzHoloBoss(snapshot, source.role, theme) :
         "trial" in snapshot ? renderZzzDeadly(snapshot, source.role.nickname, theme) :
         renderZzzShiyu(snapshot, source.role, theme)).catch(() => undefined);
       if (signal.aborted) return [];
@@ -193,6 +200,12 @@ export function createModule({ signal, lockFile }: {
         return `绝区零档案已变化，请重新查询${name}。`;
       }
       if (result) return { type: "image" as const, file: result.png };
+      if ("stages" in snapshot) {
+        const stages = snapshot.finalStage ? [snapshot.finalStage, ...snapshot.stages] : snapshot.stages;
+        return [`${name} · ${period}`, `总分 ${snapshot.totalScore ?? "—"}`,
+          ...stages.map(stage => `${stage.name ?? "关卡"} · ${stage.score ?? "—"}${stage.rating ? ` · ${stage.rating}` : ""}`),
+        ].join("\n");
+      }
       if ("bosses" in snapshot) {
         return [
           `${name} · ${period}`,
@@ -348,12 +361,13 @@ export function createModule({ signal, lockFile }: {
       }
       const shiyu = shiyuCommand.exec(command);
       const deadly = shiyu ? null : deadlyCommand.exec(command);
-      const battle = shiyu ?? deadly ?? holoBossCommand.exec(command);
+      const holoBoss = shiyu || deadly ? null : holoBossCommand.exec(command);
+      const battle = shiyu ?? deadly ?? holoBoss ?? voidFrontCommand.exec(command);
       if (battle) {
         const profileId = Number(battle[2] ?? 1);
         if (profileId <= MAX_PROFILE_ID) {
           const scheduleType = battle[1] === "上期" || battle[1] === "往期" ? 2 : 1;
-          return battleRecord(context, profileId, scheduleType, shiyu ? "shiyu" : deadly ? "deadly" : "holoBoss");
+          return battleRecord(context, profileId, scheduleType, shiyu ? "shiyu" : deadly ? "deadly" : holoBoss ? "holoBoss" : "voidFront");
         }
         return;
       }
