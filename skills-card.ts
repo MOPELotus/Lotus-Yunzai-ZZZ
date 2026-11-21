@@ -319,9 +319,8 @@ export async function renderZzzSkills(sections: readonly SkillSection[], source:
   for (const page of pages) {
     const end = header + heightOf(page) + Math.max(0, page.length - 1) * sectionGap;
     const height = Math.ceil(end + footerHeight);
-    const scale = height <= 4000 ? 2 : 1;
-    result.push(await renderPng(width * scale, height * scale, context => {
-      context.scale(scale, scale);
+    result.push(await renderPng(width * 4, height * 4, context => {
+      context.scale(4, 4);
       box(context, "#191722", 0, 0, width, height);
       if (source.background) cover(context, source.background, 0, 0, width, height);
       if (source.avatar) {

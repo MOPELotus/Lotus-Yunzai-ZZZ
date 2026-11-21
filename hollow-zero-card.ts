@@ -86,8 +86,8 @@ export async function renderZzzHollowZero(snapshot: ZzzHollowSnapshot, role: Gam
   const groupHeights = groups.map((group, i) => i === 0 && snapshot.hollowMode === "withered" ? 143 :
     69 + group.rows.length * 55 + (group.title === "刀耕火焚" ? teamHeight : 0));
   const height = start + groupHeights.reduce((sum, h) => sum + h + 20, 0) + 49;
-  return renderPng(width * 2, height * 2, context => {
-    context.scale(2, 2);
+  return renderPng(width * 4, height * 4, context => {
+    context.scale(4, 4);
     box(context, "#1d1a24", 0, 0, width, height);
     if (background) cover(context, background, 0, 0, width, height);
     drawZzzCardPlayer(context, role, snapshot.region, player);

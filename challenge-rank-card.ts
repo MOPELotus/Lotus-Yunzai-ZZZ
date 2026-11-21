@@ -285,7 +285,7 @@ async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, 
   return { local: new Map(await pathEntries), memberAvatars: members, buffIcons: books, portraits };
 }
 
-// ZZZure/ZZZ-Plugin 2057599 resources/rank/{abyss,deadly,deadlyHard}, normal screenshot scale 1.
+// ZZZure/ZZZ-Plugin 2057599 resources/rank/{abyss,deadly,deadlyHard}.
 export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow[], options: ZzzCardOptions = {}) {
   const season = rankTowerSeason(rankType(mode));
   const width = season ? ({ 1: 900, 2: 1000, 3: 1150, 4: 1150 })[season] : mode === "DEADLY_HARD" ? 1000 : mode === "HOLO_BOSS" ? 2200 : 2400;
@@ -295,7 +295,8 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
   const height = startNotes + notes + 80;
   const art = await loadRankArt(await openZzzCardTheme(options), mode, rows, options.signal);
   options.signal?.throwIfAborted();
-  return renderPng(width, height, (context) => {
+  return renderPng(width * 4, height * 4, (context) => {
+    context.scale(4, 4);
     box(context, "#222025", 0, 0, width, height);
     const background = art.local.get("common/images/bg.jpg");
     if (background) cover(context, background, 0, 0, width, height);

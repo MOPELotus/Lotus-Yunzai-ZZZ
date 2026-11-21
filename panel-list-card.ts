@@ -61,9 +61,8 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
   const ranks = { S: s, A: a, B: b };
   const listHeight = Math.max(72, Math.ceil(rows.length / 5) * rowHeight + 25.6);
   const height = Math.ceil(129.33 + listHeight + 91.6);
-  const resolution = height <= 7_500 ? 2 : 1;
-  return renderPng(width * resolution, height * resolution, (context) => {
-    context.scale(resolution, resolution);
+  return renderPng(width * 4, height * 4, (context) => {
+    context.scale(4, 4);
     const gradient = context.createLinearGradient(0, 0, 0, height);
     gradient.addColorStop(0, "#150937");
     gradient.addColorStop(1, "#4a1049");

@@ -295,7 +295,7 @@ export async function renderZzzTuningDetail(
   options: TuningDetailCardOptions = {},
 ) {
   const {
-    mode = "auto", scale = 2,
+    mode = "auto", scale = 4,
     themeDirectory = Bun.env.LOTUS_ZZZ_GACHA_THEME_DIR?.trim() || defaultTheme,
     loadArtwork,
   } = options;

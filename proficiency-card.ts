@@ -159,9 +159,8 @@ export async function renderZzzProficiency(model: Proficiency, role: GameRole, o
   const art = await loadProficiencyArt(model, options);
   options.signal?.throwIfAborted();
   const height = Math.round(listTop + model.total * (rowHeight + gap) + 68);
-  const scale = height <= 7_500 ? 2 : 1;
-  return renderPng(width * scale, height * scale, context => {
-    context.scale(scale, scale);
+  return renderPng(width * 4, height * 4, context => {
+    context.scale(4, 4);
     box(context, "#1d1b20", 0, 0, width, height);
     if (art.background) cover(context, art.background, 0, 0, width, height);
     const shade = context.createLinearGradient(0, 0, 0, height);

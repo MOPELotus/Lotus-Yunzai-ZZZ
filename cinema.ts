@@ -87,9 +87,8 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
   const artWidth = artwork && Math.min(width - 2 * inset, artwork.width);
   const artHeight = artwork && artWidth ? artWidth * artwork.height / artwork.width : 0;
   const height = Math.ceil(header + 108 + rowHeights.reduce((sum, row) => sum + row, 0) + artHeight + 116);
-  const scale = height <= 4000 ? 2 : 1;
-  return renderPng(width * scale, height * scale, context => {
-    context.scale(scale, scale);
+  return renderPng(width * 4, height * 4, context => {
+    context.scale(4, 4);
     box(context, "#191722", 0, 0, width, height);
     if (source.background) cover(context, source.background, 0, 0, width, height);
     if (source.avatar) {

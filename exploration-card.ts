@@ -54,8 +54,8 @@ export async function renderZzzExploration(snapshot: ZzzExplorationSnapshot, rol
   const heights = snapshot.areas.map(area => 65 + Math.ceil(area.maps.length / columns) * rowHeight);
   const follow = continuation(snapshot, command);
   const height = start + 81 + heights.reduce((sum, value) => sum + value + 21, 0) + (follow ? 96 : 52);
-  return renderPng(width * 2, height * 2, ctx => {
-    ctx.scale(2, 2);
+  return renderPng(width * 4, height * 4, ctx => {
+    ctx.scale(4, 4);
     box(ctx, "#1d1a24", 0, 0, width, height);
     if (background) cover(ctx, background, 0, 0, width, height);
     drawZzzCardPlayer(ctx, role, snapshot.region, player);

@@ -10,7 +10,6 @@ import type { ZzzPanelRankRow } from "./panel-rank-model.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 820;
-const scale = 2880 / width;
 const gold = "#d3bc8e";
 const skillNames = ["普攻", "闪避", "支援", "特殊", "连携", "核心"];
 
@@ -62,9 +61,8 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
   });
   const height = Math.max(240, 86 + strips.reduce((sum, strip) => sum + strip.height + 10, 0) + 50 +
     (options.next ? 21 : 0));
-  const density = Math.min(scale, 8192 / height);
-  return renderPng(Math.round(width * density), Math.ceil(height * density), ctx => {
-    ctx.scale(density, density);
+  return renderPng(width * 4, height * 4, ctx => {
+    ctx.scale(4, 4);
     ctx.drawImage(theme.background, 0, 0, width, height);
     ctx.save();
     ctx.shadowColor = "#000";

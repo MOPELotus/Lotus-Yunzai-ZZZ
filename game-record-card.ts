@@ -121,9 +121,8 @@ export async function renderZzzGameRecord(record: ZzzGameRecordSnapshot, role: G
   const startGrid = 578.8;
   const nextGrid = startGrid + gridHeight(record.avatars) + 96;
   const height = Math.ceil(nextGrid + gridHeight(record.buddies) + 80);
-  const scale = height <= 7_500 ? 2 : 1;
-  return renderPng(width * scale, height * scale, (context) => {
-    context.scale(scale, scale);
+  return renderPng(width * 4, height * 4, (context) => {
+    context.scale(4, 4);
     const gradient = context.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, "#20222d");
     gradient.addColorStop(1, "#0c0d12");

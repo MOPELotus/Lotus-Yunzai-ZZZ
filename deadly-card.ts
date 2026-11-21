@@ -163,8 +163,8 @@ export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: str
   options.signal?.throwIfAborted();
   const footer = firstRoom + snapshot.hard.length * (hardHeight + 24) + snapshot.trial.length * (trialHeight + 24);
   const height = Math.ceil(footer + 177.6);
-  return renderPng(width * 2, height * 2, (context) => {
-    context.scale(2, 2);
+  return renderPng(width * 4, height * 4, (context) => {
+    context.scale(4, 4);
     box(context, "#1a181c", 0, 0, width, height);
     const background = art.local.get("common/images/bg.jpg");
     if (background) cover(context, background, 0, 0, width, height);

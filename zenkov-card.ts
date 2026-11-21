@@ -216,8 +216,8 @@ export async function renderZzzZenkov(snapshot: ZzzZenkovSnapshot, role: GameRol
     const followUp = index === pages.length - 1 ? zzzZenkovFollowUp(snapshot, command, pages.length) : undefined;
     const recordsHeight = 108 + runs.reduce((sum, run) => sum + recordHeight(run) + 11, 0) + (followUp ? 29 : 0);
     const height = 280 + mapsHeight(snapshot) + (snapshot.kind === "summary" ? 478 + summaryCollection : recordsHeight);
-    output.push(await renderPng(width * 2, height * 2, ctx => {
-      ctx.scale(2, 2);
+    output.push(await renderPng(width * 4, height * 4, ctx => {
+      ctx.scale(4, 4);
       box(ctx, "#1d1a24", 0, 0, width, height);
       const background = art.local.get("common/images/bg.jpg");
       if (background) cover(ctx, background, 0, 0, width, height);

@@ -117,8 +117,8 @@ export async function renderZzzMonthly(view: View, role: GameRole, region: strin
   const listY = 668;
   const height = listY + detailsHeight + (view.collect ? 209 : 157) + (follow ? 34 : 0);
   options.signal?.throwIfAborted();
-  return renderPng(width * 2, height * 2, ctx => {
-    ctx.scale(2, 2);
+  return renderPng(width * 4, height * 4, ctx => {
+    ctx.scale(4, 4);
     box(ctx, "#4c625b", 0, 0, width, height);
     const bg = images.get("bg.png");
     if (bg) cover(ctx, bg, 0, 0, width, height);

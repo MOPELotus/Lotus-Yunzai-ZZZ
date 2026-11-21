@@ -243,8 +243,8 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
   const topHeight = damage ? 722 : 565;
   const scoreHeight = score ? 179 : 0;
   const height = topHeight + (damage ? panelDamageHeight(damage) : 510 + scoreHeight);
-  const rendered = await renderPng(width * 2, height * 2, context => {
-    context.scale(2, 2);
+  const rendered = await renderPng(width * 4, height * 4, context => {
+    context.scale(4, 4);
     box(context, "#1d1b20", 0, 0, width, height);
     const background = images.get("common/images/bg.jpg");
     if (background) cover(context, background, 0, 0, width, height);

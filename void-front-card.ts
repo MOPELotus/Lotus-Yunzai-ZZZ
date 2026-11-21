@@ -141,8 +141,8 @@ export async function renderZzzVoidFront(snapshot: ZzzVoidFrontSnapshot, role: G
   const [art, player] = await Promise.all([loadVoidFrontArt(snapshot, stages, local, options.signal), loadZzzCardPlayer(local, options, role.avatar)]);
   options.signal?.throwIfAborted();
   const height = firstStage + stages.reduce((total, stage) => total + stageHeight + Math.ceil(stage.rounds.length / 2) * roundHeight, 0) + (options.rankVisibility === undefined ? 61 : 94);
-  return renderPng(width * 2, height * 2, context => {
-    context.scale(2, 2);
+  return renderPng(width * 4, height * 4, context => {
+    context.scale(4, 4);
     box(context, "#191720", 0, 0, width, height);
     const background = art.local.get(themePath + "bg.png");
     if (background) cover(context, background, 0, 0, width, height);

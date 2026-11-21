@@ -77,8 +77,8 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
   const visibility = options.towerVisibility;
   const showVisibility = visibility?.some(value => value !== undefined);
   const height = top + snapshot.seasons.reduce((sum, season) => sum + blockHeight(season) + 22, 0) + (showVisibility ? 118 : 57);
-  return renderPng(width * 2, height * 2, context => {
-    context.scale(2, 2);
+  return renderPng(width * 4, height * 4, context => {
+    context.scale(4, 4);
     box(context, "#1d1a24", 0, 0, width, height);
     if (background) cover(context, background, 0, 0, width, height);
     drawZzzCardPlayer(context, role, snapshot.region, player);

@@ -103,8 +103,8 @@ export async function renderZzzHoloBoss(snapshot: ZzzHoloBossSnapshot, role: Gam
   options.signal?.throwIfAborted();
   const footer = firstRoom + snapshot.bosses.length * (roomHeight + 24);
   const height = footer + (options.rankVisibility === undefined ? 72 : 105);
-  return renderPng(width * 2, height * 2, (context) => {
-    context.scale(2, 2);
+  return renderPng(width * 4, height * 4, (context) => {
+    context.scale(4, 4);
     box(context, "#1a181c", 0, 0, width, height);
     const background = art.local.get("common/images/bg.jpg");
     if (background) cover(context, background, 0, 0, width, height);
