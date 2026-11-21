@@ -302,7 +302,9 @@ function drawSection(context: Context, block: ReturnType<typeof layout>, top: nu
 export async function renderZzzSkills(sections: readonly SkillSection[], source: SkillCardSource, inlineImageByteLimit?: number) {
   const measurement = new Canvas(1, 1).getContext("2d");
   const nameX = source.avatar ? 168 : 24;
-  const impressions = source.impressions.flatMap(value => wrapZzzWikiText(measurement, value, width - nameX - 24, impressionFont));
+  // The old header has one block per impression, with normal HTML whitespace within each block.
+  const impressions = source.impressions.flatMap(value =>
+    wrapZzzWikiText(measurement, value.replace(/[\t\n\f\r ]+/gu, " "), width - nameX - 24, impressionFont));
   const header = Math.max(168, 108 + impressions.length * 28) + 12;
   const blocks = sections.map(section => layout(measurement, section, source.icons));
   const pages: (typeof blocks)[] = [[]];
