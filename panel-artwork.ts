@@ -5,7 +5,7 @@ import { readPanelJson } from "./panel-storage.ts";
 type Local = Awaited<ReturnType<typeof openZzzCardTheme>>;
 
 export function panelSpriteName(value: unknown) {
-  if (typeof value === "string" && /^[A-Za-z0-9_]{1,80}$/u.test(value)) return value;
+  if (typeof value === "string" && /^[A-Za-z0-9_&]{1,80}$/u.test(value)) return value;
 }
 
 export async function firstCachedPanelImage(local: Local, paths: readonly string[]) {

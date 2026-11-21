@@ -3,10 +3,17 @@ import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createAtlasCatalog } from "@lotus-yunzai/atlas/catalog";
+import { panelSpriteName } from "./panel-artwork.ts";
 import { buildZzzPanelDetail } from "./panel-detail.ts";
 import { createZzzAtlasPortraitReader, loadZzzAtlasPanelOriginal, loadZzzRandomGalleryPortrait, readZzzPanelOriginal } from "./panel-original.ts";
 
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQIW2P8/x8AAwMCAO+a2e8AAAAASUVORK5CYII=", "base64");
+
+test("旧驱动盘素材保留文件名中的连接符并限制为单个文件名", () => {
+  expect(panelSpriteName("SuitBranch&BladeSong")).toBe("SuitBranch&BladeSong");
+  expect(panelSpriteName("../SuitBranch&BladeSong")).toBeUndefined();
+  expect(panelSpriteName("套装/SuitBranch&BladeSong")).toBeUndefined();
+});
 
 test("图库仅从给定角色文件夹取可读图，回执区分图库挂载与安装副本", async () => {
   const root = await mkdtemp(join(tmpdir(), "lotus-zzz-random-gallery-"));
