@@ -1,4 +1,4 @@
-import type { ZzzDeadlyRoom, ZzzHoloBossRoom, ZzzShiyuPortrait, ZzzShiyuTeam } from "@lotus-yunzai/hoyo-client";
+import type { ZzzDeadlyRoom, ZzzHoloBossRoom, ZzzShiyuPortrait, ZzzShiyuTeam, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
@@ -7,8 +7,8 @@ import { holoBossDuration } from "./holo-boss-card.ts";
 import { rankLabels, type RankMode, type RankRow } from "./challenge-rank-model.ts";
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
-const modeTheme = { ABYSS: "abyss", DEADLY: "deadly", DEADLY_HARD: "deadlyHard", HOLO_BOSS: "holoBoss" } as const;
-const englishTitle = { ABYSS: "ABYSS RANK", DEADLY: "DEADLY RANK", DEADLY_HARD: "DEADLY HARD RANK", HOLO_BOSS: "HOLO BOSS RANK" } as const;
+const modeTheme = { ABYSS: "abyss", DEADLY: "deadly", DEADLY_HARD: "deadlyHard", HOLO_BOSS: "holoBoss", VOID_FRONT_BATTLE: "voidFrontBattle" } as const;
+const englishTitle = { ABYSS: "ABYSS RANK", DEADLY: "DEADLY RANK", DEADLY_HARD: "DEADLY HARD RANK", HOLO_BOSS: "HOLO BOSS RANK", VOID_FRONT_BATTLE: "VOID FRONT BATTLE RANK" } as const;
 type Art = ZzzChallengeArt & {
   readonly memberAvatars: ReadonlyMap<string, Image | undefined>;
   readonly buffIcons: ReadonlyMap<string, Image | undefined>;
@@ -88,6 +88,11 @@ function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: num
   else fillRound(context, "#111", 156, uidY, 225, 42, 12);
   label(context, `UID ${row.uid}`, 268.5, uidY + 21, 22, { align: "center", color: "#ffffff99" });
 
+  if (row.voidFront) {
+    label(context, "总得分", 463, y + 91, 29, { color: "#ddd", align: "center" });
+    score(context, art, row.score, 663000, 396, y + 140, true);
+    return;
+  }
   if (row.holo) {
     for (const [i, [field, value]] of [["总用时", holoBossDuration(row.score)], ["星级", String(row.bonus)],
       ["无伤", String(row.holo.undamaged)]].entries()) {
@@ -178,13 +183,37 @@ function holoTeam(context: Context, art: Art, room: ZzzHoloBossRoom | undefined,
   }
 }
 
+function voidFrontTeam(context: Context, art: Art, stage: ZzzVoidFrontStage | undefined, x: number, y: number, index: number) {
+  const mode = "VOID_FRONT_BATTLE";
+  frame(context, theme(art, mode, "BgFrame01"), x, y, 451, 216);
+  if (!stage) return;
+  const buff = stage.buffIcon && art.buffIcons.get(stage.buffIcon);
+  const badge = theme(art, mode, "PetSelectBG");
+  if (buff) {
+    if (badge) context.drawImage(badge, x + 401, y, 50, 50);
+    contain(context, buff, x + 407, y + 6, 38, 38);
+  }
+  label(context, stage.name || (index === 0 ? "最终关" : "关卡"), x + 40, y + 46, 25, { color: "#e6e6e6", maxWidth: 300 });
+  score(context, art, stage.score, index <= 1 ? 182000 : 149500, x + 40, y + 83, false);
+  if (stage.rating === "AP" && !art.local.get("common/images/rating/AP.png")) {
+    label(context, "A+", x + 372, y + 78, 30, { align: "center", color: "#f9cc56" });
+  } else badgeRating(context, art, stage.rating, x + 328, y + 50);
+  for (let i = 0; i < 3; i++) {
+    const left = x + 39 + i * 94;
+    const entry = stage.avatars[i];
+    if (entry) drawPortrait(context, art, entry, left, y + 117, 77);
+    else fillRound(context, "#151517", left, y + 117, 77, 77, 8, "#343534");
+  }
+  if (stage.buddy) drawPortrait(context, art, stage.buddy, x + 329, y + 139, 55, true);
+}
+
 async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, mode: RankMode, rows: readonly RankRow[], signal?: AbortSignal): Promise<Art> {
   const root = `rank/${modeTheme[mode]}/images/`;
   const paths = [
     "common/images/bg.jpg", "common/images/SuitBg.png", "common/images/UIDBg.png",
     ...["S", "A", "B"].map(name => `common/images/RANK_${name}.png`),
-    ...["SP", "S", "A", "B"].map(name => `common/images/rating/${name}.png`),
-    ...[50000, 65000, 150000, 195000].map(value => `common/images/max_score/${value}.png`),
+    ...["SP", "S", "AP", "A", "B"].map(name => `common/images/rating/${name}.png`),
+    ...[50000, 65000, 150000, 195000, 149500, 182000, 663000].map(value => `common/images/max_score/${value}.png`),
     ...["BgFrame01", "PetSelectBG", "star-icon-light", "star-icon-dark", "star-icon-hard.13c9ee51",
       "hard-module-inner-bg-m.83b7d1a1", "star-light.d591d065", "star-gray.53e3ee51"].map(name => root + name + ".png"),
   ];
@@ -210,6 +239,14 @@ async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, 
           room.medalIcon && official(room.medalIcon).then(icon => books.set(room.medalIcon!, icon)),
         ]);
       }) ?? []),
+      ...(row.voidFront ? [row.voidFront.finalStage, ...row.voidFront.stages.slice(0, 3)].map(async stage => {
+        const buff = stage.buffIcon;
+        await Promise.all([
+          ...stage.avatars.slice(0, 3).map(entry => loadChallengePortrait(entry, false, local, official, portraits)),
+          loadChallengePortrait(stage.buddy, true, local, official, portraits),
+          buff && official(buff).then(image => books.set(buff, image)),
+        ]);
+      }) : []),
       ...teams.map(async entry => {
         const buff = (entry as ZzzDeadlyRoom).buffIcon;
         await Promise.all([
@@ -245,6 +282,9 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
       member(context, art, row, mode, y);
       if (mode === "HOLO_BOSS") {
         for (let idx = 0; idx < 3; idx++) holoTeam(context, art, row.holo?.bosses[idx], 762 + 467 * idx, y - 12);
+      } else if (mode === "VOID_FRONT_BATTLE") {
+        const stages = [row.voidFront?.finalStage, ...(row.voidFront?.stages ?? [])];
+        for (let idx = 0; idx < 4; idx++) voidFrontTeam(context, art, stages[idx], 552 + 460 * idx, y - 12, idx);
       } else if (mode === "DEADLY_HARD") team(context, art, mode, row.teams[0], 438, y - 12);
       else for (let idx = 0; idx < 3; idx++) team(context, art, mode, row.teams[idx], 698 + 552 * idx, y - 12);
     });
@@ -262,10 +302,13 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     label(context, " 以登记本期战绩", x + context.measureText(query).width, noteY, 19.2, { color: "#979797" });
     const tie = mode === "ABYSS" ? "同分同评级" : mode === "DEADLY" ? "同星同分" : "同分";
     const order = mode === "HOLO_BOSS" ? "先比较星数、总用时、无伤间数，完全相同时以较早记录排前" :
-      `${tie}时，最后通关时间较早者排前`;
+      mode === "VOID_FRONT_BATTLE" ? "总分持平时，最终关及普通关的最晚通关时间较早者排前" :
+        `${tie}时，最后通关时间较早者排前`;
     label(context, `• ${order}`, 74, noteY + 39, 19.2, { color: "#979797", maxWidth: width - 145 });
-    if (mode === "HOLO_BOSS") label(context, "• 使用 %显示拟境排名 或 %隐藏拟境排名 设置本群可见性",
-      74, noteY + 78, 19.2, { color: "#f3cb45" });
+    if (mode === "HOLO_BOSS" || mode === "VOID_FRONT_BATTLE") {
+      const name = mode === "HOLO_BOSS" ? "拟境" : "临界";
+      label(context, `• 使用 %显示${name}排名 或 %隐藏${name}排名 设置本群可见性`, 74, noteY + 78, 19.2, { color: "#f3cb45" });
+    }
     label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
   }, "gpu");
 }

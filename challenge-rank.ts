@@ -1,7 +1,7 @@
 import type { createProfileStore, GameRole } from "@lotus-yunzai/account";
 import { previewRedeemIdentity } from "@lotus-yunzai/hoyo-client/redeem-submit";
 import {
-  currentPeriod, domesticRegion, idOf, rankCommand, rankIdentity, rankLabels, sortedRankRows,
+  currentPeriod, domesticRegion, idOf, isOwnedRank, rankCommand, rankIdentity, rankLabels, sortedRankRows,
   type RankRow, type RankSnapshot, type RankType,
 } from "./challenge-rank-model.ts";
 import { createChallengeRankStore, readRankConfig } from "./challenge-rank-store.ts";
@@ -37,7 +37,7 @@ function groupFor(context: ChallengeRankContext) {
 }
 
 export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfileStore>, signal: AbortSignal) {
-  async function holoRankRole(qq: string, profileId: number) {
+  async function ownedRankRole(qq: string, profileId: number) {
     const before = await profiles.requestContext(qq, profileId, "zzz");
     const selected = await profiles.savedRole(qq, profileId, "zzz");
     const source = await profiles.requestContext(qq, profileId, "zzz", selected.uid);
@@ -48,8 +48,8 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
   }
 
   async function roleKeepsOwnership(row: RankRow) {
-    if (row.holo) {
-      const active = row.profileId && await holoRankRole(row.qq, row.profileId).catch(() => undefined);
+    if (row.holo || row.voidFront) {
+      const active = row.profileId && await ownedRankRole(row.qq, row.profileId).catch(() => undefined);
       return !!active && active.role.uid === row.uid && active.role.region === row.region;
     }
     if (row.source === "legacy") return true;
@@ -67,8 +67,8 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
       try {
         if (!(await readRankConfig(scope.group)).allowed || !await membership(context, scope.actor) ||
             signal.aborted || !await verify() || signal.aborted) return;
-        if (type === "HOLO_BOSS") {
-          const active = await holoRankRole(scope.actor, profileId);
+        if (isOwnedRank(type)) {
+          const active = await ownedRankRole(scope.actor, profileId);
           if (!active || active.role.uid !== snapshot.uid || active.role.region !== snapshot.region || !await verify() || signal.aborted) return;
         }
         return await createChallengeRankStore(redis).remember(scope.group, type, {
@@ -90,12 +90,12 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
       try {
         if (command.kind === "visibility") {
           if (!await membership(context, actor)) return "暂无法核对当前群成员，请稍后重试。";
-          const holo = command.types.includes("HOLO_BOSS");
-          const role = holo ?
-            (await holoRankRole(actor, command.profileId).catch(() => undefined))?.role :
+          const ownedType = command.types.find(isOwnedRank);
+          const role = ownedType ?
+            (await ownedRankRole(actor, command.profileId).catch(() => undefined))?.role :
             await profiles.savedRole(actor, command.profileId, "zzz").catch(() => undefined);
-          if (!role || !rankIdentity(role.uid, role.region)) return holo ?
-            "请先登录并选择已认证的国服绝区零角色，再设置拟境排名。" : "未绑定国服绝区零 UID，请先绑定。";
+          if (!role || !rankIdentity(role.uid, role.region)) return ownedType ?
+            `请先登录并选择已认证的国服绝区零角色，再设置${rankLabels[ownedType]}排名。` : "未绑定国服绝区零 UID，请先绑定。";
           if (signal.aborted) return;
           await store.setVisibility(group, command.types, role.uid, role.region, command.enabled, { qq: actor, profileId: command.profileId });
           return [{
@@ -117,7 +117,7 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
           if (rows.length >= settings.maximum) break;
         }
         if (!rows.length) {
-          const include = mode === "ABYSS" ? "深渊" : mode === "HOLO_BOSS" ? "拟境" : "危局";
+          const include = mode === "ABYSS" ? "深渊" : mode === "HOLO_BOSS" ? "拟境" : mode === "VOID_FRONT_BATTLE" ? "临界" : "危局";
           return `没有${name}排名，请先 %显示${include}排名，并在本群用 %${include} 查询本期战绩。`;
         }
         const result = await renderChallengeRank(mode, rows, {

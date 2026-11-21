@@ -140,7 +140,7 @@ export async function renderZzzVoidFront(snapshot: ZzzVoidFrontSnapshot, role: G
   const stages = snapshot.finalStage ? [snapshot.finalStage, ...snapshot.stages] : snapshot.stages;
   const [art, player] = await Promise.all([loadVoidFrontArt(snapshot, stages, local, options.signal), loadZzzCardPlayer(local, options, role.avatar)]);
   options.signal?.throwIfAborted();
-  const height = firstStage + stages.reduce((total, stage) => total + stageHeight + Math.ceil(stage.rounds.length / 2) * roundHeight, 0) + 61;
+  const height = firstStage + stages.reduce((total, stage) => total + stageHeight + Math.ceil(stage.rounds.length / 2) * roundHeight, 0) + (options.rankVisibility === undefined ? 61 : 94);
   return renderPng(width * 2, height * 2, context => {
     context.scale(2, 2);
     box(context, "#191720", 0, 0, width, height);
@@ -153,6 +153,10 @@ export async function renderZzzVoidFront(snapshot: ZzzVoidFrontSnapshot, role: G
     let y = firstStage;
     for (const [i, stage] of stages.entries()) {
       y += stageCard(context, art, stage, y, stage === snapshot.finalStage ? "最终关" : `关卡 ${i + (snapshot.finalStage ? 0 : 1)}`);
+    }
+    if (options.rankVisibility !== undefined) {
+      const status = options.rankVisibility ? "显示" : "隐藏";
+      label(context, `本群临界推演排名已${status} · %显示临界排名 / %隐藏临界排名`, 43, y + 12, 19, { color: "#f3cb45" });
     }
     label(context, zzzCardFooter, width / 2, height - 36, 17, { align: "center", color: "#a09ca3" });
   }, "gpu");

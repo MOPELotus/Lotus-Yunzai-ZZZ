@@ -275,10 +275,10 @@ export function createModule({ signal, lockFile }: {
     const qq = String(user);
     const period = scheduleType === 2 ? "上期" : "本期";
     try {
-      const selected = mode === "holoBoss" && context.message_type === "group" ? await profiles.savedRole(qq, profileId, "zzz") : undefined;
+      const selected = (mode === "holoBoss" || mode === "voidFront") && context.message_type === "group" ? await profiles.savedRole(qq, profileId, "zzz") : undefined;
       const source = await profiles.requestContext(qq, profileId, "zzz", selected?.uid);
       if (selected && (source.role.region !== selected.region || source.role.gameBiz !== selected.gameBiz)) {
-        return "绝区零档案角色已变化，请重新查询拟境湮灭战。";
+        return `绝区零档案角色已变化，请重新查询${name}。`;
       }
       const request = { scheduleType, signal };
       const requestedAt = Date.now();
@@ -293,9 +293,9 @@ export function createModule({ signal, lockFile }: {
         const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
         return active?.revision === snapshot.revision && active.role.uid === snapshot.uid;
       }
-      const rankVisibility = "stages" in snapshot || "seasons" in snapshot || "hollowMode" in snapshot ? undefined :
+      const rankVisibility = "seasons" in snapshot || "hollowMode" in snapshot ? undefined :
         await challengeRanks.remember(context, profileId, source.role, snapshot,
-          "bosses" in snapshot ? "HOLO_BOSS" : mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive);
+          "bosses" in snapshot ? "HOLO_BOSS" : "stages" in snapshot ? "VOID_FRONT_BATTLE" : mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive);
       const theme = { qq, signal, rankVisibility, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
       const result = await ("hollowMode" in snapshot ? renderZzzHollowZero(snapshot, source.role, theme) :
         "seasons" in snapshot ? renderZzzClimbingTower(snapshot, source.role, theme) :
