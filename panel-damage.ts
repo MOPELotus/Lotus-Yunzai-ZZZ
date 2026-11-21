@@ -236,8 +236,7 @@ export interface PanelDamage {
   readonly unavailableSkills: readonly string[];
 }
 
-export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, gear: { suits: Json; weapons: Json },
-  requestedSkill?: number): PanelDamage {
+function panelSkills(avatar: ZzzPanelAvatar, data: DamageData, gear: { suits: Json; weapons: Json }) {
   const active = adapt(avatar, gear);
   const character = supported[avatar.id]!;
   const rules = characterRules[character.name];
@@ -256,6 +255,18 @@ export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, g
       skills.some(row => !Number.isFinite(row.result.expectDMG) || !Number.isFinite(row.result.critDMG))) {
     throw new ZzzDamageUnavailable("现有角色属性无法完整核验伤害。");
   }
+  return { calculator, skills, unavailableSkills: missing.map(skill => skill.name) };
+}
+
+export interface PanelDamageSummary {
+  readonly skills: readonly damage[];
+  readonly buffs: ReturnType<Calculator["calc_showInPanel_buffs"]>;
+  readonly unavailableSkills: readonly string[];
+}
+
+export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, gear: { suits: Json; weapons: Json },
+  requestedSkill?: number): PanelDamage {
+  const { calculator, skills, unavailableSkills } = panelSkills(avatar, data, gear);
   let skillIndex = requestedSkill === undefined ? undefined : Math.min(skills.length - 1, Math.max(0, requestedSkill - 1));
   const substats = calculator.calc_sub_differences(skillIndex === undefined ? undefined : skills[skillIndex]!.skill);
   if (skillIndex === undefined) {
@@ -268,12 +279,12 @@ export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, g
   if ([...substats, ...mainstats].some(row => row.some(cell => !Number.isFinite(cell.difference)))) {
     throw new ZzzDamageUnavailable("现有角色属性无法完整核验词条变化。");
   }
-  return { skills, skillIndex, selected, substats, mainstats, unavailableSkills: missing.map(skill => skill.name) };
+  return { skills, skillIndex, selected, substats, mainstats, unavailableSkills };
 }
 
 export function createPanelDamageReader() {
   let common: { resources: string; value: Promise<readonly unknown[]> } | undefined;
-  return async (avatar: ZzzPanelAvatar, resources: string | undefined, requestedSkill?: number) => {
+  async function load(avatar: ZzzPanelAvatar, resources?: string) {
     const character = supported[avatar.id];
     if (!character) throw new ZzzDamageUnavailable("该角色的原版伤害计算规则尚未核验。");
     if (!resources) throw new ZzzDamageUnavailable("本机未配置旧版伤害计算资料目录。");
@@ -290,6 +301,16 @@ export function createPanelDamageReader() {
       anomaly: anomalyData as DamageData["anomaly"], character: rankData as DamageData["character"],
       property: propertyMap(panelObject(properties)),
     };
-    return calculatePanelDamage(avatar, data, { suits: panelObject(suits), weapons: panelObject(weapons) }, requestedSkill);
-  };
+    return { data, gear: { suits: panelObject(suits), weapons: panelObject(weapons) } };
+  }
+  return Object.assign(async (avatar: ZzzPanelAvatar, resources?: string, requestedSkill?: number) => {
+    const { data, gear } = await load(avatar, resources);
+    return calculatePanelDamage(avatar, data, gear, requestedSkill);
+  }, {
+    async summary(avatar: ZzzPanelAvatar, resources?: string): Promise<PanelDamageSummary> {
+      const { data, gear } = await load(avatar, resources);
+      const { calculator, skills, unavailableSkills } = panelSkills(avatar, data, gear);
+      return { skills, unavailableSkills, buffs: calculator.calc_showInPanel_buffs() };
+    },
+  });
 }

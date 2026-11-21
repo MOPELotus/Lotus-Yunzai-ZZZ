@@ -122,6 +122,7 @@ async function settings(resources: string | undefined) {
 
 interface PanelContext {
   readonly adapter?: string;
+  readonly inlineImageByteLimit?: number;
   readonly user_id?: number;
   readonly self_id?: number;
   readonly group_id?: number;
@@ -273,8 +274,11 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
           ? `暂无角色${command.name}的公开展柜数据，请先%更新展柜面板。`
           : `暂无角色${command.name}面板数据，请先%更新面板。`;
         const damage = command.kind === "damage" ? await readDamage(row, resources, command.skill) : undefined;
+        const damageSummary = command.kind === "damage" ? undefined :
+          await readDamage.summary(row, resources).catch(() => undefined);
         const { png, original } = await renderZzzPanelDetail(row, identity.uid, {
-          ...theme, showcase: !privateIds.has(row.id), damage, profileId, galleryDirectory,
+          ...theme, showcase: !privateIds.has(row.id), damage, damageSummary, profileId, galleryDirectory,
+          inlineImageByteLimit: context.adapter === "milky" ? context.inlineImageByteLimit : undefined,
           async atlasNames(id) {
             const entry = await findZzzAtlasCharacter(atlas, id);
             return entry ? [entry.name, (await atlas.roleDetails(entry))?.overview.name ?? entry.name] : [];
