@@ -76,7 +76,9 @@ const help = [
 const historyDirectory = fileURLToPath(new URL("../../data/zzzTuningStats/", import.meta.url));
 const legacyHistoryDirectory = fileURLToPath(new URL("../../data/zzzGachaJson/", import.meta.url));
 const linkHistoryDirectory = fileURLToPath(new URL("../../data/zzzGachaRows/", import.meta.url));
-const retiredData = ["Lotus-Plugin", "Lotus-ReFactor"].map(name => new URL(`../${name}/data/`, import.meta.url));
+const retiredData = ["Lotus-Plugin", "Lotus-ReFactor"].flatMap(name => [
+  `../${name}/data/`, `../../data/legacy-game-history/${name}/`,
+].map(path => new URL(path, import.meta.url)));
 const monthlyDirectory = fileURLToPath(new URL("../../data/zzzMonthly/", import.meta.url));
 const monthlyLegacyDirectories = ["../../data/ZZZ-Plugin/monthly/", "../ZZZ-Plugin/data/monthly/"]
   .map(path => fileURLToPath(new URL(path, import.meta.url)));
