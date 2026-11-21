@@ -23,6 +23,8 @@ import { rankCommand, towerRanks } from "./challenge-rank-model.ts";
 import { startZzzChallengeReminders, type ZzzReminderRuntime } from "./challenge-reminder-runtime.ts";
 import { createZzzChallengeReminders, zzzChallengeReminderCommand } from "./challenge-reminder.ts";
 import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
+import { createZzzPanelRanks } from "./panel-rank.ts";
+import { zzzPanelRankCommand } from "./panel-rank-model.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
 import { createZzzPoolHistory, zzzPoolHistoryCommand } from "./pool-history.ts";
 import { createZzzCurrentPool, zzzCurrentPoolCommand } from "./current-pool.ts";
@@ -103,6 +105,7 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
     createZzzMonthlyArchive(monthlyDirectory, legacyMonthly ? [legacyMonthly] : monthlyLegacyDirectories, lockFile), signal);
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const reminder = createZzzChallengeReminders(profiles, client, signal);
+  const panelRanks = createZzzPanelRanks(profiles, lockFile, signal);
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);
   const cinema = createZzzCinema(signal);
   const skills = createZzzSkillReader(signal);
@@ -457,6 +460,8 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
     async fallback(_message: string, context: GachaContext) {
       const rank = rankCommand(context.normalizedMessage);
       if (rank) return challengeRanks.handle(context, rank);
+      const panelRank = zzzPanelRankCommand(context.normalizedMessage);
+      if (panelRank) return panelRanks(context, panelRank);
       const remind = zzzChallengeReminderCommand(context.normalizedMessage);
       if (remind) return reminder(context, remind);
       const cinemaQuery = zzzCinemaCommand(context.normalizedMessage);

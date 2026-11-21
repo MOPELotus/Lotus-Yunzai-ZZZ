@@ -25,7 +25,7 @@ function circle(context: Context, color: string, x: number, y: number, r: number
   context.fill();
 }
 
-async function loadPanelPortraits(rows: readonly ZzzPanelAvatar[], local: Local, options: ListOptions) {
+export async function loadPanelPortraits(rows: readonly ZzzPanelAvatar[], local: Local, options: ListOptions) {
   const variants = options.legacyResources
     ? await readPanelJson(options.legacyResources, "map/PartnerId2Data.json", 8 * 1024 * 1024).catch(() => undefined)
     : undefined;

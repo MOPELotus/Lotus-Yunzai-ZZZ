@@ -16,7 +16,7 @@ export interface ChallengeRankContext {
   readonly listCheckinGroupMembers?: () => Promise<readonly { id: number; name?: string }[] | undefined>;
 }
 
-async function membership(context: ChallengeRankContext, actor: string) {
+export async function rankMembership(context: ChallengeRankContext, actor: string) {
   const list = await context.listCheckinGroupMembers?.().catch(() => undefined);
   if (!Array.isArray(list) || list.length < 1 || list.length > 10_000) return;
   const members = new Set<string>();
@@ -28,7 +28,7 @@ async function membership(context: ChallengeRankContext, actor: string) {
   if (members.has(actor)) return members;
 }
 
-function groupFor(context: ChallengeRankContext) {
+export function rankGroup(context: ChallengeRankContext) {
   if (context.message_type === "group" && !context.isDelegated) {
     const group = idOf(context.group_id);
     const actor = idOf(context.user_id);
@@ -36,20 +36,20 @@ function groupFor(context: ChallengeRankContext) {
   }
 }
 
-export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfileStore>, signal: AbortSignal) {
-  async function ownedRankRole(qq: string, profileId: number) {
-    const before = await profiles.requestContext(qq, profileId, "zzz");
-    const selected = await profiles.savedRole(qq, profileId, "zzz");
-    const source = await profiles.requestContext(qq, profileId, "zzz", selected.uid);
-    const account = source.account.stuid || source.account.ltuid;
-    if (source.revision === before.revision && source.role.uid === selected.uid && source.role.region === selected.region &&
-        source.role.gameBiz === "nap_cn" && source.role.gameBiz === selected.gameBiz &&
-        rankIdentity(selected.uid, selected.region) && account && previewRedeemIdentity(source) === account) return source;
-  }
+export async function ownedRankRole(profiles: ReturnType<typeof createProfileStore>, qq: string, profileId: number) {
+  const before = await profiles.requestContext(qq, profileId, "zzz");
+  const selected = await profiles.savedRole(qq, profileId, "zzz");
+  const source = await profiles.requestContext(qq, profileId, "zzz", selected.uid);
+  const account = source.account.stuid || source.account.ltuid;
+  if (source.revision === before.revision && source.role.uid === selected.uid && source.role.region === selected.region &&
+      source.role.gameBiz === "nap_cn" && source.role.gameBiz === selected.gameBiz &&
+      rankIdentity(selected.uid, selected.region) && account && previewRedeemIdentity(source) === account) return source;
+}
 
+export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfileStore>, signal: AbortSignal) {
   async function roleKeepsOwnership(row: RankRow) {
     if (row.holo || row.voidFront || row.tower) {
-      const active = row.profileId && await ownedRankRole(row.qq, row.profileId).catch(() => undefined);
+      const active = row.profileId && await ownedRankRole(profiles, row.qq, row.profileId).catch(() => undefined);
       return !!active && active.role.uid === row.uid && active.role.region === row.region;
     }
     if (row.source === "legacy") return true;
@@ -61,14 +61,14 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
   return {
     async remember(context: ChallengeRankContext, profileId: number, role: GameRole, snapshot: RankSnapshot,
       type: RankType, requestedAt: number, verify: () => Promise<boolean>) {
-      const scope = groupFor(context);
+      const scope = rankGroup(context);
       const redis = globalThis.redis;
       if (!scope || !redis || !currentPeriod(snapshot, Date.now()) || !domesticRegion(snapshot.region)) return;
       try {
-        if (!(await readRankConfig(scope.group)).allowed || !await membership(context, scope.actor) ||
+        if (!(await readRankConfig(scope.group)).allowed || !await rankMembership(context, scope.actor) ||
             signal.aborted || !await verify() || signal.aborted) return;
         if (isOwnedRank(type)) {
-          const active = await ownedRankRole(scope.actor, profileId);
+          const active = await ownedRankRole(profiles, scope.actor, profileId);
           if (!active || active.role.uid !== snapshot.uid || active.role.region !== snapshot.region || !await verify() || signal.aborted) return;
         }
         return await createChallengeRankStore(redis).remember(scope.group, type, {
@@ -80,7 +80,7 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
       }
     },
     async handle(context: ChallengeRankContext, command: NonNullable<ReturnType<typeof rankCommand>>) {
-      const scope = groupFor(context);
+      const scope = rankGroup(context);
       if (command.kind === "tower-help") {
         return [scope ? undefined : "请在群聊中查询排名！", "当前可查的爬塔排名：",
           "%爬塔S1排名（拟真鏖战试炼）", "%爬塔S2排名（鏖战试炼：末路）",
@@ -95,10 +95,10 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
 
       try {
         if (command.kind === "visibility") {
-          if (!await membership(context, actor)) return "暂无法核对当前群成员，请稍后重试。";
+          if (!await rankMembership(context, actor)) return "暂无法核对当前群成员，请稍后重试。";
           const ownedType = command.types.find(isOwnedRank);
           const role = ownedType ?
-            (await ownedRankRole(actor, command.profileId).catch(() => undefined))?.role :
+            (await ownedRankRole(profiles, actor, command.profileId).catch(() => undefined))?.role :
             await profiles.savedRole(actor, command.profileId, "zzz").catch(() => undefined);
           if (!role || !rankIdentity(role.uid, role.region)) return ownedType ?
             `请先登录并选择已认证的国服绝区零角色，再设置${rankLabels[ownedType]}排名。` : "未绑定国服绝区零 UID，请先绑定。";
@@ -113,7 +113,7 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         const name = rankLabels[mode];
         const settings = await readRankConfig(group);
         if (!settings.allowed) return `当前群${name}排名功能已关闭！`;
-        const members = await membership(context, actor);
+        const members = await rankMembership(context, actor);
         if (!members) return "暂无法核对当前群成员，请稍后重试。";
         const candidates = await store.rows(group, mode, members, Date.now());
         const rows: RankRow[] = [];
@@ -132,7 +132,7 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
           signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
         }).catch(() => undefined);
         if (signal.aborted) return;
-        const after = await membership(context, actor);
+        const after = await rankMembership(context, actor);
         if (!after || !(await readRankConfig(group)).allowed || !await store.stillVisible(group, mode, after, rows, Date.now()) ||
             !(await Promise.all(rows.map(roleKeepsOwnership))).every(Boolean)) {
           return "群排名的成员或可见状态已变化，请重新查询。";
