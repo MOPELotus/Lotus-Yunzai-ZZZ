@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import type { InboundSegment } from "../../lib/messages.ts";
 import { createProfileStore, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
 import { createGachaUpdater } from "@lotus-yunzai/gacha/update";
 import {
@@ -36,6 +37,7 @@ import { zzzSkillCommand } from "./skills-data.ts";
 import { createZzzLegacyGachaArtwork, createZzzTuningArtwork } from "./tuning-artwork.ts";
 import { buildZzzTuningDetail, buildZzzTuningInventoryReply } from "./tuning-detail.ts";
 import { renderZzzTuningDetail } from "./tuning-detail-card.ts";
+import { createZzzInventoryQuery, zzzInventoryCommand } from "./tuning-inventory-command.ts";
 import { renderZzzTuningFailure, renderZzzTuningResult } from "./tuning-result-card.ts";
 import { createZzzTuningSync, ZzzTuningHistoryChangedError } from "./tuning-sync.ts";
 import { renderZzzZenkov, zzzZenkovFollowUp, zzzZenkovText } from "./zenkov-card.ts";
@@ -61,6 +63,7 @@ const help = [
   "绝区零抽卡记录",
   "%更新抽卡记录 同步国服米游社的六个频段。",
   "%抽卡记录 查看调频记录，当前登录可用时另发实时库存。",
+  "%母带 / #绝区零存货 直接查看本人实时调频库存。",
   "%抽卡链接 私聊录入有效的绝区零官方抽卡链接。",
   "%获取抽卡链接 私聊获取当前国服档案的官方抽卡链接。",
   "%逐抽记录 查看录入的记录和已有旧档案。",
@@ -93,6 +96,8 @@ interface GachaContext extends ZzzRoleGalleryContext {
   readonly self_id?: number;
   readonly user_id?: number;
   readonly message_type?: string;
+  readonly groupActivitySignal?: AbortSignal;
+  readonly message?: readonly InboundSegment[];
   reply(message: string | { readonly type: "image"; readonly file: Uint8Array }): unknown;
 }
 
@@ -103,6 +108,7 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
 }) {
   const profiles = createProfileStore(Bun.env.LOTUS_PROFILE_DIR || undefined);
   const client = createProfileHoyoClient(profiles);
+  const inventory = createZzzInventoryQuery(profiles, client, signal);
   const legacyMonthly = Bun.env.LOTUS_ZZZ_LEGACY_MONTHLY_DIR?.trim();
   const monthly = createZzzMonthlyCommands(profiles, client,
     createZzzMonthlyArchive(monthlyDirectory, legacyMonthly ? [legacyMonthly] : monthlyLegacyDirectories, lockFile), signal);
@@ -460,11 +466,13 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
     gachaUpdate,
     fallbackFeatures(context: Pick<GachaContext, "normalizedMessage">) {
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
-      if ([helpCommand, generateLinkCommand, linkCommand, updateCommand, linkedViewCommand, viewCommand].some(rule => rule.test(command)) ||
+      if ([helpCommand, generateLinkCommand, linkCommand, updateCommand, linkedViewCommand, viewCommand, zzzInventoryCommand].some(rule => rule.test(command)) ||
           command.trim() === "取消" || isZzzGachaLinkMessage(command)) return ["[gacha] 抽卡记录"];
       return [];
     },
     async fallback(_message: string, context: GachaContext) {
+      const inventoryRequest = zzzInventoryCommand.exec(context.normalizedMessage);
+      if (inventoryRequest) return inventory(Number(inventoryRequest[1] ?? 1), context);
       const gallery = zzzRoleGalleryCommand(context.normalizedMessage);
       if (gallery) return roleGallery(context, gallery);
       const alias = zzzRoleAliasCommand(context.normalizedMessage);

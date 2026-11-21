@@ -85,3 +85,7 @@
 调频详图沿用同版本的 `resources/gachalog/{index.html,index.css}` 和 `resources/common/layout/`。现有图卡由 Lotus-Yunzai 的 Skia 模板绘制。
 
 公开展柜沿用同版本的 `dist/model/Enka/` 数据适配以及 [Enka.Network 绝区零公开接口规范](https://github.com/EnkaNetwork/API-docs/blob/master/docs/zzz/api.md)。
+
+发送 `#母带`、`#绝区零存货`、`#绝区零存量` 或 `#绝区零囤货` 可直接查询本人国服实时调频库存，无需先同步抽卡记录。支持 `%母带2` 等档案编号。图卡按原顺序列出菲林底片、菲林、加密母带、原装母带和邦布券。资料变化或原会话断开时取消本次结果。
+
+版式参照 [thisee/xhh 固定旧母带模板](https://github.com/thisee/xhh/tree/f898ce6d08ee7a09bede98ef6e9f493d770560d0/resources/zzz_md)。部署者可设置 `LOTUS_ZZZ_INVENTORY_THEME_DIR` 指向已有的旧素材根，其内含 `zzz_md/imgs/` 和可选的 `font/yuan.ttf`，默认读取主仓 `data/zzzInventoryTheme/`。缺少旧素材时仍绘制可辨识的库存卡，模块源码不附带上游图片或字体。
