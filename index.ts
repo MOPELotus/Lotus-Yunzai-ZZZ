@@ -118,9 +118,9 @@ export function createModule({ signal, lockFile }: {
     readZzzLegacyGachaSources(legacyOverride || legacyHistoryDirectory, legacySources, qq, uid);
   const linkHistory = createZzzLinkHistory(linkHistoryDirectory, lockFile);
   const getLink = createGachaUpdater(async (qq, profileId) => {
-    const source = await profiles.requestContext(qq, profileId, "zzz");
+    const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
     const result = await client.fetchZzzGachaAuthKey(source, { signal });
-    const latest = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
+    const latest = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
     if (latest?.revision !== result.revision || latest.role.uid !== result.uid) {
       throw new ProfileError("changed", "绝区零档案角色已变化。");
     }
@@ -151,11 +151,11 @@ export function createModule({ signal, lockFile }: {
     }
     const qq = String(user);
     try {
-      const source = await profiles.requestContext(qq, profileId, "zzz");
+      const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const record = await client.fetchZzzGameRecord(source, { signal });
       const { png } = await renderZzzGameRecord(record, source.role,
         { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR });
-      const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
+      const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return [];
       if (active?.revision !== record.revision || active.role.uid !== record.uid) {
         return "绝区零档案已变化，请重新查询战绩。";
@@ -165,7 +165,7 @@ export function createModule({ signal, lockFile }: {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
         if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "role-missing") return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -187,7 +187,7 @@ export function createModule({ signal, lockFile }: {
     const qq = String(user);
     const changed = "绝区零档案已变化，请重新查询迷宫诡域。";
     try {
-      const source = await profiles.requestContext(qq, profileId, "zzz");
+      const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const record = await client.fetchZzzZenkov(source, { kind, page, signal });
       if (record.status === "empty") return kind === "detail" ? "暂无迷宫诡域详细战绩数据" : "暂无迷宫诡域数据";
       const command = `%迷宫战绩${profileId === 1 ? "" : profileId}`;
@@ -197,7 +197,7 @@ export function createModule({ signal, lockFile }: {
       const pages = await renderZzzZenkov(record, source.role, command,
         { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR }).catch(() => undefined);
       if (signal.aborted) return [];
-      const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
+      const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return [];
       if (active?.revision !== record.revision || active.role.uid !== record.uid) return changed;
       if (!pages) return zzzZenkovText(record, command);
@@ -210,7 +210,7 @@ export function createModule({ signal, lockFile }: {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
         if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "role-missing") return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -232,7 +232,7 @@ export function createModule({ signal, lockFile }: {
     const qq = String(user);
     const changed = "绝区零档案已变化，请重新查询区域收集。";
     try {
-      const source = await profiles.requestContext(qq, profileId, "zzz");
+      const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const record = await client.fetchZzzExploration(source, { page, signal });
       if (record.status === "empty") return "暂无探索详情数据";
       const command = `%区域收集${profileId === 1 ? "" : profileId}`;
@@ -240,7 +240,7 @@ export function createModule({ signal, lockFile }: {
       const result = await renderZzzExploration(record, source.role, command,
         { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR }).catch(() => undefined);
       if (signal.aborted) return [];
-      const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
+      const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return [];
       if (active?.revision !== record.revision || active.role.uid !== record.uid) return changed;
       return result ? { type: "image" as const, file: result.png } : zzzExplorationText(record, command);
@@ -248,7 +248,7 @@ export function createModule({ signal, lockFile }: {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
         if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "role-missing") return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -275,11 +275,7 @@ export function createModule({ signal, lockFile }: {
     const qq = String(user);
     const period = scheduleType === 2 ? "上期" : "本期";
     try {
-      const selected = (mode === "holoBoss" || mode === "voidFront") && context.message_type === "group" ? await profiles.savedRole(qq, profileId, "zzz") : undefined;
-      const source = await profiles.requestContext(qq, profileId, "zzz", selected?.uid);
-      if (selected && (source.role.region !== selected.region || source.role.gameBiz !== selected.gameBiz)) {
-        return `绝区零档案角色已变化，请重新查询${name}。`;
-      }
+      const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const request = { scheduleType, signal };
       const requestedAt = Date.now();
       const snapshot = await (mode === "shiyu" ? client.fetchZzzShiyu(source, request) :
@@ -290,7 +286,7 @@ export function createModule({ signal, lockFile }: {
       if (snapshot.status === "older-format") return `${period}${name}使用旧版深渊战绩格式。`;
       if (snapshot.status === "empty") return mode === "climbingTower" ? "暂无爬塔数据" : personalHollow ? `暂无${name}数据` : `${period}暂无${name}战绩。`;
       async function stillActive() {
-        const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
+        const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
         return active?.revision === snapshot.revision && active.role.uid === snapshot.uid;
       }
       const rankVisibility = "seasons" in snapshot || "hollowMode" in snapshot ? undefined :
@@ -344,7 +340,7 @@ export function createModule({ signal, lockFile }: {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
         if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "role-missing") return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -535,7 +531,7 @@ export function createModule({ signal, lockFile }: {
           if (signal.aborted) return;
           if (error instanceof ProfileError) {
             if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
-            if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+            if (error.code === "role-missing") return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
             if (error.code === "changed") return "绝区零档案角色已变化，请重新获取。";
           }
           if (error instanceof HoyoRequestError) {

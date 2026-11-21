@@ -38,13 +38,10 @@ function groupFor(context: ChallengeRankContext) {
 
 export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfileStore>, signal: AbortSignal) {
   async function ownedRankRole(qq: string, profileId: number) {
-    const before = await profiles.requestContext(qq, profileId, "zzz");
-    const selected = await profiles.savedRole(qq, profileId, "zzz");
-    const source = await profiles.requestContext(qq, profileId, "zzz", selected.uid);
+    const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
     const account = source.account.stuid || source.account.ltuid;
-    if (source.revision === before.revision && source.role.uid === selected.uid && source.role.region === selected.region &&
-        source.role.gameBiz === "nap_cn" && source.role.gameBiz === selected.gameBiz &&
-        rankIdentity(selected.uid, selected.region) && account && previewRedeemIdentity(source) === account) return source;
+    if (source.role.gameBiz === "nap_cn" && rankIdentity(source.role.uid, source.role.region) &&
+        account && previewRedeemIdentity(source) === account) return source;
   }
 
   async function roleKeepsOwnership(row: RankRow) {
