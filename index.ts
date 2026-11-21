@@ -4,15 +4,16 @@ import { createProfileStore, MAX_PROFILE_ID, ProfileError, type GameRole } from 
 import { createGachaUpdater } from "@lotus-yunzai/gacha/update";
 import {
   createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
-  ZzzManualGachaLinkRequired, ZzzTuningRateLimitError, type ZzzHollowMode, type ZzzZenkovMode,
+  splitZzzExploration, ZzzManualGachaLinkRequired, ZzzTuningRateLimitError, type ZzzExplorationSnapshot, type ZzzHollowMode, type ZzzZenkovMode,
 } from "@lotus-yunzai/hoyo-client";
 import { readZzzFlatLegacyGacha, readZzzLegacyGachaSources, ZzzLegacyGachaError } from "./gacha-legacy.ts";
 import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
+import { ImageSizeLimitError } from "@lotus-yunzai/skia";
 import { ZzzInlineImageLimitError } from "./challenge-card.ts";
 import { renderZzzClimbingTower, zzzClimbingTowerText } from "./climbing-tower-card.ts";
-import { renderZzzExploration, zzzExplorationText } from "./exploration-card.ts";
+import { createZzzExplorationRenderer, zzzExplorationText } from "./exploration-card.ts";
 import { renderZzzGameRecord } from "./game-record-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
 import { renderZzzHollowZero, zzzHollowText, zzzHollowTitles } from "./hollow-zero-card.ts";
@@ -255,19 +256,50 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     const changed = "绝区零档案已变化，请重新查询区域收集。";
     try {
       const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
-      const record = await client.fetchZzzExploration(source, { page, signal });
+      const record = await client.fetchZzzExploration(source, { page, whole: page === undefined, signal });
       if (record.status === "empty") return "暂无探索详情数据";
       const command = `%区域收集${profileId === 1 ? "" : profileId}`;
       if (record.page > record.pageCount) return `区域收集共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
-      const result = await renderZzzExploration(record, source.role, command,
-        { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit: context.inlineImageByteLimit })
-        .catch((error: unknown) => error instanceof ZzzInlineImageLimitError ? `${error.message}\n${zzzExplorationText(record, command)}` : undefined);
+      const renderer = createZzzExplorationRenderer(record, source.role, command, {
+        qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit: context.inlineImageByteLimit,
+      });
+      const render = (view: ZzzExplorationSnapshot) => renderer.then(draw => draw(view))
+        .catch((error: unknown) => error instanceof ZzzInlineImageLimitError || error instanceof ImageSizeLimitError ? error : undefined);
+      const result = await render(record);
+      if (signal.aborted) return [];
+      const body = (view: ZzzExplorationSnapshot, image: Awaited<ReturnType<typeof render>>) => {
+        if (image && !(image instanceof Error)) return { type: "image" as const, file: image.png };
+        const text = zzzExplorationText(view, command);
+        return image instanceof Error ? `图片超过当前会话大小上限，已改为文字。\n${text}` : text;
+      };
+      let reply;
+      if (page === undefined && result instanceof Error) {
+        const nodes: ReturnType<typeof body>[] = [];
+        async function include(view: ZzzExplorationSnapshot, image: Awaited<ReturnType<typeof render>>, rowLimit: number) {
+          if (signal.aborted) return;
+          if (image instanceof Error && rowLimit > 0) {
+            const parts = splitZzzExploration(view, rowLimit);
+            if (parts.length > 1) {
+              for (const part of parts) {
+                if (signal.aborted) return;
+                const section = { ...part, page: 1, pageCount: 1 };
+                await include(section, await render(section), Math.floor(rowLimit / 2));
+              }
+              return;
+            }
+            await include(view, image, Math.floor(rowLimit / 2));
+            return;
+          }
+          nodes.push(body(view, image));
+        }
+        await include(record, result, 7);
+        if (nodes.length > 1) reply = { type: "forward" as const, nodes: [`区域收集 · 共 ${nodes.length} 页`, ...nodes] };
+      }
       if (signal.aborted) return [];
       const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return [];
       if (active?.revision !== record.revision || active.role.uid !== record.uid) return changed;
-      if (typeof result === "string") return result;
-      return result ? { type: "image" as const, file: result.png } : zzzExplorationText(record, command);
+      return reply ?? body(record, result);
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {

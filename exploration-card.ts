@@ -1,15 +1,17 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import { zzzExplorationColumns as columns, type ZzzExplorationSnapshot } from "@lotus-yunzai/hoyo-client";
-import type { Image } from "skia-canvas";
+import type { CanvasRenderingContext2D, Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter,
   type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound, renderZzzBattlePng } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 1000;
-const mapHeight = 179;
-const rowHeight = 192;
-const start = 171;
+const start = 184.8;
+const side = 57;
+const areaWidth = width - 2 * side;
+const mapGap = 19.2;
+const mapWidth = (areaWidth - (columns - 1) * mapGap) / columns;
 const orange = "#ffa500";
 
 function percent(value?: string) {
@@ -37,7 +39,7 @@ export function zzzExplorationText(snapshot: ZzzExplorationSnapshot, command: st
   ]), continuation(snapshot, command)].filter(Boolean).join("\n");
 }
 
-export async function renderZzzExploration(snapshot: ZzzExplorationSnapshot, role: GameRole, command: string, options: ZzzCardOptions = {}) {
+export async function createZzzExplorationRenderer(snapshot: ZzzExplorationSnapshot, role: GameRole, command: string, options: ZzzCardOptions = {}) {
   const local = await openZzzCardTheme(options);
   const [background, player] = await Promise.all([
     local("common/images/bg.jpg"), loadZzzCardPlayer(local, options, role.avatar),
@@ -50,45 +52,77 @@ export async function renderZzzExploration(snapshot: ZzzExplorationSnapshot, rol
     await Promise.all(urls.slice(index, index + 8).map(async url => icons.set(url, await artwork(fetchZzzOfficialArtwork(url, options.signal)))));
   }
   options.signal?.throwIfAborted();
-  const heights = snapshot.areas.map(area => 65 + Math.ceil(area.maps.length / columns) * rowHeight);
+  return (view: ZzzExplorationSnapshot) => renderZzzExploration(view, role, command, background, player, icons, options);
+}
+
+function renderZzzExploration(snapshot: ZzzExplorationSnapshot, role: GameRole, command: string, background: Image | undefined,
+  player: Awaited<ReturnType<typeof loadZzzCardPlayer>>, icons: ReadonlyMap<string, Image | undefined>, options: ZzzCardOptions) {
+  options.signal?.throwIfAborted();
+  const layouts = snapshot.areas.map(area => {
+    const rows = Array.from({ length: Math.ceil(area.maps.length / columns) }, (_, row) =>
+      area.maps.slice(row * columns, (row + 1) * columns));
+    const heights = rows.map(row => row.some(map => map.collections.length === 4) ? 160.7 : 159.2);
+    return { area, rows, heights, height: 88.8 + heights.reduce((sum, value) => sum + value, 0) + Math.max(0, rows.length - 1) * mapGap };
+  });
   const follow = continuation(snapshot, command);
-  const height = start + 81 + heights.reduce((sum, value) => sum + value + 21, 0) + (follow ? 96 : 52);
+  const contentY = 303.8;
+  const contentHeight = layouts.reduce((sum, layout) => sum + layout.height, 0) + Math.max(0, layouts.length - 1) * 36;
+  const panelEnd = contentY + contentHeight + 33 + (follow ? 36 : 0);
+  const height = Math.round(panelEnd + 103.6);
   return renderZzzBattlePng(width, height, ctx => {
     box(ctx, "#1d1a24", 0, 0, width, height);
     if (background) cover(ctx, background, 0, 0, width, height);
-    drawZzzCardPlayer(ctx, role, snapshot.region, player);
-    fillRound(ctx, "#0009", 29, start, 942, height - start - 34, 17, "#444");
-    label(ctx, "区域收集", 58, start + 39, 36, { color: "#e6e6e6", weight: 700 });
-    if (snapshot.pageCount > 1) label(ctx, `${snapshot.page} / ${snapshot.pageCount}`, 938, start + 39, 23,
+    ctx.save();
+    ctx.translate(-48, 24);
+    drawZzzCardPlayer(ctx, role, snapshot.region, player, 1024);
+    ctx.restore();
+    fillRound(ctx, "#0009", 24, start, 952, panelEnd - start, 24);
+    ctx.beginPath();
+    ctx.roundRect(28.5, start + 4.5, 943, panelEnd - start - 9, 19.5);
+    ctx.lineWidth = 9;
+    ctx.strokeStyle = "#444";
+    ctx.stroke();
+    label(ctx, "区域收集", side + 2, 244.8, 36, { color: "#383434" });
+    label(ctx, "区域收集", side, 241.8, 36, { color: "#e6e6e6" });
+    if (snapshot.pageCount > 1) label(ctx, `${snapshot.page} / ${snapshot.pageCount}`, 943, 241.8, 23,
       { align: "right", color: "#aaa" });
-    box(ctx, "#444", 56, start + 64, 886, 2);
-    let y = start + 81;
-    for (const [index, area] of snapshot.areas.entries()) {
-      const areaHeight = heights[index]!;
-      fillRound(ctx, "#fff3", 56, y, 886, areaHeight, 12);
-      fillRound(ctx, "#ffffff0d", 56, y, 886, 49, 12);
-      label(ctx, areaName(area), 73, y + 25, 28, { color: "#e6e6e6", maxWidth: 700 });
-      label(ctx, percent(area.progress), 923, y + 25, 27, { align: "right", color: orange });
-      for (const [position, map] of area.maps.entries()) {
-        const x = 65 + position % columns * 292;
-        const top = y + 59 + Math.floor(position / columns) * rowHeight;
-        fillRound(ctx, "#ffffff0d", x, top, 283, mapHeight, 9);
-        if (map.name) label(ctx, map.name, x + 10, top + 20, 19, { color: "#e6e6e6", maxWidth: 258 });
-        const mapIcon = map.icon && icons.get(map.icon);
-        if (mapIcon) contain(ctx, mapIcon, x + 6, top + 47, 92, 84);
-        label(ctx, percent(map.progress), x + 52, top + 150, 23, { align: "center", color: orange });
-        for (const [i, item] of map.collections.entries()) {
-          const line = top + 41 + i * 31;
-          fillRound(ctx, "#0005", x + 104, line, 166, 26, 3);
-          const icon = item.icon && icons.get(item.icon);
-          if (icon) contain(ctx, icon, x + 106, line + 3, 21, 21);
-          else if (item.name) label(ctx, item.name, x + 109, line + 13, 13, { color: "#ddd", maxWidth: 67 });
-          label(ctx, progress(item), x + 264, line + 13, 17, { align: "right", maxWidth: icon ? 128 : 83 });
+    box(ctx, "#444", side, 277.8, areaWidth, 2);
+    let y = contentY;
+    for (const layout of layouts) {
+      const { area, rows, heights } = layout;
+      fillRound(ctx, "#fff3", side, y, areaWidth, layout.height, 12);
+      fillRound(ctx, "#ffffff0d", side, y, areaWidth, 64.8, 12);
+      label(ctx, areaName(area), 76.2, y + 32.4, 26.4, { color: "#e6e6e6", maxWidth: 700 });
+      label(ctx, percent(area.progress), 923.8, y + 32.4, 26.4, { align: "right", color: orange });
+      let top = y + 88.8;
+      for (const [row, maps] of rows.entries()) {
+        const rowHeight = heights[row]!;
+        for (const [column, map] of maps.entries()) {
+          drawMap(ctx, map, icons, side + column * (mapWidth + mapGap), top, rowHeight);
         }
+        top += rowHeight + mapGap;
       }
-      y += areaHeight + 21;
+      y += layout.height + 36;
     }
-    if (follow) label(ctx, follow, 61, y + 17, 23, { color: orange, maxWidth: 750 });
-    label(ctx, zzzCardFooter, width / 2, height - 17, 15, { align: "center", color: "#a09ca3" });
+    if (follow) label(ctx, follow, side, panelEnd - 45, 21.6, { color: orange, maxWidth: 750 });
+    label(ctx, zzzCardFooter, width / 2, height - 45, 16.8, { align: "center", color: "#797979" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
+}
+
+function drawMap(ctx: CanvasRenderingContext2D, map: ZzzExplorationSnapshot["areas"][number]["maps"][number],
+  icons: ReadonlyMap<string, Image | undefined>, x: number, top: number, height: number) {
+  fillRound(ctx, "#ffffff0d", x, top, mapWidth, height, 12);
+  const mapIcon = map.icon && icons.get(map.icon);
+  if (mapIcon) contain(ctx, mapIcon, x + 12, top + 12, 96, 96);
+  else if (map.name) label(ctx, map.name, x + 60, top + 60, 14, { color: "#ddd", align: "center", maxWidth: 93 });
+  label(ctx, percent(map.progress), x + 60, top + 131.2, 24, { align: "center", color: orange, maxWidth: 96 });
+  for (const [i, item] of map.collections.entries()) {
+    const line = top + 12 + i * 36;
+    fillRound(ctx, "#0005", x + 120, line, mapWidth - 132, 28.8, 2.4);
+    const icon = item.icon && icons.get(item.icon);
+    if (icon) contain(ctx, icon, x + 122.4, line + 2.4, 24, 24);
+    else if (item.name) label(ctx, item.name, x + 122.4, line + 14.4, 11, { color: "#ddd", maxWidth: 24 });
+    label(ctx, `${item.current ?? "—"}/${item.maximum ?? "—"}`, x + 148.8, line + 14.4, 18,
+      { color: "#e6e6e6", maxWidth: mapWidth - 162, ellipsis: false });
+  }
 }
