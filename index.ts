@@ -22,13 +22,14 @@ import { createZzzMonthlyCommands, zzzMonthlyCommand } from "./monthly-command.t
 import { rankCommand, towerRanks } from "./challenge-rank-model.ts";
 import { startZzzChallengeReminders, type ZzzReminderRuntime } from "./challenge-reminder-runtime.ts";
 import { createZzzChallengeReminders, zzzChallengeReminderCommand } from "./challenge-reminder.ts";
-import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
+import { createZzzChallengeRanks } from "./challenge-rank.ts";
 import { createZzzPanelRanks } from "./panel-rank.ts";
 import { zzzPanelRankCommand } from "./panel-rank-model.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
 import { createZzzPoolHistory, zzzPoolHistoryCommand } from "./pool-history.ts";
 import { createZzzCurrentPool, zzzCurrentPoolCommand } from "./current-pool.ts";
 import { createZzzRoleAliasCommands, zzzRoleAliasCommand } from "./role-alias-command.ts";
+import { createZzzRoleGallery, zzzRoleGalleryCommand, type ZzzRoleGalleryContext } from "./role-gallery.ts";
 import { renderZzzShiyu } from "./shiyu-card.ts";
 import { createZzzSkillReader } from "./skills-command.ts";
 import { zzzSkillCommand } from "./skills-data.ts";
@@ -85,7 +86,7 @@ function overseasRegion({ uid, region, gameBiz }: GameRole) {
   }
 }
 
-interface GachaContext extends ChallengeRankContext {
+interface GachaContext extends ZzzRoleGalleryContext {
   readonly adapter?: string;
   readonly normalizedMessage: string;
   readonly self_id?: number;
@@ -108,6 +109,7 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
   const reminder = createZzzChallengeReminders(profiles, client, signal);
   const panelRanks = createZzzPanelRanks(profiles, client, lockFile, signal);
   const roleAliases = createZzzRoleAliasCommands(signal);
+  const roleGallery = createZzzRoleGallery(signal);
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);
   const cinema = createZzzCinema(signal);
   const skills = createZzzSkillReader(signal);
@@ -461,6 +463,8 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
       return [];
     },
     async fallback(_message: string, context: GachaContext) {
+      const gallery = zzzRoleGalleryCommand(context.normalizedMessage);
+      if (gallery) return roleGallery(context, gallery);
       const alias = zzzRoleAliasCommand(context.normalizedMessage);
       if (alias) return roleAliases(context, alias);
       const rank = rankCommand(context.normalizedMessage);

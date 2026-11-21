@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProfileStore, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
+import { zzzCharacterGalleryRoot } from "@lotus-yunzai/atlas/gallery";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
 import { createProfileHoyoClient, GameRecordRequestError, HoyoRequestError } from "@lotus-yunzai/hoyo-client";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
@@ -146,8 +147,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   }, signal);
   const atlas = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
   const atlasPortrait = createZzzAtlasPortraitReader(atlas);
-  const galleryRoot = Bun.env.LOTUS_CHARACTER_GALLERY_DIR;
-  const galleryDirectory = galleryRoot ? join(galleryRoot, "zzz-character") : undefined;
+  const galleryDirectory = join(zzzCharacterGalleryRoot(), "zzz-character");
   const running = new Set<string>();
   const lastSuccess = new Map<string, number>();
 
