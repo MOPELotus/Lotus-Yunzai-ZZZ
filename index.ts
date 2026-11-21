@@ -10,6 +10,7 @@ import { readZzzFlatLegacyGacha, readZzzLegacyGachaSources, ZzzLegacyGachaError 
 import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
+import { ZzzInlineImageLimitError } from "./challenge-card.ts";
 import { renderZzzClimbingTower, zzzClimbingTowerText } from "./climbing-tower-card.ts";
 import { renderZzzExploration, zzzExplorationText } from "./exploration-card.ts";
 import { renderZzzGameRecord } from "./game-record-card.ts";
@@ -215,17 +216,18 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         return `迷宫诡域战绩共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
       }
       const pages = await renderZzzZenkov(record, source.role, command,
-        { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR }).catch(() => undefined);
+        { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit: context.inlineImageByteLimit })
+        .catch((error: unknown) => error instanceof ZzzInlineImageLimitError ? [`${error.message}\n${zzzZenkovText(record, command)}`] : undefined);
       if (signal.aborted) return [];
       const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return [];
       if (active?.revision !== record.revision || active.role.uid !== record.uid) return changed;
       if (!pages) return zzzZenkovText(record, command);
-      const images = pages.map(({ png }) => ({ type: "image" as const, file: png }));
-      if (images.length === 1) return images[0];
-      const followUp = zzzZenkovFollowUp(record, command, images.length);
-      const title = `迷宫诡域战绩 · ${images.length} 页${followUp ? `\n${followUp}` : ""}`;
-      return { type: "forward" as const, nodes: [title, ...images] };
+      const nodes = pages.map(page => typeof page === "string" ? page : ({ type: "image" as const, file: page.png }));
+      if (nodes.length === 1) return nodes[0];
+      const followUp = zzzZenkovFollowUp(record, command, nodes.length);
+      const title = `迷宫诡域战绩 · ${nodes.length} 页${followUp ? `\n${followUp}` : ""}`;
+      return { type: "forward" as const, nodes: [title, ...nodes] };
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
@@ -258,11 +260,13 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const command = `%区域收集${profileId === 1 ? "" : profileId}`;
       if (record.page > record.pageCount) return `区域收集共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
       const result = await renderZzzExploration(record, source.role, command,
-        { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR }).catch(() => undefined);
+        { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit: context.inlineImageByteLimit })
+        .catch((error: unknown) => error instanceof ZzzInlineImageLimitError ? `${error.message}\n${zzzExplorationText(record, command)}` : undefined);
       if (signal.aborted) return [];
       const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return [];
       if (active?.revision !== record.revision || active.role.uid !== record.uid) return changed;
+      if (typeof result === "string") return result;
       return result ? { type: "image" as const, file: result.png } : zzzExplorationText(record, command);
     } catch (error) {
       if (signal.aborted) return [];

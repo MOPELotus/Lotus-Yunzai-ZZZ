@@ -1,11 +1,11 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import { zzzZenkovPageSize as pageSize, type ZzzShiyuPortrait, type ZzzZenkovItem, type ZzzZenkovRank,
   type ZzzZenkovRun, type ZzzZenkovSnapshot } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
+import type { PngRender } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter,
   type ZzzCardOptions } from "./card-theme.ts";
-import { contain, drawPortrait, fillRound, loadChallengePortrait, rankBand, type ZzzChallengeArt } from "./challenge-card.ts";
+import { contain, drawPortrait, fillRound, loadChallengePortrait, rankBand, renderZzzBattlePng, ZzzInlineImageLimitError, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 type Summary = Extract<ZzzZenkovSnapshot, { kind: "summary" }>;
@@ -178,7 +178,7 @@ export async function renderZzzZenkov(snapshot: ZzzZenkovSnapshot, role: GameRol
     Array.from({ length: Math.max(1, Math.ceil(snapshot.records.length / pageSize)) },
       (_, index) => snapshot.records.slice(index * pageSize, (index + 1) * pageSize)) : [[]];
 
-  const output = [];
+  const output: (PngRender | string)[] = [];
   for (const [index, runs] of pages.entries()) {
     options.signal?.throwIfAborted();
     const assets = snapshot.kind === "summary" ? [...(snapshot.medals?.items ?? []), ...(snapshot.goods?.items ?? [])] :
@@ -192,14 +192,13 @@ export async function renderZzzZenkov(snapshot: ZzzZenkovSnapshot, role: GameRol
     await Promise.all(runs.flatMap(run => run.avatars.map(entry => loadChallengePortrait(entry, false, local, async url => icons.get(url), portraits))));
     options.signal?.throwIfAborted();
     if (snapshot.kind === "summary") {
-      output.push(await renderZenkovSummary(snapshot, role, art, player));
+      output.push(await renderZenkovSummary(snapshot, role, art, player, options.inlineImageByteLimit));
       continue;
     }
     const followUp = index === pages.length - 1 ? zzzZenkovFollowUp(snapshot, command, pages.length) : undefined;
     const recordsHeight = 108 + runs.reduce((sum, run) => sum + recordHeight(run) + 11, 0) + (followUp ? 29 : 0);
     const height = 280 + mapsHeight(snapshot) + recordsHeight;
-    output.push(await renderPng(width * 4, height * 4, ctx => {
-      ctx.scale(4, 4);
+    const rendered = await renderZzzBattlePng(width, height, ctx => {
       box(ctx, "#1d1a24", 0, 0, width, height);
       const background = art.local.get("common/images/bg.jpg");
       if (background) cover(ctx, background, 0, 0, width, height);
@@ -219,7 +218,12 @@ export async function renderZzzZenkov(snapshot: ZzzZenkovSnapshot, role: GameRol
       }
       if (followUp) label(ctx, followUp, 62, y + 17, 22, { color: gold, maxWidth: 700 });
       label(ctx, zzzCardFooter, 420, height - 17, 15, { align: "center", color: "#a09ca3" });
-    }, "gpu"));
+    }, 4, options.inlineImageByteLimit, { allowHalfScale: true }).catch((error: unknown) => {
+      if (!(error instanceof ZzzInlineImageLimitError)) throw error;
+      const page = { ...snapshot, firstPage: snapshot.firstPage + index, records: runs };
+      return `${error.message}\n${zzzZenkovText(page, command)}`;
+    });
+    output.push(rendered);
   }
   return output;
 }
@@ -392,7 +396,7 @@ function overviewCollection(ctx: Context, art: Assets, view: Collection, y: numb
 }
 
 async function renderZenkovSummary(snapshot: Summary, role: GameRole, art: Assets,
-  player: Awaited<ReturnType<typeof loadZzzCardPlayer>>) {
+  player: Awaited<ReturnType<typeof loadZzzCardPlayer>>, inlineImageByteLimit?: number) {
   const mapsTop = 273.8 + 212.4 + summaryGap + 315.4 + summaryGap;
   const mapMetrics = overviewMaps(snapshot);
   const collectionTop = mapsTop + mapMetrics.height + summaryGap;
@@ -401,8 +405,7 @@ async function renderZenkovSummary(snapshot: Summary, role: GameRole, art: Asset
     + summaryGap * Math.max(0, views.length - 1) + summaryInset;
   const contentEnd = views.length ? collectionTop + collectionHeight : mapsTop + mapMetrics.height;
   const height = Math.floor(contentEnd + 103.6);
-  return renderPng(summaryWidth * 4, height * 4, ctx => {
-    ctx.scale(4, 4);
+  return renderZzzBattlePng(summaryWidth, height, ctx => {
     box(ctx, "#1d1a24", 0, 0, summaryWidth, height);
     const background = art.local.get("common/images/bg.jpg");
     if (background) cover(ctx, background, 0, 0, summaryWidth, height);
@@ -424,5 +427,5 @@ async function renderZenkovSummary(snapshot: Summary, role: GameRole, art: Asset
       }
     }
     label(ctx, zzzCardFooter, summaryWidth / 2, height - 45, 16.8, { align: "center", color: "#797979" });
-  }, "gpu", { allowHalfScale: true });
+  }, 4, inlineImageByteLimit, { allowHalfScale: true });
 }

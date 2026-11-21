@@ -1,10 +1,9 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import { zzzExplorationColumns as columns, type ZzzExplorationSnapshot } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import type { Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter,
   type ZzzCardOptions } from "./card-theme.ts";
-import { contain, fillRound } from "./challenge-card.ts";
+import { contain, fillRound, renderZzzBattlePng } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 1000;
@@ -54,8 +53,7 @@ export async function renderZzzExploration(snapshot: ZzzExplorationSnapshot, rol
   const heights = snapshot.areas.map(area => 65 + Math.ceil(area.maps.length / columns) * rowHeight);
   const follow = continuation(snapshot, command);
   const height = start + 81 + heights.reduce((sum, value) => sum + value + 21, 0) + (follow ? 96 : 52);
-  return renderPng(width * 4, height * 4, ctx => {
-    ctx.scale(4, 4);
+  return renderZzzBattlePng(width, height, ctx => {
     box(ctx, "#1d1a24", 0, 0, width, height);
     if (background) cover(ctx, background, 0, 0, width, height);
     drawZzzCardPlayer(ctx, role, snapshot.region, player);
@@ -92,5 +90,5 @@ export async function renderZzzExploration(snapshot: ZzzExplorationSnapshot, rol
     }
     if (follow) label(ctx, follow, 61, y + 17, 23, { color: orange, maxWidth: 750 });
     label(ctx, zzzCardFooter, width / 2, height - 17, 15, { align: "center", color: "#a09ca3" });
-  }, "gpu");
+  }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

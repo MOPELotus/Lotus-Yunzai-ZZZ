@@ -101,20 +101,26 @@ export async function loadChallengePortrait(entry: ZzzShiyuPortrait | undefined,
 }
 
 
+export class ZzzInlineImageLimitError extends Error {
+  constructor() {
+    super("图片超过当前会话大小上限，已改为文字。");
+  }
+}
+
 export async function renderZzzBattlePng(width: number, height: number, draw: (context: Context) => void,
-  scale: 2 | 4, inlineImageByteLimit?: number) {
+  scale: 2 | 4, inlineImageByteLimit?: number, { allowHalfScale = false } = {}) {
   function render(density: 2 | 4) {
     return renderPng(width * density, height * density, context => {
       context.scale(density, density);
       draw(context);
-    }, "gpu");
+    }, "gpu", { allowHalfScale: density === 4 && allowHalfScale });
   }
 
   const image = await render(scale);
   if (inlineImageByteLimit === undefined || image.png.byteLength <= inlineImageByteLimit) return image;
-  if (scale === 4) {
+  if (scale === 4 && image.reducedScaleReason === undefined) {
     const reduced = await render(2);
     if (reduced.png.byteLength <= inlineImageByteLimit) return reduced;
   }
-  throw new Error("绝区零挑战卡超过当前会话的图片大小上限。");
+  throw new ZzzInlineImageLimitError();
 }

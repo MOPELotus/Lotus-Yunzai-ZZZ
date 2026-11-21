@@ -15,6 +15,7 @@ export interface ZzzCardOptions {
   readonly signal?: AbortSignal;
   readonly qq?: string;
   readonly rankVisibility?: boolean;
+  readonly inlineImageByteLimit?: number;
 }
 
 async function localPath(root: string | undefined, path: string) {
