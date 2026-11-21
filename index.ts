@@ -9,6 +9,7 @@ import { readZzzFlatLegacyGacha, readZzzLegacyGachaSources, ZzzLegacyGachaError 
 import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
+import { renderZzzClimbingTower, zzzClimbingTowerText } from "./climbing-tower-card.ts";
 import { renderZzzGameRecord } from "./game-record-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
 import { holoBossDuration, renderZzzHoloBoss } from "./holo-boss-card.ts";
@@ -39,7 +40,8 @@ const shiyuCommand = /^#绝区零(本期|当期|上期|往期)?(?:式舆防卫�
 const deadlyCommand = /^#绝区零(本期|当期|上期|往期)?(?:危局强袭战|危局|强袭战|强袭)\s*([1-9]\d{0,2})?$/u;
 const holoBossCommand = /^#绝区零(本期|当期|上期|往期)?(?:拟境湮灭战|拟境|湮灭战|湮灭)\s*([1-9]\d{0,2})?$/u;
 const voidFrontCommand = /^#绝区零(本期|当期|上期|往期)?(?:临界推演|临界|推演)\s*([1-9]\d{0,2})?$/u;
-const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
+const climbingTowerCommand = /^#绝区零(?:拟真鏖战试炼|鏖战|爬塔)\s*([1-9]\d{0,2})?$/u;
+const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|拟真鏖战试炼|鏖战|爬塔|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
 const help = [
   "绝区零抽卡记录",
   "%更新抽卡记录 同步国服米游社的六个频段。",
@@ -162,11 +164,12 @@ export function createModule({ signal, lockFile }: {
   }
 
   async function battleRecord(context: GachaContext, profileId: number, scheduleType: 1 | 2,
-    mode: "shiyu" | "deadly" | "holoBoss" | "voidFront") {
-    const name = { shiyu: "式舆防卫战", deadly: "危局强袭战", holoBoss: "拟境湮灭战", voidFront: "临界推演" }[mode];
+    mode: "shiyu" | "deadly" | "holoBoss" | "voidFront" | "climbingTower") {
+    const name = { shiyu: "式舆防卫战", deadly: "危局强袭战", holoBoss: "拟境湮灭战", voidFront: "临界推演",
+      climbingTower: "拟真鏖战试炼" }[mode];
     const { user_id: user } = context;
     if ((context.message_type !== "private" && context.message_type !== "group") ||
-        ((mode === "holoBoss" || mode === "voidFront") && context.isDelegated) ||
+        ((mode === "holoBoss" || mode === "voidFront" || mode === "climbingTower") && context.isDelegated) ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
       return `请从登录档案对应的 QQ 会话查询${name}。`;
     }
@@ -178,18 +181,20 @@ export function createModule({ signal, lockFile }: {
       const requestedAt = Date.now();
       const snapshot = await (mode === "shiyu" ? client.fetchZzzShiyu(source, request) :
         mode === "deadly" ? client.fetchZzzDeadly(source, request) :
-          mode === "holoBoss" ? client.fetchZzzHoloBoss(source, request) : client.fetchZzzVoidFront(source, request));
+          mode === "holoBoss" ? client.fetchZzzHoloBoss(source, request) :
+            mode === "voidFront" ? client.fetchZzzVoidFront(source, request) : client.fetchZzzClimbingTower(source, { signal }));
       if (snapshot.status === "older-format") return `${period}${name}使用旧版深渊战绩格式。`;
-      if (snapshot.status === "empty") return `${period}暂无${name}战绩。`;
+      if (snapshot.status === "empty") return mode === "climbingTower" ? "暂无爬塔数据" : `${period}暂无${name}战绩。`;
       async function stillActive() {
         const active = await profiles.requestContext(qq, profileId, "zzz").catch(() => undefined);
         return active?.revision === snapshot.revision && active.role.uid === snapshot.uid;
       }
-      const rankVisibility = "bosses" in snapshot || "stages" in snapshot ? undefined :
+      const rankVisibility = "bosses" in snapshot || "stages" in snapshot || "seasons" in snapshot ? undefined :
         await challengeRanks.remember(context, profileId, source.role, snapshot,
           mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive);
       const theme = { qq, signal, rankVisibility, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
-      const result = await ("stages" in snapshot ? renderZzzVoidFront(snapshot, source.role, theme) :
+      const result = await ("seasons" in snapshot ? renderZzzClimbingTower(snapshot, source.role, theme) :
+        "stages" in snapshot ? renderZzzVoidFront(snapshot, source.role, theme) :
         "bosses" in snapshot ? renderZzzHoloBoss(snapshot, source.role, theme) :
         "trial" in snapshot ? renderZzzDeadly(snapshot, source.role.nickname, theme) :
         renderZzzShiyu(snapshot, source.role, theme)).catch(() => undefined);
@@ -200,6 +205,7 @@ export function createModule({ signal, lockFile }: {
         return `绝区零档案已变化，请重新查询${name}。`;
       }
       if (result) return { type: "image" as const, file: result.png };
+      if ("seasons" in snapshot) return zzzClimbingTowerText(snapshot);
       if ("stages" in snapshot) {
         const stages = snapshot.finalStage ? [snapshot.finalStage, ...snapshot.stages] : snapshot.stages;
         return [`${name} · ${period}`, `总分 ${snapshot.totalScore ?? "—"}`,
@@ -357,6 +363,12 @@ export function createModule({ signal, lockFile }: {
       if (card) {
         const profileId = Number(card[1] ?? 1);
         if (profileId <= MAX_PROFILE_ID) return gameRecord(context, profileId);
+        return;
+      }
+      const tower = climbingTowerCommand.exec(command);
+      if (tower) {
+        const profileId = Number(tower[1] ?? 1);
+        if (profileId <= MAX_PROFILE_ID) return battleRecord(context, profileId, 1, "climbingTower");
         return;
       }
       const shiyu = shiyuCommand.exec(command);
