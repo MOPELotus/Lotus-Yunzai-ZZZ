@@ -16,7 +16,7 @@ interface TuningDetailCardOptions {
   readonly regionName?: string;
 }
 
-// Measurements from ZZZ-Plugin's gachalog and shared player-info layouts at a 24 px base font.
+// Original tuning history and shared player-info layouts use a 24 px base font.
 const width = 840;
 const margin = 24;
 const header = 196.796875;
