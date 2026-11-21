@@ -28,6 +28,7 @@ import { zzzPanelRankCommand } from "./panel-rank-model.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
 import { createZzzPoolHistory, zzzPoolHistoryCommand } from "./pool-history.ts";
 import { createZzzCurrentPool, zzzCurrentPoolCommand } from "./current-pool.ts";
+import { createZzzRoleAliasCommands, zzzRoleAliasCommand } from "./role-alias-command.ts";
 import { renderZzzShiyu } from "./shiyu-card.ts";
 import { createZzzSkillReader } from "./skills-command.ts";
 import { zzzSkillCommand } from "./skills-data.ts";
@@ -106,6 +107,7 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const reminder = createZzzChallengeReminders(profiles, client, signal);
   const panelRanks = createZzzPanelRanks(profiles, client, lockFile, signal);
+  const roleAliases = createZzzRoleAliasCommands(signal);
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);
   const cinema = createZzzCinema(signal);
   const skills = createZzzSkillReader(signal);
@@ -459,6 +461,8 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
       return [];
     },
     async fallback(_message: string, context: GachaContext) {
+      const alias = zzzRoleAliasCommand(context.normalizedMessage);
+      if (alias) return roleAliases(context, alias);
       const rank = rankCommand(context.normalizedMessage);
       if (rank) return challengeRanks.handle(context, rank);
       const panelRank = zzzPanelRankCommand(context.normalizedMessage);
