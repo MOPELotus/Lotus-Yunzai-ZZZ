@@ -105,7 +105,7 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
     createZzzMonthlyArchive(monthlyDirectory, legacyMonthly ? [legacyMonthly] : monthlyLegacyDirectories, lockFile), signal);
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const reminder = createZzzChallengeReminders(profiles, client, signal);
-  const panelRanks = createZzzPanelRanks(profiles, lockFile, signal);
+  const panelRanks = createZzzPanelRanks(profiles, client, lockFile, signal);
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);
   const cinema = createZzzCinema(signal);
   const skills = createZzzSkillReader(signal);

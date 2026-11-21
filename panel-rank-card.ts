@@ -90,7 +90,7 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
         ctx.restore();
       }
       lines.forEach((line, i) => text(ctx, line, x + 103, y + 8 + i * 24, 110, 18, theme.text, gold));
-      text(ctx, `${row.uid} · ${row.avatar.rank}影`, x + 103, y + 10 + lines.length * 24, 110, 12, theme.text);
+      text(ctx, `${row.uid} · ${row.avatar.rank}影`, x + 103, y + 10 + lines.length * 24, 119, row.uid.length === 10 ? 11 : 12, theme.text);
       skillNames.forEach((label, i) => {
         const xx = x + 224 + i * 37;
         text(ctx, label, xx + 18.5, y + 10, 37, 11, theme.text, "#fff", "center");

@@ -4,7 +4,7 @@ import { zzzPrefixedCommand } from "./panel-command.ts";
 import { buildZzzPanelDetail, panelInteger, panelObject } from "./panel-detail.ts";
 import { buildZzzPanelScore } from "./panel-score.ts";
 
-const visibility = /^(显示|隐藏|取消显示|关闭|开启)(?:群(?:内)?)?角色面板排名\s*([1-9]\d{0,2})?$/u;
+const visibility = /^(显示|隐藏|取消显示|关闭|开启)(?:群(?:内)?)?(国际服|海外服)?角色面板排名\s*([1-9]\d{0,2})?$/u;
 const query = /^([^\p{Cc}\p{Cf}]{1,80}?)(?:(?:面板|圣遗物|驱动盘)?(排名|排行|综合榜)|(?:圣遗物|驱动盘))\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,3}))?$/u;
 
 export function zzzPanelRankCommand(raw: string) {
@@ -12,8 +12,9 @@ export function zzzPanelRankCommand(raw: string) {
   if (!body || /^(?:更新|刷新)/u.test(body)) return;
   const action = visibility.exec(body);
   if (action) {
-    const profileId = Number(action[2] ?? 1);
-    if (profileId <= MAX_PROFILE_ID) return { kind: "visibility", enable: action[1] === "显示" || action[1] === "开启", profileId } as const;
+    const profileId = Number(action[3] ?? 1);
+    if (profileId <= MAX_PROFILE_ID) return { kind: "visibility", enable: action[1] === "显示" || action[1] === "开启",
+      profileId, ...(action[2] && { international: true as const }) } as const;
     return;
   }
   const match = query.exec(body);

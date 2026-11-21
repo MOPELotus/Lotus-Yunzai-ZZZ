@@ -1,16 +1,25 @@
 import { MAX_PROFILE_ID, type createProfileStore } from "@lotus-yunzai/account";
 import type { AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
-import { ownedRankRole, rankGroup, rankMembership, type ChallengeRankContext } from "./challenge-rank.ts";
+import type { createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
+import { rankGroup, rankMembership, type ChallengeRankContext } from "./challenge-rank.ts";
 import { readRankConfig } from "./challenge-rank-store.ts";
-import { rankIdentity } from "./challenge-rank-model.ts";
+import { createPanelRankIdentityReader, panelRankMode } from "./panel-rank-identity.ts";
 import { renderZzzPanelRank } from "./panel-rank-card.ts";
 import { buildZzzPanelRankRow, type zzzPanelRankCommand } from "./panel-rank-model.ts";
 import { createZzzPanelStorage } from "./panel-storage.ts";
 import { readZzzRoleAliases, zzzRoleAlias, zzzRoleName } from "./role-alias.ts";
 
 const rankKey = (group: string) => `lotus-yunzai:zzz-panel-ranks:${group}:owners`;
+const hideInternational = `
+local value = redis.call('HGET', KEYS[1], ARGV[1])
+if value and (value:match('^selected:') or value:match('^international:')) then
+  return redis.call('HDEL', KEYS[1], ARGV[1])
+end
+return 0
+`;
 
-export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileStore>, lock: AcquireRoleArchiveLock, signal: AbortSignal) {
+export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileStore>, client: ReturnType<typeof createProfileHoyoClient>,
+  lock: AcquireRoleArchiveLock, signal: AbortSignal) {
   const archive = createZzzPanelStorage(lock);
 
   return async (context: ChallengeRankContext, command: NonNullable<ReturnType<typeof zzzPanelRankCommand>>) => {
@@ -22,7 +31,7 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
     const key = rankKey(group);
     const participant = `${actor}:${command.profileId}`;
     const resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
-    const roleFor = (qq: string, profileId: number) => ownedRankRole(profiles, qq, profileId).catch(() => undefined);
+    const roleFor = createPanelRankIdentityReader(profiles, client, signal);
     try {
       const settings = await readRankConfig(group);
       if (!settings.allowed && (command.kind !== "visibility" || command.enable)) return "当前群角色面板排名功能已关闭！";
@@ -31,17 +40,26 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
 
       if (command.kind === "visibility" && !command.enable) {
         if (signal.aborted) return;
+        if (command.international) {
+          await redis.eval(hideInternational, { keys: [key], arguments: [participant] });
+          return "本群已隐藏该档案的国际服角色面板排名。";
+        }
         await redis.hDel(key, participant);
         return "本群已隐藏该档案的角色面板排名。";
       }
-      const requester = await roleFor(actor, command.profileId);
-      if (!requester) return "请先登录并选择已认证的国服绝区零角色。";
+      const requester = await (command.kind === "visibility" && command.international
+        ? roleFor(actor, command.profileId, "international")
+        : roleFor(actor, command.profileId));
+      const viewer = requester ?? (command.kind === "board" ? await roleFor(actor, command.profileId, "international") : undefined);
+      if (!viewer) return command.kind === "visibility" && command.international ?
+        "请先在私聊绑定已核验的国际服 Cookie，再在 HoYoLAB 选择要展示的绝区零角色。" :
+        "请先登录并选择已认证的绝区零角色。";
 
       if (command.kind === "visibility") {
-        const identity = rankIdentity(requester.role.uid, requester.role.region)!;
         if (signal.aborted) return;
-        await redis.hSet(key, participant, identity);
-        return `本群已显示该档案的角色面板排名。发送 %隐藏角色面板排名${command.profileId === 1 ? "" : command.profileId} 可撤回。`;
+        await redis.hSet(key, participant, viewer.value);
+        const label = panelRankMode(viewer.value) === "cn" ? "角色面板排名" : `国际服角色面板排名（UID ${viewer.uid}）`;
+        return `本群已显示该档案的${label}。发送 %隐藏角色面板排名${command.profileId === 1 ? "" : command.profileId} 可撤回。`;
       }
 
       const aliases = await readZzzRoleAliases(resources).catch(() => undefined);
@@ -53,15 +71,17 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
         const owner = /^([1-9]\d{0,15}):([1-9]\d{0,2})$/u.exec(field);
         if (!owner || !members.has(owner[1]!) || Number(owner[2]) > MAX_PROFILE_ID) continue;
         const [qq, profileId] = [owner[1]!, Number(owner[2])];
-        const source = await roleFor(qq, profileId);
-        if (!source || rankIdentity(source.role.uid, source.role.region) !== value) continue;
-        const { uid, region } = source.role;
+        const mode = panelRankMode(value);
+        if (!mode) continue;
+        const source = await roleFor(qq, profileId, mode);
+        if (!source || source.value !== value) continue;
+        const { uid, region } = source;
         const avatars = await archive.read({ qq, uid, region }).catch(() => []);
         for (const avatar of avatars) {
           const names = [avatar.name_mi18n, avatar.full_name_mi18n];
           if (!names.some(candidate => candidate && zzzRoleName(candidate) === name)) continue;
           matches.add(avatar.id);
-          rows.push({ ...buildZzzPanelRankRow(avatar), uid, qq, profileId, value, field, revision: source.revision });
+          rows.push({ ...buildZzzPanelRankRow(avatar), uid, qq, profileId, value, field, region, revision: source.revision });
         }
       }
       if (matches.size > 1) return "有多个同名代理人，请输入完整名称。";
@@ -69,8 +89,9 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       rows.sort((a, b) => b[mode] - a[mode] || a.qq.localeCompare(b.qq, "en") || a.profileId - b.profileId);
       const seen = new Set<string>();
       const unique = rows.filter(row => {
-        if (seen.has(row.value)) return false;
-        seen.add(row.value);
+        const identity = `${row.region}:${row.uid}`;
+        if (seen.has(identity)) return false;
+        seen.add(identity);
         return true;
       });
       if (!unique.length) return "本群暂无已授权的该角色面板。发送 %显示角色面板排名 可加入。";
@@ -85,11 +106,11 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
         { offset: first, weighted: command.weighted, next, legacyResources: resources, signal }).catch(() => undefined);
       if (signal.aborted) return;
       const [currentMembers, currentRequester, currentSettings, activeRows] = await Promise.all([
-        rankMembership(context, actor), roleFor(actor, command.profileId), readRankConfig(group),
-        Promise.all(selected.map(row => roleFor(row.qq, row.profileId))),
+        rankMembership(context, actor), roleFor(actor, command.profileId, panelRankMode(viewer.value), viewer.revision), readRankConfig(group),
+        Promise.all(selected.map(row => roleFor(row.qq, row.profileId, panelRankMode(row.value), row.revision))),
       ]);
-      if (!currentMembers || currentRequester?.revision !== requester.revision || !currentSettings.allowed ||
-          selected.some((row, index) => !currentMembers.has(row.qq) || row.revision !== activeRows[index]?.revision)) return changed;
+      if (!currentMembers || currentRequester?.value !== viewer.value || !currentSettings.allowed ||
+          selected.some((row, index) => !currentMembers.has(row.qq) || row.value !== activeRows[index]?.value)) return changed;
       const visible = await redis.hmGet(key, selected.map(row => row.field));
       if (visible.some((value, index) => value !== selected[index]!.value)) return changed;
       if (signal.aborted) return;
