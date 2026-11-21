@@ -6,6 +6,7 @@ import { zzzCharacterGalleryRoot } from "@lotus-yunzai/atlas/gallery";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
 import { createProfileHoyoClient, GameRecordRequestError, HoyoRequestError } from "@lotus-yunzai/hoyo-client";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
+import { ImageSizeLimitError } from "@lotus-yunzai/skia";
 import type { AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
 import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
 import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
@@ -243,6 +244,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
           "未找到面板数据，请先%更新面板或%更新展柜面板。";
         const { png } = await renderZzzProficiency(buildZzzProficiency(rows), display, {
           legacyResources: resources, signal, atlasPortrait, source: local.length ? "local" : "showcase",
+          inlineImageByteLimit: context.inlineImageByteLimit,
         });
         await sameRole();
         return { type: "image" as const, file: png };
@@ -392,7 +394,10 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       }
       if (error instanceof HoyoRequestError && error.code === "profile-changed") return "绝区零档案角色已变化，请重新操作。";
       if (command.kind === "showcase-update") return "绝区零公开展柜暂时无法更新。";
-      if (command.kind === "proficiency") return "绝区零练度统计暂时无法查询。";
+      if (command.kind === "proficiency") {
+        if (error instanceof ImageSizeLimitError) return "绝区零练度统计超过当前会话的图片大小上限。";
+        return "绝区零练度统计暂时无法查询。";
+      }
       return command.kind === "update" ? "绝区零面板暂时无法更新。" : "绝区零面板暂时无法查询。";
     }
   };

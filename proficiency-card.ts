@@ -1,5 +1,5 @@
 import type { GameRole } from "@lotus-yunzai/account";
-import { renderPng } from "@lotus-yunzai/skia";
+import { ImageSizeLimitError, renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, zzzScoreColors } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
@@ -15,6 +15,7 @@ type Options = {
   readonly legacyResources?: string;
   readonly signal?: AbortSignal;
   readonly atlasPortrait?: ZzzAtlasPortraitReader;
+  readonly inlineImageByteLimit?: number;
 };
 type RowArtwork = { portrait?: Image; weapon?: Image };
 const width = 840;
@@ -159,8 +160,7 @@ export async function renderZzzProficiency(model: Proficiency, role: GameRole, o
   const art = await loadProficiencyArt(model, options);
   options.signal?.throwIfAborted();
   const height = Math.round(listTop + model.total * (rowHeight + gap) + 68);
-  return renderPng(width * 4, height * 4, context => {
-    context.scale(4, 4);
+  function draw(context: Context) {
     box(context, "#1d1b20", 0, 0, width, height);
     if (art.background) cover(context, art.background, 0, 0, width, height);
     const shade = context.createLinearGradient(0, 0, 0, height);
@@ -193,5 +193,21 @@ export async function renderZzzProficiency(model: Proficiency, role: GameRole, o
     });
     for (const [index, row] of model.rows.entries()) drawRow(context, row, art.art[index]!, art, listTop + (rowHeight + gap) * index);
     label(context, zzzCardFooter, 420, height - 48, 17, { align: "center", color: "#a09ca3" });
-  }, "gpu");
+  }
+
+  const image = await renderPng(width * 4, height * 4, context => {
+    context.scale(4, 4);
+    draw(context);
+  }, "gpu", { allowHalfScale: true });
+  const limit = options.inlineImageByteLimit;
+  if (limit === undefined || image.png.byteLength <= limit) return image;
+  if (!image.reducedScaleReason) {
+    options.signal?.throwIfAborted();
+    const reduced = await renderPng(width * 2, height * 2, context => {
+      context.scale(2, 2);
+      draw(context);
+    }, "gpu");
+    if (reduced.png.byteLength <= limit) return reduced;
+  }
+  throw new ImageSizeLimitError("绝区零练度统计超过当前会话的图片大小上限。");
 }
