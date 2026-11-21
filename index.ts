@@ -490,7 +490,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const remind = zzzChallengeReminderCommand(context.normalizedMessage);
       if (remind) return reminder(context, remind);
       const cinemaQuery = zzzCinemaCommand(context.normalizedMessage);
-      if (cinemaQuery) return cinema(cinemaQuery);
+      if (cinemaQuery) return cinema(cinemaQuery, { inlineImageByteLimit: context.inlineImageByteLimit });
       const skillQuery = zzzSkillCommand(context.normalizedMessage);
       if (skillQuery) return skills(skillQuery);
       const panel = zzzPanelCommand(context.normalizedMessage, context.message_type === "group");

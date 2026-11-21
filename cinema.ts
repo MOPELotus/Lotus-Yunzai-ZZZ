@@ -1,9 +1,9 @@
 import { fileURLToPath } from "node:url";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
 import { readAtlasGalleryImage } from "@lotus-yunzai/atlas/gallery";
-import { renderPng } from "@lotus-yunzai/skia";
 import { Canvas, loadImage, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
 import { box, cover, label, openZzzCardTheme, zzzCardFooter } from "./card-theme.ts";
+import { renderZzzBattlePng, ZzzInlineImageLimitError } from "./challenge-card.ts";
 import { zzzPrefixedCommand } from "./panel-command.ts";
 import { readPanelJson } from "./panel-storage.ts";
 import { panelObject } from "./panel-detail.ts";
@@ -76,7 +76,7 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
   readonly avatar?: Image;
   readonly illustration?: Image;
   readonly impressions: readonly string[];
-}) {
+}, inlineImageByteLimit?: number) {
   const measurement = new Canvas(1, 1).getContext("2d");
   const impressions = source.impressions.flatMap(value => wrapZzzWikiText(measurement, value, 642, impressionFont));
   const header = Math.max(168, 92 + impressions.length * impressionLineHeight);
@@ -87,8 +87,7 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
   const artWidth = artwork && Math.min(width - 2 * inset, artwork.width);
   const artHeight = artwork && artWidth ? artWidth * artwork.height / artwork.width : 0;
   const height = Math.ceil(header + 108 + rowHeights.reduce((sum, row) => sum + row, 0) + artHeight + 116);
-  return renderPng(width * 4, height * 4, context => {
-    context.scale(4, 4);
+  return renderZzzBattlePng(width, height, context => {
     box(context, "#191722", 0, 0, width, height);
     if (source.background) cover(context, source.background, 0, 0, width, height);
     if (source.avatar) {
@@ -129,12 +128,15 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
     }
     label(context, "数据来源于 Nanoka", width / 2, height - 71, 20, { color: "#a09ca3", align: "center" });
     label(context, zzzCardFooter, width / 2, height - 28, 18, { color: "#a09ca3", align: "center" });
-  });
+  }, 4, inlineImageByteLimit, { allowHalfScale: true });
 }
 
 export function createZzzCinema(signal: AbortSignal) {
   const catalog = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
-  return async (query: string, resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR) => {
+  return async (query: string, { resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit }: {
+    readonly resources?: string;
+    readonly inlineImageByteLimit?: number;
+  } = {}) => {
     try {
       const [snapshot, aliases] = await Promise.all([catalog.read(), readZzzRoleAliases(resources).catch(() => undefined)]);
       const matches = findTraditionalEntries(snapshot, zzzRoleAlias(aliases, query) ?? query, "zzz", "character");
@@ -159,8 +161,16 @@ export function createZzzCinema(signal: AbortSignal) {
         oldImpressions(resources, entry.id),
       ]);
       if (signal.aborted) return [];
-      const { png } = await renderCinema(entry.name, role.overview.name, ranks, { background, avatar, illustration, impressions });
-      return signal.aborted ? [] : { type: "image" as const, file: png };
+      try {
+        const { png } = await renderCinema(entry.name, role.overview.name, ranks,
+          { background, avatar, illustration, impressions }, inlineImageByteLimit);
+        return signal.aborted ? [] : { type: "image" as const, file: png };
+      } catch (error) {
+        if (!(error instanceof ZzzInlineImageLimitError)) throw error;
+        if (signal.aborted) return [];
+        return [`${entry.name}意象影画`, error.message,
+          ...ranks.map(rank => `${rank.rank}. ${rank.name}\n${rank.description}`)].join("\n\n");
+      }
     } catch {
       return signal.aborted ? [] : "绝区零意象影画暂时无法查看。";
     }
