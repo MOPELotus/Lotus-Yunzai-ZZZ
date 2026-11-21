@@ -11,6 +11,7 @@ export interface ChallengeReminderPreferences {
 
 export interface ChallengeReminderUser extends ChallengeReminderPreferences {
   readonly enable: boolean;
+  readonly botId?: number;
 }
 
 export interface ChallengeReminderDefaults {
@@ -35,8 +36,36 @@ end
 return 0
 `;
 
+const finishSlot = `
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
+redis.call('SET', KEYS[1], 'finished', 'EX', 172800)
+return 1
+`;
+const releaseSlot = `
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+  redis.call('DEL', KEYS[1])
+end
+`;
+
+const reminderTimePattern = /^(每日|每周[日天一二三四五六])(\d{1,2})时(?:(\d{1,2})分)?$/u;
+const shanghaiClock = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", hourCycle: "h23", weekday: "short",
+});
+const weekNames: Record<string, string> = { Sun: "日", Mon: "一", Tue: "二", Wed: "三", Thu: "四", Fri: "五", Sat: "六" };
+
+export function challengeReminderWindow(input: string, now: number) {
+  const rule = reminderTimePattern.exec(input);
+  if (!rule) return;
+  const parts = Object.fromEntries(shanghaiClock.formatToParts(now).map(({ type, value }) => [type, value]));
+  const weekday = rule[1]?.slice(2).replace("天", "日");
+  if (weekday && weekday !== weekNames[parts.weekday ?? ""]) return;
+  const elapsed = Number(parts.hour) * 60 + Number(parts.minute) - (Number(rule[2]) * 60 + Number(rule[3] ?? 0));
+  if (elapsed >= 0 && elapsed < 10) return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 export function challengeReminderTime(input: string): { readonly time: string; readonly error?: never } | { readonly error: string; readonly time?: never } {
-  const match = /^(每日|每周[日天一二三四五六])(\d{1,2})时(?:(\d{1,2})分)?$/u.exec(input);
+  const match = reminderTimePattern.exec(input);
   if (!match) return { error: "时间格式错误，请使用每日20时或每周五20时30分。" } as const;
   const hour = Number(match[2]), minute = Number(match[3] || 0);
   if (hour > 23) return { error: "小时必须在 0 到 23 之间。" } as const;
@@ -56,12 +85,14 @@ function time(value: unknown) {
   if (typeof value === "string" && value.length <= 32) return challengeReminderTime(value).time;
 }
 
-function parseUser(raw: string | null | undefined): ChallengeReminderUser | undefined {
+function parseUser(raw: string | null | undefined, useBinding: boolean): ChallengeReminderUser | undefined {
   if (!raw || raw.length > 4096) return;
   try {
     const doc = object(JSON.parse(raw));
-    if (typeof doc.enable !== "boolean") return;
-    return { enable: doc.enable, abyssCheckLevel: count(doc.abyssCheckLevel, 6), deadlyStars: count(doc.deadlyStars, 9), remindTime: time(doc.remindTime) };
+    const botId = useBinding ? count(doc.botId, Number.MAX_SAFE_INTEGER) : undefined;
+    if (typeof doc.enable !== "boolean" || (useBinding && doc.botId !== undefined && !botId)) return;
+    return { enable: doc.enable, abyssCheckLevel: count(doc.abyssCheckLevel, 6), deadlyStars: count(doc.deadlyStars, 9),
+      remindTime: time(doc.remindTime), botId };
   } catch {
     return;
   }
@@ -79,8 +110,8 @@ async function readOldSettings(path: string) {
 export function createZzzChallengeReminderStore(redis: Redis, configPath = Bun.env.LOTUS_ZZZ_LEGACY_REMIND_CONFIG || oldSettings) {
   async function readUser(qq: string) {
     const modern = await redis.hGet(users, qq);
-    if (modern != null) return { modern, value: parseUser(modern) };
-    return { modern, value: parseUser(await redis.hGet(oldUsers, qq)) };
+    if (modern != null) return { modern, value: parseUser(modern, true) };
+    return { modern, value: parseUser(await redis.hGet(oldUsers, qq), false) };
   }
 
   return {
@@ -101,6 +132,24 @@ export function createZzzChallengeReminderStore(redis: Redis, configPath = Bun.e
     },
     async user(qq: string) {
       return (await readUser(qq)).value;
+    },
+    async *subscriberIds() {
+      for (const key of [users, oldUsers]) {
+        for await (const { field, value } of redis.hScanIterator(key, { COUNT: 100 })) {
+          if (!/^[1-9]\d{0,15}$/u.test(field) || !Number.isSafeInteger(Number(field)) || !parseUser(value, key === users)?.enable) continue;
+          if (key === oldUsers && await redis.hExists(users, field)) continue;
+          yield field;
+        }
+      }
+    },
+    async claim(qq: string, day: string) {
+      const key = `lotus-yunzai:zzz-challenge-reminders:dispatch:${day}:${qq}`;
+      const token = crypto.randomUUID();
+      if (await redis.set(key, token, { NX: true, EX: 90 }) !== "OK") return;
+      return {
+        async finish() { return await redis.eval(finishSlot, { keys: [key], arguments: [token] }) === 1; },
+        async release() { await redis.eval(releaseSlot, { keys: [key], arguments: [token] }); },
+      };
     },
     async updateUser(qq: string, update: (current: ChallengeReminderUser) => ChallengeReminderUser | undefined,
       initial?: Pick<ChallengeReminderDefaults, "abyssCheckLevel" | "deadlyStars">) {

@@ -6,6 +6,7 @@ import { challengeReminderTime, createZzzChallengeReminderStore, type ChallengeR
 interface ReminderContext {
   readonly message_type?: string;
   readonly user_id?: number;
+  readonly self_id?: number;
   readonly isMaster?: boolean;
   readonly adapter?: string;
   readonly isBotMaster?: (userId: number) => boolean;
@@ -38,7 +39,7 @@ export function zzzChallengeReminderCommand(text: string) {
   }
 }
 
-function effective(global: ChallengeReminderDefaults, user?: ChallengeReminderPreferences) {
+export function effectiveChallengeReminder(global: ChallengeReminderDefaults, user?: ChallengeReminderPreferences) {
   return {
     abyssCheckLevel: user?.abyssCheckLevel ?? global.abyssCheckLevel,
     deadlyStars: user?.deadlyStars ?? global.deadlyStars,
@@ -46,17 +47,25 @@ function effective(global: ChallengeReminderDefaults, user?: ChallengeReminderPr
   };
 }
 
-function summary({ abyssCheckLevel, deadlyStars, remindTime }: ReturnType<typeof effective>) {
+function summary({ abyssCheckLevel, deadlyStars, remindTime }: ReturnType<typeof effectiveChallengeReminder>) {
   const abyss = abyssCheckLevel === 0 ? "式舆防卫战不提醒" :
     `防卫战S评级<${Math.min(abyssCheckLevel, 5)}层${abyssCheckLevel === 6 ? "或第五层<S+评价" : ""}进行提醒`;
   const deadly = deadlyStars === 0 ? "危局强袭战不提醒" : `危局<${deadlyStars}星进行提醒`;
   return `提醒时间: ${remindTime}，${abyss}，${deadly}`;
 }
 
+function chinaTime(value: string) {
+  return Date.parse(value.replace(" ", "T") + "+08:00");
+}
+
+function inPeriod(period: ZzzDeadlySnapshot["period"], now: number) {
+  return !period || (chinaTime(period.start) <= now && now <= chinaTime(period.end));
+}
+
 function periodLines(period: ZzzDeadlySnapshot["period"], now: number) {
   if (!period) return [];
   const day = (value: string) => value.slice(0, 10).split("-").map(Number).join("/");
-  const end = Date.parse(period.end.replace(" ", "T") + "+08:00");
+  const end = chinaTime(period.end);
   const hours = Math.max(0, Math.floor((end - now) / 3_600_000));
   return [`统计周期：${day(period.start)} - ${day(period.end)}`, `刷新剩余: ${Math.floor(hours / 24)}天${hours % 24}小时`];
 }
@@ -67,31 +76,37 @@ function statusFailure(name: string, error: unknown) {
 
 export function renderZzzChallengeStatus(
   status: Awaited<ReturnType<ReturnType<typeof createProfileHoyoClient>["fetchZzzChallengeStatus"]>>,
-  preferences: Pick<ChallengeReminderDefaults, "abyssCheckLevel" | "deadlyStars">, now = Date.now(),
+  preferences: Pick<ChallengeReminderDefaults, "abyssCheckLevel" | "deadlyStars">, now = Date.now(), onlyIncomplete = false,
 ) {
   const { shiyu, deadly } = status;
   const lines: string[] = [];
-  if (shiyu.status === "rejected") lines.push(statusFailure("式舆防卫战", shiyu.reason));
-  else {
+  if (shiyu.status === "rejected" && !onlyIncomplete) lines.push(statusFailure("式舆防卫战", shiyu.reason));
+  if (shiyu.status === "fulfilled") {
     const result: ZzzShiyuSnapshot = shiyu.value;
-    if (result.status === "older-format") lines.push("本期式舆防卫战使用旧版深渊战绩格式。");
-    else {
+    if (result.status === "older-format") {
+      if (!onlyIncomplete) lines.push("本期式舆防卫战使用旧版深渊战绩格式。");
+    } else {
       const count = result.clearedSRanks ?? (result.status === "empty" ? 0 : undefined);
       const fifth = result.overall?.rating;
       const target = preferences.abyssCheckLevel;
       const passed = !!target && count !== undefined && (target === 6 ? count === 5 && fifth === "S+" : count >= target);
-      lines.push(`式舆防卫战S评级: ${count ?? "—"}/5${passed ? " ✓" : ""}`);
-      if (fifth || target === 0 || target === 6) lines.push(`第五层评价: ${fifth ?? "无"}${passed && target === 6 ? " ✓" : ""}`);
-      lines.push(...periodLines(result.period, now));
+      if (!onlyIncomplete || (target > 0 && count !== undefined && !passed && inPeriod(result.period, now))) {
+        lines.push(`式舆防卫战S评级: ${count ?? "—"}/5${passed ? " ✓" : ""}`);
+        if (fifth || target === 0 || target === 6) lines.push(`第五层评价: ${fifth ?? "无"}${passed && target === 6 ? " ✓" : ""}`);
+        lines.push(...periodLines(result.period, now));
+      }
     }
   }
 
-  if (deadly.status === "rejected") lines.push(statusFailure("危局强袭战", deadly.reason));
-  else {
+  if (deadly.status === "rejected" && !onlyIncomplete) lines.push(statusFailure("危局强袭战", deadly.reason));
+  if (deadly.status === "fulfilled") {
     const result = deadly.value;
     const stars = result.totalStars ?? (result.status === "empty" ? 0 : undefined);
-    const passed = !!preferences.deadlyStars && stars !== undefined && stars >= preferences.deadlyStars;
-    lines.push(`危局强袭战星数: ${stars ?? "—"}/9${passed ? " ✓" : ""}`, ...periodLines(result.period, now));
+    const target = preferences.deadlyStars;
+    const passed = !!target && stars !== undefined && stars >= target;
+    if (!onlyIncomplete || (target > 0 && stars !== undefined && !passed && inPeriod(result.period, now))) {
+      lines.push(`危局强袭战星数: ${stars ?? "—"}/9${passed ? " ✓" : ""}`, ...periodLines(result.period, now));
+    }
   }
   return lines.join("\n");
 }
@@ -120,7 +135,7 @@ export function createZzzChallengeReminders(profiles: ReturnType<typeof createPr
         const { profileId } = command;
         const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
         if (source.role.gameBiz !== "nap_cn") return "挑战状态暂支持国服绝区零角色。";
-        const preferences = effective(global, await store.user(qq));
+        const preferences = effectiveChallengeReminder(global, await store.user(qq));
         if (signal.aborted) return;
         await context.reply("正在查询，请稍候...");
         const result = await client.fetchZzzChallengeStatus(source, { signal });
@@ -135,9 +150,9 @@ export function createZzzChallengeReminders(profiles: ReturnType<typeof createPr
         if (command.global) return `当前全局提醒时间: ${global.remindTime}`;
         const user = await store.user(qq);
         const time = user?.remindTime ? `当前个人提醒时间: ${user.remindTime}` : `个人提醒时间未设置，默认使用全局时间: ${global.remindTime}`;
-        return user ? `${time}\n当前提醒功能已${user.enable ? `开启\n${summary(effective(global, user))}` : "关闭"}` : time;
+        return user ? `${time}\n当前提醒功能已${user.enable ? `开启\n${summary(effectiveChallengeReminder(global, user))}` : "关闭"}` : time;
       }
-      if (!command.global) {
+      if (!command.global && !(command.kind === "enable" && !command.enabled)) {
         if (!global.enable) return "当前未启用防卫战/危局挑战提醒功能";
         if (!await context.isFriend?.().catch(() => false)) return "请添加好友后重试";
         if (signal.aborted) return;
@@ -149,14 +164,17 @@ export function createZzzChallengeReminders(profiles: ReturnType<typeof createPr
           await store.updateGlobal("enable", command.enabled);
           return `全局防卫战/危局挑战提醒功能已${command.enabled ? "启用" : "禁用"}`;
         }
+        const botId = context.self_id;
         if (command.enabled) {
+          if (!botId || !Number.isSafeInteger(botId) || botId < 1 || botId === context.user_id) return "无法确认当前提醒机器人。";
           const source = await profiles.requestSelectedContext(qq, 1, "zzz");
           if (source.role.gameBiz !== "nap_cn") return "请先选择已认证的国服绝区零角色，再开启挑战提醒。";
         }
         if (signal.aborted) return;
-        const changed = await updateUser(user => user.enable === command.enabled ? undefined : { ...user, enable: command.enabled });
+        const changed = await updateUser(user => user.enable === command.enabled && (!command.enabled || user.botId === botId) ?
+          undefined : { ...user, enable: command.enabled, botId: command.enabled ? botId : undefined });
         if (!changed) return command.enabled ? "提醒已开启，请勿重复操作" : "提醒功能尚未开启";
-        return `提醒功能已${command.enabled ? `开启，${summary(effective(global, changed))}` : "关闭"}`;
+        return `提醒功能已${command.enabled ? `开启，${summary(effectiveChallengeReminder(global, changed))}` : "关闭"}`;
       }
       if (command.kind === "threshold") {
         const shiyu = command.field === "abyssCheckLevel";

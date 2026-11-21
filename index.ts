@@ -20,6 +20,7 @@ import { createZzzCinema, zzzCinemaCommand } from "./cinema.ts";
 import { createZzzMonthlyArchive } from "./monthly-archive.ts";
 import { createZzzMonthlyCommands, zzzMonthlyCommand } from "./monthly-command.ts";
 import { rankCommand, towerRanks } from "./challenge-rank-model.ts";
+import { startZzzChallengeReminders, type ZzzReminderRuntime } from "./challenge-reminder-runtime.ts";
 import { createZzzChallengeReminders, zzzChallengeReminderCommand } from "./challenge-reminder.ts";
 import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
@@ -90,9 +91,10 @@ interface GachaContext extends ChallengeRankContext {
   reply(message: string | { readonly type: "image"; readonly file: Uint8Array }): unknown;
 }
 
-export function createModule({ signal, lockFile }: {
+export function createModule({ signal, lockFile, zzzReminderRuntime }: {
   signal: AbortSignal;
   lockFile: Parameters<typeof createZzzTuningSync>[3];
+  zzzReminderRuntime?: ZzzReminderRuntime;
 }) {
   const profiles = createProfileStore(Bun.env.LOTUS_PROFILE_DIR || undefined);
   const client = createProfileHoyoClient(profiles);
@@ -441,8 +443,10 @@ export function createModule({ signal, lockFile }: {
     }
   }
 
+  const dispose = zzzReminderRuntime && startZzzChallengeReminders(profiles, client, zzzReminderRuntime, signal);
   return {
     commands: {},
+    dispose,
     gachaUpdate,
     fallbackFeatures(context: Pick<GachaContext, "normalizedMessage">) {
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
