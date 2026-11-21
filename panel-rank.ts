@@ -1,9 +1,8 @@
 import { MAX_PROFILE_ID, type createProfileStore } from "@lotus-yunzai/account";
 import type { AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
-import type { createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
 import { rankGroup, rankMembership, type ChallengeRankContext } from "./challenge-rank.ts";
 import { readRankConfig } from "./challenge-rank-store.ts";
-import { createPanelRankIdentityReader, panelRankMode } from "./panel-rank-identity.ts";
+import { createPanelRankIdentityReader, panelRankMode, type ZzzPanelRankRoleReader } from "./panel-rank-identity.ts";
 import { renderZzzPanelRank } from "./panel-rank-card.ts";
 import { buildZzzPanelRankRow, type zzzPanelRankCommand } from "./panel-rank-model.ts";
 import { createZzzPanelStorage } from "./panel-storage.ts";
@@ -18,8 +17,8 @@ end
 return 0
 `;
 
-export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileStore>, client: ReturnType<typeof createProfileHoyoClient>,
-  lock: AcquireRoleArchiveLock, signal: AbortSignal) {
+export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileStore>,
+  openHoYoLabZzzCheckin: ZzzPanelRankRoleReader, lock: AcquireRoleArchiveLock, signal: AbortSignal) {
   const archive = createZzzPanelStorage(lock);
 
   return async (context: ChallengeRankContext, command: NonNullable<ReturnType<typeof zzzPanelRankCommand>>) => {
@@ -31,7 +30,7 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
     const key = rankKey(group);
     const participant = `${actor}:${command.profileId}`;
     const resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
-    const roleFor = createPanelRankIdentityReader(profiles, client, signal);
+    const roleFor = createPanelRankIdentityReader(profiles, { openHoYoLabZzzCheckin }, signal);
     try {
       const settings = await readRankConfig(group);
       if (!settings.allowed && (command.kind !== "visibility" || command.enable)) return "当前群角色面板排名功能已关闭！";

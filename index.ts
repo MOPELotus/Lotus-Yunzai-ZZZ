@@ -24,6 +24,7 @@ import { rankCommand, towerRanks } from "./challenge-rank-model.ts";
 import { startZzzChallengeReminders, type ZzzReminderRuntime } from "./challenge-reminder-runtime.ts";
 import { createZzzChallengeReminders, zzzChallengeReminderCommand } from "./challenge-reminder.ts";
 import { createZzzChallengeRanks } from "./challenge-rank.ts";
+import type { ZzzPanelRankRoleReader } from "./panel-rank-identity.ts";
 import { createZzzPanelRanks } from "./panel-rank.ts";
 import { zzzPanelRankCommand } from "./panel-rank-model.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
@@ -101,9 +102,10 @@ interface GachaContext extends ZzzRoleGalleryContext {
   reply(message: string | { readonly type: "image"; readonly file: Uint8Array }): unknown;
 }
 
-export function createModule({ signal, lockFile, zzzReminderRuntime }: {
+export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderRuntime }: {
   signal: AbortSignal;
   lockFile: Parameters<typeof createZzzTuningSync>[3];
+  zzzPanelRankRoles?: ZzzPanelRankRoleReader;
   zzzReminderRuntime?: ZzzReminderRuntime;
 }) {
   const profiles = createProfileStore(Bun.env.LOTUS_PROFILE_DIR || undefined);
@@ -114,7 +116,7 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
     createZzzMonthlyArchive(monthlyDirectory, legacyMonthly ? [legacyMonthly] : monthlyLegacyDirectories, lockFile), signal);
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const reminder = createZzzChallengeReminders(profiles, client, signal);
-  const panelRanks = createZzzPanelRanks(profiles, client, lockFile, signal);
+  const panelRanks = createZzzPanelRanks(profiles, zzzPanelRankRoles ?? client.openHoYoLabZzzCheckin, lockFile, signal);
   const roleAliases = createZzzRoleAliasCommands(signal);
   const roleGallery = createZzzRoleGallery(signal);
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);

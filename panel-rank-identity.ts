@@ -8,6 +8,8 @@ import { zzzPanelRegion } from "./panel-storage.ts";
 type InternationalMode = "selected" | "international";
 type Mode = "cn" | InternationalMode;
 type InternationalContext = NonNullable<Awaited<ReturnType<ReturnType<typeof createProfileStore>["internationalRoleContext"]>>>;
+type OpenZzzCheckin = ReturnType<typeof createProfileHoyoClient>["openHoYoLabZzzCheckin"];
+export type ZzzPanelRankRoleReader = (...args: Parameters<OpenZzzCheckin>) => Promise<Pick<Awaited<ReturnType<OpenZzzCheckin>>, "roles">>;
 
 export interface ZzzPanelRankIdentity {
   readonly uid: string;
@@ -23,8 +25,8 @@ export function panelRankMode(value: string): Mode | undefined {
 }
 
 export function createPanelRankIdentityReader(profiles: ReturnType<typeof createProfileStore>,
-  client: Pick<ReturnType<typeof createProfileHoyoClient>, "openHoYoLabZzzCheckin">, signal: AbortSignal) {
-  const catalogues = new Map<string, ReturnType<typeof client.openHoYoLabZzzCheckin>>();
+  client: { openHoYoLabZzzCheckin: ZzzPanelRankRoleReader }, signal: AbortSignal) {
+  const catalogues = new Map<string, ReturnType<ZzzPanelRankRoleReader>>();
 
   function catalogue(qq: string, profileId: number, source: InternationalContext) {
     const key = `${qq}:${profileId}:${source.revision}`;
