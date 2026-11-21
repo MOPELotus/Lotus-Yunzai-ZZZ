@@ -102,7 +102,7 @@ export async function renderZzzHoloBoss(snapshot: ZzzHoloBossSnapshot, role: Gam
   const [art, player] = await Promise.all([loadRoomArt(snapshot, local, options.signal), loadZzzCardPlayer(local, options, role.avatar)]);
   options.signal?.throwIfAborted();
   const footer = firstRoom + snapshot.bosses.length * (roomHeight + 24);
-  const height = footer + 72;
+  const height = footer + (options.rankVisibility === undefined ? 72 : 105);
   return renderPng(width * 2, height * 2, (context) => {
     context.scale(2, 2);
     box(context, "#1a181c", 0, 0, width, height);
@@ -124,6 +124,10 @@ export async function renderZzzHoloBoss(snapshot: ZzzHoloBossSnapshot, role: Gam
       43, 347, 19, { color: "#b8b5bb" });
     label(context, "挑战详情约延迟 2 小时", 43, 374, 19, { color: "#b8b5bb" });
     snapshot.bosses.forEach((room, index) => drawRoom(context, art, room, firstRoom + index * (roomHeight + 24)));
+    if (options.rankVisibility !== undefined) {
+      const status = options.rankVisibility ? "显示" : "隐藏";
+      label(context, `本群拟境排名已${status} · %显示拟境排名 / %隐藏拟境排名`, 43, footer + 12, 19, { color: "#f3cb45" });
+    }
     label(context, zzzCardFooter, width / 2, height - 39, 17, { align: "center", color: "#a09ca3" });
   }, "gpu");
 }

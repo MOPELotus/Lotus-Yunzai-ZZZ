@@ -3,9 +3,9 @@ import { open, readFile, realpath } from "node:fs/promises";
 import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
-import { normalizeZzzDeadly, normalizeZzzShiyu } from "@lotus-yunzai/hoyo-client";
+import { normalizeZzzDeadly, normalizeZzzHoloBoss, normalizeZzzShiyu } from "@lotus-yunzai/hoyo-client";
 import {
-  domesticRegion, idOf, rankIdentity, rankRow, rankType,
+  domesticRegion, idOf, rankIdentity, rankRow, rankType, sortedRankRows,
   type RankMode, type RankProfile, type RankRow, type RankSnapshot, type RankType,
 } from "./challenge-rank-model.ts";
 
@@ -25,6 +25,43 @@ if not last or tonumber(last) <= tonumber(requested_at) then
 end
 return redis.call('HGET', KEYS[1], field)
 `;
+
+type RankOwner = { readonly qq: string; readonly profileId: number };
+const rememberHoloBest = `
+local field, owner, payload = unpack(ARGV)
+if redis.call('HGET', KEYS[1], field) ~= '1' or redis.call('HGET', KEYS[3], field) ~= owner then
+  return '0'
+end
+local stored = redis.call('HGET', KEYS[2], field)
+if stored then
+  local ok, earlier = pcall(cjson.decode, stored)
+  local next = cjson.decode(payload)
+  if ok and type(earlier) == 'table' and earlier.owner == owner and type(earlier.holoScore) == 'table' then
+    local a, b = earlier.holoScore, next.holoScore
+    if a.season == b.season and type(a.stars) == 'number' and type(a.duration) == 'number' and
+      type(a.undamaged) == 'number' and (a.stars > b.stars or
+        (a.stars == b.stars and (a.duration < b.duration or
+          (a.duration == b.duration and a.undamaged >= b.undamaged)))) then
+      return '1'
+    end
+    if type(a.season) == 'string' and a.season > b.season then return '1' end
+  end
+end
+redis.call('HSET', KEYS[2], field, payload)
+return '1'
+`;
+
+function holoOwner(qq: string, profileId: number) {
+  return `${qq}:${profileId}`;
+}
+
+function readHoloOwner(value: string | undefined): RankOwner | undefined {
+  const [qq, slot, extra] = value?.split(":") ?? [];
+  const profileId = Number(slot);
+  if (qq && idOf(qq) === qq && extra === undefined && /^[1-9]\d{0,2}$/u.test(slot ?? "") && profileId <= MAX_PROFILE_ID) {
+    return { qq, profileId };
+  }
+}
 
 function object(value: unknown): Json | undefined {
   if (value && typeof value === "object" && !Array.isArray(value)) return value as Json;
@@ -65,7 +102,7 @@ export async function readRankConfig(group: string) {
 
 function keys(group: string, type: RankType) {
   const base = `lotus-yunzai:zzz-challenge-ranks:${group}:${type}`;
-  return { status: `${base}:visibility`, data: `${base}:records`, requests: `${base}:request-time` };
+  return { status: `${base}:visibility`, data: `${base}:records`, requests: `${base}:request-time`, owners: `${base}:owners` };
 }
 
 function oldStatus(group: string, type: RankType, uid: string) {
@@ -95,7 +132,7 @@ function parseProfile(raw: Json, qq: string, uid: string) {
 }
 
 async function legacyRecord(root: string, type: RankType, uid: string, qq: string) {
-  const directory = join(root, type === "ABYSS" ? "abyss" : "deadly");
+  const directory = join(root, { ABYSS: "abyss", DEADLY: "deadly", HOLO_BOSS: "holoBoss" }[type]);
   const actual = await realpath(join(directory, `${uid}.json`)).catch(() => undefined);
   if (!actual?.startsWith(directory + sep)) return;
   const file = await open(actual, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK).catch(() => undefined);
@@ -109,8 +146,12 @@ async function legacyRecord(root: string, type: RankType, uid: string, qq: strin
     const profile = parseProfile(legacy, qq, uid);
     if (!profile) return;
     const identity = { uid, region: profile.region, scheduleType: 1 as const };
-    const snapshot = type === "ABYSS" ? normalizeZzzShiyu(data?.result, identity) : normalizeZzzDeadly(data?.result, identity);
-    return { profile, snapshot };
+    const snapshot = type === "ABYSS" ? normalizeZzzShiyu(data?.result, identity) :
+      type === "HOLO_BOSS" ? normalizeZzzHoloBoss(data?.result, identity) : normalizeZzzDeadly(data?.result, identity);
+    const updateTime = data?.updateTime;
+    const observedAt = typeof updateTime === "number" && Number.isSafeInteger(updateTime) &&
+      updateTime > 0 && updateTime < 5_000_000_000 ? updateTime * 1000 : undefined;
+    return { profile, snapshot, observedAt };
   } catch {
     return;
   } finally {
@@ -129,8 +170,12 @@ function modernRecord(field: string, encoded: string) {
     const profile = parseProfile(storedProfile, qq, uid);
     if (!profile?.profileId || rankIdentity(uid, profile.region) !== field) return;
     const snapshot = object(raw.snapshot);
-    if (!snapshot || !Array.isArray(snapshot.layers) && (!Array.isArray(snapshot.trial) || !Array.isArray(snapshot.hard))) return;
-    return { profile, snapshot: snapshot as unknown as RankSnapshot };
+    if (!snapshot || !Array.isArray(snapshot.layers) && !Array.isArray(snapshot.bosses) &&
+        (!Array.isArray(snapshot.trial) || !Array.isArray(snapshot.hard))) return;
+    const observedAt = typeof raw.observedAt === "number" && Number.isSafeInteger(raw.observedAt) && raw.observedAt > 0 ?
+      raw.observedAt : undefined;
+    const owner = typeof raw.owner === "string" ? raw.owner : undefined;
+    return { profile, snapshot: snapshot as unknown as RankSnapshot, observedAt, owner };
   } catch {
     return;
   }
@@ -141,7 +186,20 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
     async remember(group: string, type: RankType, profile: RankProfile, snapshot: RankSnapshot, requestedAt: number) {
       const field = rankIdentity(profile.uid, profile.region);
       if (!field || !Number.isSafeInteger(requestedAt) || requestedAt < 1) return;
-      const { status, data, requests } = keys(group, type);
+      const { status, data, requests, owners } = keys(group, type);
+      if (type === "HOLO_BOSS") {
+        if (!profile.profileId || !("bosses" in snapshot) || !snapshot.period) return;
+        const now = Date.now();
+        const row = rankRow(type, profile, snapshot, now, "current");
+        if (!row?.holo) return;
+        const observedAt = Math.floor(now / 1000) * 1000;
+        const owner = holoOwner(profile.qq, profile.profileId);
+        const holoScore = { season: snapshot.period.start.slice(0, 13), stars: row.bonus,
+          duration: row.score, undamaged: row.holo.undamaged };
+        const payload = JSON.stringify({ version: 1, profile, snapshot, owner, holoScore, observedAt });
+        if (Buffer.byteLength(payload) > maxRecordBytes) return;
+        return (await redis.eval(rememberHoloBest, { keys: [status, data, owners], arguments: [field, owner, payload] })) === "1";
+      }
       const prior = legacyUid.test(profile.uid) && await redis.get(oldStatus(group, type, profile.uid));
       const encoded = JSON.stringify({ version: 1, profile, snapshot });
       if (Buffer.byteLength(encoded) > maxRecordBytes) return;
@@ -150,33 +208,58 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
       });
       return saved === "1";
     },
-    async setVisibility(group: string, types: readonly RankType[], uid: string, region: string, enabled: boolean) {
+    async setVisibility(group: string, types: readonly RankType[], uid: string, region: string, enabled: boolean, owner?: RankOwner) {
       const field = rankIdentity(uid, region);
-      if (!field) return false;
+      if (!field || (types.includes("HOLO_BOSS") && (!owner || !readHoloOwner(holoOwner(owner.qq, owner.profileId))))) return false;
       const transaction = redis.multi();
-      for (const type of types) transaction.hSet(keys(group, type).status, field, enabled ? "1" : "0");
+      for (const type of types) {
+        const { status, owners } = keys(group, type);
+        transaction.hSet(status, field, enabled ? "1" : "0");
+        if (type === "HOLO_BOSS" && owner) {
+          if (enabled) transaction.hSet(owners, field, holoOwner(owner.qq, owner.profileId));
+          else transaction.hDel(owners, field);
+        }
+      }
       await transaction.exec();
       return true;
     },
     async rows(group: string, mode: RankMode, members: ReadonlySet<string>, now: number) {
       const type = rankType(mode);
-      const { status, data } = keys(group, type);
-      const [visibility, records, root] = await Promise.all([
+      const { status, data, owners } = keys(group, type);
+      const [visibility, records, root, permission] = await Promise.all([
         redis.hGetAll(status), redis.hGetAll(data), realpath(legacyData).catch(() => undefined),
+        type === "HOLO_BOSS" ? redis.hGetAll(owners) : {} as Record<string, string>,
       ]);
       const rows = new Map<string, RankRow>();
       for (const [field, encoded] of Object.entries(records)) {
         if (visibility[field] !== "1") continue;
         const current = modernRecord(field, encoded);
-        if (!current || !members.has(current.profile.qq)) continue;
+        if (!current || !members.has(current.profile.qq) || (type === "HOLO_BOSS" &&
+            (!current.owner || current.owner !== permission[field] || !current.profile.profileId ||
+              current.owner !== holoOwner(current.profile.qq, current.profile.profileId)))) continue;
         try {
-          const row = rankRow(mode, current.profile, current.snapshot, now, "current");
+          const row = rankRow(mode, current.profile, current.snapshot, now, "current", current.observedAt);
           if (row) rows.set(field, row);
         } catch {
           continue;
         }
       }
       if (!root) return [...rows.values()];
+      if (type === "HOLO_BOSS") {
+        for (const [field, rawOwner] of Object.entries(permission)) {
+          const uid = field.split(":")[1];
+          const owner = readHoloOwner(rawOwner);
+          if (visibility[field] !== "1" || !uid || !legacyUid.test(uid) || !owner || !members.has(owner.qq) ||
+              await redis.get(`${oldGroup(group)}${uid}:${owner.qq}`) !== "1" ||
+              await redis.get(oldStatus(group, type, uid)) !== "1") continue;
+          const legacy = await legacyRecord(root, type, uid, owner.qq);
+          if (!legacy || rankIdentity(uid, legacy.profile.region) !== field) continue;
+          const row = rankRow(mode, { ...legacy.profile, profileId: owner.profileId }, legacy.snapshot, now, "legacy", legacy.observedAt);
+          const current = rows.get(field);
+          if (row && (!current || sortedRankRows(mode, [current, row])[0] === row)) rows.set(field, row);
+        }
+        return [...rows.values()];
+      }
       const oldMembers = new Map<string, string>();
       const prefix = oldGroup(group);
       for await (const key of redis.scanIterator({ MATCH: `${prefix}*`, COUNT: 200 })) {
@@ -202,8 +285,10 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
         if (!members.has(row.qq) || row.expiresAt < now) return false;
         const field = rankIdentity(row.uid, row.region);
         if (!field) return false;
-        const { status, data } = keys(group, type);
+        const { status, data, owners } = keys(group, type);
         const current = await redis.hGet(status, field);
+        if (type === "HOLO_BOSS" && (current !== "1" || !row.profileId ||
+            await redis.hGet(owners, field) !== holoOwner(row.qq, row.profileId))) return false;
         if (row.source === "current") {
           if (current !== "1") return false;
           const record = await redis.hGet(data, field);
@@ -211,7 +296,7 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
           return !!owner && owner.qq === row.qq && owner.profileId === row.profileId;
         }
         if (current === "0" || await redis.get(`${oldGroup(group)}${row.uid}:${row.qq}`) !== "1") return false;
-        return current === "1" || await redis.get(oldStatus(group, type, row.uid)) === "1";
+        return (type !== "HOLO_BOSS" && current === "1") || await redis.get(oldStatus(group, type, row.uid)) === "1";
       }))).every(Boolean);
     },
   };

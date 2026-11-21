@@ -1,13 +1,14 @@
-import type { ZzzDeadlyRoom, ZzzShiyuPortrait, ZzzShiyuTeam } from "@lotus-yunzai/hoyo-client";
+import type { ZzzDeadlyRoom, ZzzHoloBossRoom, ZzzShiyuPortrait, ZzzShiyuTeam } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, type ZzzChallengeArt } from "./challenge-card.ts";
+import { holoBossDuration } from "./holo-boss-card.ts";
 import { rankLabels, type RankMode, type RankRow } from "./challenge-rank-model.ts";
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
-const modeTheme = { ABYSS: "abyss", DEADLY: "deadly", DEADLY_HARD: "deadlyHard" } as const;
-const englishTitle = { ABYSS: "ABYSS RANK", DEADLY: "DEADLY RANK", DEADLY_HARD: "DEADLY HARD RANK" } as const;
+const modeTheme = { ABYSS: "abyss", DEADLY: "deadly", DEADLY_HARD: "deadlyHard", HOLO_BOSS: "holoBoss" } as const;
+const englishTitle = { ABYSS: "ABYSS RANK", DEADLY: "DEADLY RANK", DEADLY_HARD: "DEADLY HARD RANK", HOLO_BOSS: "HOLO BOSS RANK" } as const;
 type Art = ZzzChallengeArt & {
   readonly memberAvatars: ReadonlyMap<string, Image | undefined>;
   readonly buffIcons: ReadonlyMap<string, Image | undefined>;
@@ -87,6 +88,15 @@ function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: num
   else fillRound(context, "#111", 156, uidY, 225, 42, 12);
   label(context, `UID ${row.uid}`, 268.5, uidY + 21, 22, { align: "center", color: "#ffffff99" });
 
+  if (row.holo) {
+    for (const [i, [field, value]] of [["总用时", holoBossDuration(row.score)], ["星级", String(row.bonus)],
+      ["无伤", String(row.holo.undamaged)]].entries()) {
+      const x = 424 + 107 * i;
+      label(context, field!, x, y + 88, 27, { color: "#ddd", align: "center" });
+      label(context, value!, x, y + 133, 28, { weight: 700, align: "center" });
+    }
+    return;
+  }
   if (mode === "DEADLY_HARD") return;
   label(context, "总得分", 488, y + 91, 36, { color: "#ddd", align: "center" });
   score(context, art, row.score, shiyu ? 150000 : 195000, 423, y + 140, true);
@@ -139,6 +149,35 @@ function team(context: Context, art: Art, mode: RankMode, entry: ZzzShiyuTeam | 
   drawPortrait(context, art, entry.buddy, infoX + 369.75, top + 29.8, 69.5, true);
 }
 
+function holoTeam(context: Context, art: Art, room: ZzzHoloBossRoom | undefined, x: number, y: number) {
+  frame(context, theme(art, "HOLO_BOSS", "BgFrame01"), x, y, 454, 217);
+  if (!room) return;
+  const medal = room.medalIcon && art.buffIcons.get(room.medalIcon);
+  const frameIcon = theme(art, "HOLO_BOSS", "PetSelectBG");
+  if (medal) {
+    if (frameIcon) context.drawImage(frameIcon, x + 403, y, 51, 51);
+    contain(context, medal, x + 408, y + 5, 41, 41);
+  }
+  label(context, `${room.name || "首领"}${room.undamaged ? " · 无伤" : ""}`,
+    x + 42, y + 47, 25, { color: "#e6e6e6", maxWidth: 355 });
+  label(context, holoBossDuration(room.duration), x + 42, y + 77, 26, { color: "#ddd", maxWidth: 110 });
+  if (room.stars !== undefined) {
+    for (let i = 0; i < 4; i++) {
+      const lit = i < room.stars;
+      const asset = theme(art, "HOLO_BOSS", lit ? "star-light.d591d065" : "star-gray.53e3ee51");
+      const left = x + 171 + i * 26;
+      if (asset) contain(context, asset, left, y + 62, 28, 28);
+      else label(context, lit ? "★" : "☆", left + 10, y + 77, 22, { color: lit ? "#ffd700" : "#999" });
+    }
+  }
+  for (let i = 0; i < 3; i++) {
+    const entry = room.avatars[i];
+    const left = x + 41 + i * 120;
+    if (entry) drawPortrait(context, art, entry, left, y + 107, 91);
+    else fillRound(context, "#151517", left, y + 107, 91, 91, 8, "#343534");
+  }
+}
+
 async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, mode: RankMode, rows: readonly RankRow[], signal?: AbortSignal): Promise<Art> {
   const root = `rank/${modeTheme[mode]}/images/`;
   const paths = [
@@ -147,7 +186,7 @@ async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, 
     ...["SP", "S", "A", "B"].map(name => `common/images/rating/${name}.png`),
     ...[50000, 65000, 150000, 195000].map(value => `common/images/max_score/${value}.png`),
     ...["BgFrame01", "PetSelectBG", "star-icon-light", "star-icon-dark", "star-icon-hard.13c9ee51",
-      "hard-module-inner-bg-m.83b7d1a1"].map(name => root + name + ".png"),
+      "hard-module-inner-bg-m.83b7d1a1", "star-light.d591d065", "star-gray.53e3ee51"].map(name => root + name + ".png"),
   ];
   const members = new Map<string, Image | undefined>();
   const books = new Map<string, Image | undefined>();
@@ -165,6 +204,12 @@ async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, 
     const teams = row.teams.slice(0, mode === "DEADLY_HARD" ? 1 : 3);
     await Promise.all([
       artwork(fetchZzzQqAvatar(row.qq, signal)).then(avatar => members.set(row.qq, avatar)),
+      ...(row.holo?.bosses.slice(0, 3).map(async room => {
+        await Promise.all([
+          ...room.avatars.slice(0, 3).map(entry => loadChallengePortrait(entry, false, local, official, portraits)),
+          room.medalIcon && official(room.medalIcon).then(icon => books.set(room.medalIcon!, icon)),
+        ]);
+      }) ?? []),
       ...teams.map(async entry => {
         const buff = (entry as ZzzDeadlyRoom).buffIcon;
         await Promise.all([
@@ -184,7 +229,7 @@ async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, 
 
 // ZZZure/ZZZ-Plugin 2057599 resources/rank/{abyss,deadly,deadlyHard}, normal screenshot scale 1.
 export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow[], options: ZzzCardOptions = {}) {
-  const width = mode === "DEADLY_HARD" ? 1000 : 2400;
+  const width = mode === "DEADLY_HARD" ? 1000 : mode === "HOLO_BOSS" ? 2200 : 2400;
   const startNotes = 96 + rows.length * 240;
   const notes = mode === "ABYSS" ? 149 : mode === "DEADLY" ? 110 : 142;
   const height = startNotes + notes + 80;
@@ -198,7 +243,9 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     rows.forEach((row, index) => {
       const y = 96 + index * 240;
       member(context, art, row, mode, y);
-      if (mode === "DEADLY_HARD") team(context, art, mode, row.teams[0], 438, y - 12);
+      if (mode === "HOLO_BOSS") {
+        for (let idx = 0; idx < 3; idx++) holoTeam(context, art, row.holo?.bosses[idx], 762 + 467 * idx, y - 12);
+      } else if (mode === "DEADLY_HARD") team(context, art, mode, row.teams[0], 438, y - 12);
       else for (let idx = 0; idx < 3; idx++) team(context, art, mode, row.teams[idx], 698 + 552 * idx, y - 12);
     });
     frame(context, theme(art, mode, "BgFrame01"), 24, startNotes, width - 48, notes);
@@ -210,11 +257,15 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     const intro = "• 请在本群查询 ";
     label(context, intro, 74, noteY, 19.2, { color: "#979797" });
     const x = 74 + context.measureText(intro).width;
-    const query = `%${rankLabels[mode === "ABYSS" ? "ABYSS" : "DEADLY"]}`;
+    const query = `%${rankLabels[mode === "DEADLY_HARD" ? "DEADLY" : mode]}`;
     label(context, query, x, noteY, 19.2, { color: "#ffd700" });
     label(context, " 以登记本期战绩", x + context.measureText(query).width, noteY, 19.2, { color: "#979797" });
     const tie = mode === "ABYSS" ? "同分同评级" : mode === "DEADLY" ? "同星同分" : "同分";
-    label(context, `• ${tie}时，最后通关时间较早者排前`, 74, noteY + 39, 19.2, { color: "#979797", maxWidth: width - 145 });
+    const order = mode === "HOLO_BOSS" ? "先比较星数、总用时、无伤间数，完全相同时以较早记录排前" :
+      `${tie}时，最后通关时间较早者排前`;
+    label(context, `• ${order}`, 74, noteY + 39, 19.2, { color: "#979797", maxWidth: width - 145 });
+    if (mode === "HOLO_BOSS") label(context, "• 使用 %显示拟境排名 或 %隐藏拟境排名 设置本群可见性",
+      74, noteY + 78, 19.2, { color: "#f3cb45" });
     label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
   }, "gpu");
 }
