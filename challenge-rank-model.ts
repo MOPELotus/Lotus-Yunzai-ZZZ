@@ -51,6 +51,8 @@ const towerS2 = "(?:爬塔 *S2|鏖战试炼[:：]?末路)";
 const towerS3 = "(?:爬塔 *S3|鏖战试炼[:：]?荣耀)";
 const towerS4 = "(?:爬塔 *S4|鏖战试炼[:：]?狂澜)";
 const hard = `(?:绝境|${deadly}绝境|绝境${deadly})`;
+const adminToggle = new RegExp(`^(开启|打开|on|启用|启动|关闭|关掉|off|禁用|停止)群(?:内)?(?:${shiyu}|${deadly}|${voidFront})排名$`, "iu");
+const adminClear = new RegExp(`^(?:重置|清空)${shiyu}排名$`, "u");
 const boardCommand = new RegExp(`^(${shiyu}|${hard}|${deadly}|${holo}|${voidFront}|${towerS1}|${towerS2}|${towerS3}|${towerS4})排名$`, "iu");
 const towerS1Label = new RegExp(`^${towerS1}$`, "iu");
 const towerS2Label = new RegExp(`^${towerS2}$`, "iu");
@@ -93,6 +95,9 @@ function namedRank(text: string): RankType {
 export function rankCommand(command: string) {
   const text = command.replace(prefix, "");
   if (text === command) return;
+  const toggle = adminToggle.exec(text);
+  if (toggle) return { kind: "admin-toggle" as const, enabled: !hidden.test(toggle[1]!) };
+  if (adminClear.test(text)) return { kind: "admin-clear" as const };
   if (/^(?:爬塔|鏖战)排名$/u.test(text)) return { kind: "tower-help" as const };
   const action = shareCommand.exec(text);
   if (action) {

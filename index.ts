@@ -284,6 +284,7 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
     try {
       const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const request = { scheduleType, signal };
+      const generation = mode === "shiyu" && scheduleType === 1 ? await challengeRanks.captureShiyuGeneration(context) : undefined;
       const requestedAt = Date.now();
       const snapshot = await (mode === "shiyu" ? client.fetchZzzShiyu(source, request) :
         mode === "deadly" ? client.fetchZzzDeadly(source, request) :
@@ -298,7 +299,7 @@ export function createModule({ signal, lockFile, zzzReminderRuntime }: {
       }
       const rankVisibility = "seasons" in snapshot || "hollowMode" in snapshot ? undefined :
         await challengeRanks.remember(context, profileId, source.role, snapshot,
-          "bosses" in snapshot ? "HOLO_BOSS" : "stages" in snapshot ? "VOID_FRONT_BATTLE" : mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive);
+          "bosses" in snapshot ? "HOLO_BOSS" : "stages" in snapshot ? "VOID_FRONT_BATTLE" : mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive, generation);
       const towerVisibility = "seasons" in snapshot ? await Promise.all(towerRanks.map(type =>
         challengeRanks.remember(context, profileId, source.role, snapshot, type, requestedAt, stillActive))) : undefined;
       const theme = { qq, signal, rankVisibility, towerVisibility, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };

@@ -15,8 +15,27 @@ const legacyUid = /^[1-9]\d{7}$/u;
 const defaultConfig = fileURLToPath(new URL("../../config/zzz-rank.yaml", import.meta.url));
 const defaultLegacyData = fileURLToPath(new URL("../../data/ZZZ-Plugin/", import.meta.url));
 const maxRecordBytes = 2 * 1024 * 1024;
+const groupRankSwitch = "lotus-yunzai:zzz-challenge-ranks:allow-group";
+export type RankGeneration = string | null;
+
+function generationKey(group: string) {
+  return `lotus-yunzai:zzz-challenge-ranks:${group}:ABYSS:generation`;
+}
+
+async function readGeneration(redis: Redis, group: string, type: RankType): Promise<RankGeneration> {
+  if (type !== "ABYSS") return null;
+  const value = await redis.get(generationKey(group));
+  if (value == null) return null;
+  if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/u.test(value)) throw new Error("群榜代次无效");
+  return value;
+}
+
+export async function setRankGroupEnabled(redis: Redis, enabled: boolean) {
+  return await redis.set(groupRankSwitch, enabled ? "1" : "0") === "OK";
+}
 const rememberRecord = `
-local field, default_status, requested_at, snapshot = unpack(ARGV)
+local field, default_status, requested_at, snapshot, generation = unpack(ARGV)
+if generation and (redis.call('GET', KEYS[4]) or '') ~= generation then return nil end
 redis.call('HSETNX', KEYS[1], field, default_status)
 local last = redis.call('HGET', KEYS[3], field)
 if not last or tonumber(last) <= tonumber(requested_at) then
@@ -79,11 +98,12 @@ function configIds(input: unknown) {
   return new Set(ids as string[]);
 }
 
-export function parseRankConfig(input: unknown, group: string) {
+export function parseRankConfig(input: unknown, group: string, override?: boolean) {
   const record = input === undefined ? {} : object(input);
   if (!record) throw new Error("群榜配置无效");
-  const enable = record.allow_group ?? true;
-  if (typeof enable !== "boolean" && enable !== 0 && enable !== 1) throw new Error("群榜开关无效");
+  const configured = record.allow_group ?? true;
+  if (typeof configured !== "boolean" && configured !== 0 && configured !== 1) throw new Error("群榜开关无效");
+  const enable = override ?? Boolean(configured);
   const listed = configIds(enable ? record.black_list : record.white_list).has(group);
   const maximum = Number(record.max_display ?? 15);
   if (!Number.isInteger(maximum)) throw new Error("群榜显示数量无效");
@@ -91,22 +111,26 @@ export function parseRankConfig(input: unknown, group: string) {
 }
 
 export async function readRankConfig(group: string) {
+  const stored = await globalThis.redis?.get(groupRankSwitch);
+  if (stored != null && stored !== "0" && stored !== "1") throw new Error("群榜总开关无效");
+  const override = stored == null ? undefined : stored === "1";
   const resourceDirectory = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
   const explicit = Bun.env.LOTUS_ZZZ_RANK_CONFIG;
   const files = explicit ? [explicit] : [defaultConfig, ...(resourceDirectory ? [join(dirname(resourceDirectory), "config", "rank.yaml")] : [])];
   for (const path of files) {
     try {
-      return parseRankConfig(Bun.YAML.parse(await readFile(path, "utf8")), group);
+      return parseRankConfig(Bun.YAML.parse(await readFile(path, "utf8")), group, override);
     } catch (error) {
       if (explicit || (error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
   }
-  return parseRankConfig(undefined, group);
+  return parseRankConfig(undefined, group, override);
 }
 
-function keys(group: string, type: RankType) {
+function keys(group: string, type: RankType, generation: RankGeneration = null) {
   const base = `lotus-yunzai:zzz-challenge-ranks:${group}:${type}`;
-  return { status: `${base}:visibility`, data: `${base}:records`, requests: `${base}:request-time`, owners: `${base}:owners` };
+  const suffix = type === "ABYSS" && generation ? `:${generation}` : "";
+  return { status: `${base}:visibility`, data: `${base}:records${suffix}`, requests: `${base}:request-time${suffix}`, owners: `${base}:owners` };
 }
 
 function oldStatus(group: string, type: RankType, uid: string) {
@@ -203,10 +227,16 @@ function modernRecord(field: string, encoded: string) {
 
 export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTUS_ZZZ_LEGACY_DATA_DIR || defaultLegacyData) {
   return {
-    async remember(group: string, type: RankType, profile: RankProfile, snapshot: RankSnapshot, requestedAt: number) {
+    generation(group: string, type: RankType) { return readGeneration(redis, group, type); },
+    async clearShiyu(group: string) {
+      if (!idOf(group)) return false;
+      return await redis.set(generationKey(group), crypto.randomUUID()) === "OK";
+    },
+    async remember(group: string, type: RankType, profile: RankProfile, snapshot: RankSnapshot, requestedAt: number,
+      generation: RankGeneration = null) {
       const field = rankIdentity(profile.uid, profile.region);
       if (!field || !Number.isSafeInteger(requestedAt) || requestedAt < 1) return;
-      const { status, data, requests, owners } = keys(group, type);
+      const { status, data, requests, owners } = keys(group, type, generation);
       if (isOwnedRank(type)) {
         if (!profile.profileId || profile.uid !== snapshot.uid || profile.region !== snapshot.region) return;
         const now = Date.now();
@@ -237,9 +267,13 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
       const prior = legacyUid.test(profile.uid) && await redis.get(oldStatus(group, type, profile.uid));
       const encoded = JSON.stringify({ version: 1, profile, snapshot });
       if (Buffer.byteLength(encoded) > maxRecordBytes) return;
-      const saved = await redis.eval(rememberRecord, {
-        keys: [status, data, requests], arguments: [field, prior === "0" ? "0" : "1", String(requestedAt), encoded],
-      });
+      const keysForWrite = [status, data, requests];
+      const args = [field, prior === "0" ? "0" : "1", String(requestedAt), encoded];
+      if (type === "ABYSS") {
+        keysForWrite.push(generationKey(group));
+        args.push(generation ?? "");
+      }
+      const saved = await redis.eval(rememberRecord, { keys: keysForWrite, arguments: args });
       return saved === "1";
     },
     async setVisibility(group: string, types: readonly RankType[], uid: string, region: string, enabled: boolean, owner?: RankOwner) {
@@ -257,9 +291,10 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
       await transaction.exec();
       return true;
     },
-    async rows(group: string, mode: RankMode, members: ReadonlySet<string>, now: number) {
+    async rows(group: string, mode: RankMode, members: ReadonlySet<string>, now: number, expected?: RankGeneration) {
       const type = rankType(mode);
-      const { status, data, owners } = keys(group, type);
+      const generation = expected === undefined ? await readGeneration(redis, group, type) : expected;
+      const { status, data, owners } = keys(group, type, generation);
       const [visibility, records, root, permission] = await Promise.all([
         redis.hGetAll(status), redis.hGetAll(data), realpath(legacyData).catch(() => undefined),
         isOwnedRank(type) ? redis.hGetAll(owners) : {} as Record<string, string>,
@@ -282,7 +317,7 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
           continue;
         }
       }
-      if (!root) return [...rows.values()];
+      if (!root || generation !== null) return [...rows.values()];
       if (isOwnedRank(type)) {
         for (const [field, rawOwner] of Object.entries(permission)) {
           const uid = field.split(":")[1];
@@ -317,13 +352,15 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
       }
       return [...rows.values()];
     },
-    async stillVisible(group: string, mode: RankMode, members: ReadonlySet<string>, rows: readonly RankRow[], now: number) {
+    async stillVisible(group: string, mode: RankMode, members: ReadonlySet<string>, rows: readonly RankRow[], now: number,
+      generation: RankGeneration = null) {
       const type = rankType(mode);
-      return (await Promise.all(rows.map(async row => {
+      if (await readGeneration(redis, group, type) !== generation) return false;
+      const visible = (await Promise.all(rows.map(async row => {
         if (!members.has(row.qq) || row.expiresAt < now) return false;
         const field = rankIdentity(row.uid, row.region);
         if (!field) return false;
-        const { status, data, owners } = keys(group, type);
+        const { status, data, owners } = keys(group, type, generation);
         const current = await redis.hGet(status, field);
         if (isOwnedRank(type) && (current !== "1" || !row.profileId ||
             await redis.hGet(owners, field) !== rankOwner(row.qq, row.profileId))) return false;
@@ -352,6 +389,7 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
         if (current === "0" || await redis.get(`${oldGroup(group)}${row.uid}:${row.qq}`) !== "1") return false;
         return (!isOwnedRank(type) && current === "1") || await redis.get(oldStatus(group, type, row.uid)) === "1";
       }))).every(Boolean);
+      return visible && await readGeneration(redis, group, type) === generation;
     },
   };
 }

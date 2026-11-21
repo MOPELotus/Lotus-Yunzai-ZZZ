@@ -4,7 +4,7 @@ import {
   currentPeriod, domesticRegion, idOf, isOwnedRank, rankCommand, rankIdentity, rankLabels, rankTowerSeason, rankType, sortedRankRows,
   type RankRow, type RankSnapshot, type RankType,
 } from "./challenge-rank-model.ts";
-import { createChallengeRankStore, readRankConfig } from "./challenge-rank-store.ts";
+import { createChallengeRankStore, readRankConfig, setRankGroupEnabled, type RankGeneration } from "./challenge-rank-store.ts";
 import { holoBossDuration } from "./holo-boss-card.ts";
 import { renderChallengeRank } from "./challenge-rank-card.ts";
 
@@ -12,6 +12,10 @@ export interface ChallengeRankContext {
   readonly user_id?: number;
   readonly group_id?: number;
   readonly message_type?: string;
+  readonly adapter?: string;
+  readonly isMaster?: boolean;
+  readonly isBotMaster?: (userId: number) => boolean;
+  readonly privateCredentialSignal?: AbortSignal;
   readonly isDelegated?: boolean;
   readonly listCheckinGroupMembers?: () => Promise<readonly { id: number; name?: string }[] | undefined>;
 }
@@ -46,6 +50,41 @@ export async function ownedRankRole(profiles: ReturnType<typeof createProfileSto
       rankIdentity(selected.uid, selected.region) && account && previewRedeemIdentity(source) === account) return source;
 }
 
+type AdminCommand = { readonly kind: "admin-toggle"; readonly enabled: boolean } | { readonly kind: "admin-clear" };
+
+async function manageZzzChallengeRanks(context: ChallengeRankContext, command: AdminCommand, signal: AbortSignal) {
+  const group = rankGroup(context);
+  const user = context.user_id;
+  if (context.isDelegated || (context.message_type !== "private" && !group) || (command.kind === "admin-clear" && !group)) {
+    return "请在群聊中使用该命令！";
+  }
+  function isOwner() {
+    if (signal.aborted || !user || context.isBotMaster?.(user) !== true) return false;
+    if (context.message_type === "private" && (!context.privateCredentialSignal || context.privateCredentialSignal.aborted)) return false;
+    return context.adapter === "milky" || context.isMaster === true;
+  }
+  const denied = command.kind === "admin-toggle" ? "仅限主人设置。" : "仅限主人操作。";
+  if (!isOwner()) return denied;
+  const redis = globalThis.redis;
+  if (!redis) return "绝区零群榜设置暂时不可用。";
+  try {
+    if (group && !await rankMembership(context, group.actor)) return "暂无法核对当前群成员，请稍后重试。";
+    if (!isOwner()) return denied;
+    if (command.kind === "admin-clear" && group) {
+      if (await createChallengeRankStore(redis).clearShiyu(group.group)) {
+        return "已清空本群式舆防卫战排行榜。群成员查询本期战绩后可重新登记。";
+      }
+    }
+    if (command.kind === "admin-toggle" && await setRankGroupEnabled(redis, command.enabled)) {
+      return command.enabled ? "已开启绝区零群榜总开关。此设置影响所有群，黑名单中的群仍不可使用。" :
+        "已关闭绝区零群榜总开关。此设置影响所有群，白名单中的群仍可使用。";
+    }
+    return "群榜操作未确认，请稍后查询。";
+  } catch {
+    return "群榜操作未确认，请稍后查询。";
+  }
+}
+
 export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfileStore>, signal: AbortSignal) {
   async function roleKeepsOwnership(row: RankRow) {
     if (row.holo || row.voidFront || row.tower) {
@@ -59,11 +98,18 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
   }
 
   return {
-    async remember(context: ChallengeRankContext, profileId: number, role: GameRole, snapshot: RankSnapshot,
-      type: RankType, requestedAt: number, verify: () => Promise<boolean>) {
+    async captureShiyuGeneration(context: ChallengeRankContext) {
       const scope = rankGroup(context);
       const redis = globalThis.redis;
-      if (!scope || !redis || !currentPeriod(snapshot, Date.now()) || !domesticRegion(snapshot.region)) return;
+      if (!scope || !redis || signal.aborted) return;
+      return createChallengeRankStore(redis).generation(scope.group, "ABYSS").catch(() => undefined);
+    },
+    async remember(context: ChallengeRankContext, profileId: number, role: GameRole, snapshot: RankSnapshot,
+      type: RankType, requestedAt: number, verify: () => Promise<boolean>, generation?: RankGeneration) {
+      const scope = rankGroup(context);
+      const redis = globalThis.redis;
+      if (!scope || !redis || (type === "ABYSS" && generation === undefined) ||
+          !currentPeriod(snapshot, Date.now()) || !domesticRegion(snapshot.region)) return;
       try {
         if (!(await readRankConfig(scope.group)).allowed || !await rankMembership(context, scope.actor) ||
             signal.aborted || !await verify() || signal.aborted) return;
@@ -74,12 +120,13 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         return await createChallengeRankStore(redis).remember(scope.group, type, {
           qq: scope.actor, profileId, uid: snapshot.uid, region: snapshot.region,
           nickname: role.nickname, level: role.level === undefined ? undefined : Number(role.level), regionName: role.regionName,
-        }, snapshot, requestedAt);
+        }, snapshot, requestedAt, generation);
       } catch {
         return;
       }
     },
     async handle(context: ChallengeRankContext, command: NonNullable<ReturnType<typeof rankCommand>>) {
+      if (command.kind === "admin-toggle" || command.kind === "admin-clear") return manageZzzChallengeRanks(context, command, signal);
       const scope = rankGroup(context);
       if (command.kind === "tower-help") {
         return [scope ? undefined : "请在群聊中查询排名！", "当前可查的爬塔排名：",
@@ -115,7 +162,8 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         if (!settings.allowed) return `当前群${name}排名功能已关闭！`;
         const members = await rankMembership(context, actor);
         if (!members) return "暂无法核对当前群成员，请稍后重试。";
-        const candidates = await store.rows(group, mode, members, Date.now());
+        const generation = await store.generation(group, rankType(mode));
+        const candidates = await store.rows(group, mode, members, Date.now(), generation);
         const rows: RankRow[] = [];
         for (const row of sortedRankRows(mode, candidates)) {
           if (await roleKeepsOwnership(row)) rows.push(row);
@@ -133,8 +181,8 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         }).catch(() => undefined);
         if (signal.aborted) return;
         const after = await rankMembership(context, actor);
-        if (!after || !(await readRankConfig(group)).allowed || !await store.stillVisible(group, mode, after, rows, Date.now()) ||
-            !(await Promise.all(rows.map(roleKeepsOwnership))).every(Boolean)) {
+        if (!after || !(await Promise.all(rows.map(roleKeepsOwnership))).every(Boolean) ||
+            !(await readRankConfig(group)).allowed || !await store.stillVisible(group, mode, after, rows, Date.now(), generation)) {
           return "群排名的成员或可见状态已变化，请重新查询。";
         }
         if (signal.aborted) return;
