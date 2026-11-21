@@ -2,7 +2,7 @@ import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
+import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
 import type { ZzzAtlasPortraitReader } from "./panel-original.ts";
 import { readPanelJson } from "./panel-storage.ts";
@@ -70,16 +70,18 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
     context.fillRect(0, 0, width, height);
     if (background) cover(context, background, 0, 0, width, height);
     box(context, "#0006", 0, 0, width, 112.53);
-    context.save();
-    context.scale(0.7, 0.7);
-    drawZzzCardPlayer(context, role, role.regionName || role.region, player);
-    context.restore();
-
     const count = options.showcase ? `公开展柜已保存 ${rows.length} 个角色` :
       options.updatedIds ? `已为您更新 ${options.updatedIds.size} 个角色` : `共计 ${rows.length} 个角色`;
-    const countWidth = (options.showcase ? 306 : options.updatedIds ? 251.14 : 180.64) +
-      (String(options.updatedIds?.size ?? rows.length).length - 1) * 14;
+    // The original top bar gives the message its own width before fitting the player row.
+    const countSize = 23.52;
+    const countWidth = measureZzzCardLabel(context, count, countSize, 700) + 2 * 0.7 * countSize;
     const countLeft = 733.5 - countWidth;
+    const playerScale = 0.7;
+    context.save();
+    context.scale(playerScale, playerScale);
+    drawZzzCardPlayer(context, role, role.regionName || role.region, player, (countLeft - 16) / playerScale);
+    context.restore();
+
     fillRound(context, "#101315", countLeft, 33.2, countWidth, 46.1, 13, "#302c48");
     context.beginPath();
     context.moveTo(732, 45);
@@ -88,7 +90,7 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
     context.closePath();
     context.fillStyle = "#101315";
     context.fill();
-    label(context, count, countLeft + countWidth / 2, 56.25, 23.5, { align: "center", weight: 700 });
+    label(context, count, countLeft + countWidth / 2, 56.25, countSize, { align: "center", weight: 700 });
     if (title) contain(context, title, 747.6, 26.86, 58.8, 58.8);
     else {
       circle(context, "#29468a", 777, 56, 27);

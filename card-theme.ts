@@ -137,7 +137,7 @@ export async function loadZzzCardPlayer(local: Awaited<ReturnType<typeof openZzz
 }
 
 export function drawZzzCardPlayer(context: Context, role: GameRole, region: string,
-  { frame, uidBar, avatar }: Awaited<ReturnType<typeof loadZzzCardPlayer>>) {
+  { frame, uidBar, avatar }: Awaited<ReturnType<typeof loadZzzCardPlayer>>, rightEdge?: number) {
   if (frame) context.drawImage(frame, 62, 31, 116, 116);
   context.save();
   context.beginPath();
@@ -148,18 +148,24 @@ export function drawZzzCardPlayer(context: Context, role: GameRole, region: stri
   else label(context, "绳", 120, 88.8, 36, { weight: 800, align: "center" });
   context.restore();
   const nickname = role.nickname || "绳匠";
-  label(context, nickname, 204, 66, 29, { weight: 700, maxWidth: 330 });
-  const levelPosition = 204 + Math.min(context.measureText(nickname).width, 330) + 12;
+  const nicknameWidth = measureZzzCardLabel(context, nickname, 29, 700);
+  const regionWidth = measureZzzCardLabel(context, region, 22) + 18;
+  const levelSpace = role.level === undefined ? 0 : 83;
+  const playerRightEdge = rightEdge ?? 802;
+  const available = playerRightEdge - 204 - 12 - levelSpace;
+  const minNicknameWidth = Math.min(nicknameWidth, 62);
+  const maxNicknameWidth = rightEdge === undefined ? 330 :
+    Math.min(330, Math.max(minNicknameWidth, available - regionWidth));
+  label(context, nickname, 204, 66, 29, { weight: 700, maxWidth: maxNicknameWidth });
+  const levelPosition = 204 + Math.min(nicknameWidth, maxNicknameWidth) + 12;
   if (role.level !== undefined) {
     drawTag(context, "#f3cb45", levelPosition, 48, 73);
     label(context, `Lv${role.level}`, levelPosition + 36.5, 66, 22, { color: "#2b2628", align: "center" });
   }
-  const serverPosition = levelPosition + (role.level !== undefined ? 83 : 0);
-  const server = region;
-  context.font = `22px ${font}`;
-  const serverWidth = Math.min(840 - serverPosition - 38, context.measureText(server).width + 18);
+  const serverPosition = levelPosition + levelSpace;
+  const serverWidth = Math.min(playerRightEdge - serverPosition, regionWidth);
   drawTag(context, "#51b1fd", serverPosition, 48, serverWidth);
-  label(context, server, serverPosition + serverWidth / 2, 66, 22, { color: "#2b2628", align: "center", maxWidth: serverWidth - 8 });
+  label(context, region, serverPosition + serverWidth / 2, 66, 22, { color: "#2b2628", align: "center", maxWidth: serverWidth - 8 });
   if (uidBar) context.drawImage(uidBar, 192, 90, 225, 42);
   else box(context, "#1b1b25", 192, 90, 225, 42);
   label(context, `UID ${role.uid}`, 304.5, 111, 22, { color: "#ffffff99", align: "center" });
