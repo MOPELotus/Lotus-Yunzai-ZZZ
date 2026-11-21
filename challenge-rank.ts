@@ -13,6 +13,7 @@ export interface ChallengeRankContext {
   readonly group_id?: number;
   readonly message_type?: string;
   readonly adapter?: string;
+  readonly inlineImageByteLimit?: number;
   readonly isMaster?: boolean;
   readonly isBotMaster?: (userId: number) => boolean;
   readonly privateCredentialSignal?: AbortSignal;
@@ -177,7 +178,7 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
           return `没有${name}排名，请先 %显示${include}排名，并在本群用 %${include} 查询本期战绩。`;
         }
         const result = await renderChallengeRank(mode, rows, {
-          signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
+          signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit: context.inlineImageByteLimit,
         }).catch(() => undefined);
         if (signal.aborted) return;
         const after = await rankMembership(context, actor);
