@@ -8,8 +8,9 @@ import { rankLabels, rankTowerSeason, rankType, type RankMode, type RankRow } fr
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
 const modeTheme = { ABYSS: "abyss", DEADLY: "deadly", DEADLY_HARD: "deadlyHard", HOLO_BOSS: "holoBoss", VOID_FRONT_BATTLE: "voidFrontBattle",
-  CLIMBING_TOWER_S3: "abyss", CLIMBING_TOWER_S4: "abyss" } as const;
+  CLIMBING_TOWER_S1: "abyss", CLIMBING_TOWER_S2: "abyss", CLIMBING_TOWER_S3: "abyss", CLIMBING_TOWER_S4: "abyss" } as const;
 const englishTitle = { ABYSS: "ABYSS RANK", DEADLY: "DEADLY RANK", DEADLY_HARD: "DEADLY HARD RANK", HOLO_BOSS: "HOLO BOSS RANK", VOID_FRONT_BATTLE: "VOID FRONT BATTLE RANK",
+  CLIMBING_TOWER_S1: "CLIMBING TOWER (S1) RANK", CLIMBING_TOWER_S2: "CLIMBING TOWER (S2) RANK",
   CLIMBING_TOWER_S3: "CLIMBING TOWER (S3) RANK", CLIMBING_TOWER_S4: "CLIMBING TOWER (S4) RANK" } as const;
 type Art = ZzzChallengeArt & {
   readonly memberAvatars: ReadonlyMap<string, Image | undefined>;
@@ -60,8 +61,8 @@ function score(context: Context, art: Art, value: number | undefined, cap: numbe
   return Math.min(159, context.measureText(text).width);
 }
 
-function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: number) {
-  if (row.tower) frame(context, theme(art, mode, "BgFrame01"), 24, y + 12, 1103, 175);
+function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: number, width: number) {
+  if (row.tower) frame(context, theme(art, mode, "BgFrame01"), 24, y + 12, width - 47, 175);
   const avatar = art.memberAvatars.get(row.qq);
   const avatarFrame = art.local.get("common/images/SuitBg.png");
   if (avatarFrame) context.drawImage(avatarFrame, 26, y + 50, 116, 116);
@@ -92,14 +93,18 @@ function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: num
   label(context, `UID ${row.uid}`, 268.5, uidY + 21, 22, { align: "center", color: "#ffffff99" });
 
   if (row.tower) {
-    const metrics = [["总得分", row.score], ["爬塔层数", row.tower.layer], ["无伤通关数", row.tower.noDamage]] as const;
+    const season = rankTowerSeason(rankType(mode));
+    const metrics: [string, number][] = [];
+    if (season && season >= 3) metrics.push(["总得分", row.score]);
+    metrics.push(["爬塔层数", row.tower.layer]);
+    if (row.tower.noDamage !== undefined) metrics.push(["无伤通关数", row.tower.noDamage]);
     for (const [index, [name, value]] of metrics.entries()) {
       const x = 504 + index * 175;
       label(context, name, x, y + 91, 27, { color: "#ddd", align: "center" });
       label(context, String(value), x, y + 140, 35, { weight: 700, align: "center", maxWidth: 152 });
     }
     const image = row.tower.medal && art.buffIcons.get(row.tower.medal);
-    if (image) contain(context, image, 995, y + 74, 83, 71);
+    if (image) contain(context, image, width - 155, y + 74, 83, 71);
     return;
   }
   if (row.voidFront) {
@@ -283,7 +288,7 @@ async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, 
 // ZZZure/ZZZ-Plugin 2057599 resources/rank/{abyss,deadly,deadlyHard}, normal screenshot scale 1.
 export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow[], options: ZzzCardOptions = {}) {
   const season = rankTowerSeason(rankType(mode));
-  const width = season ? 1150 : mode === "DEADLY_HARD" ? 1000 : mode === "HOLO_BOSS" ? 2200 : 2400;
+  const width = season ? ({ 1: 900, 2: 1000, 3: 1150, 4: 1150 })[season] : mode === "DEADLY_HARD" ? 1000 : mode === "HOLO_BOSS" ? 2200 : 2400;
   const rowHeight = season ? 190 : 240;
   const startNotes = 96 + rows.length * rowHeight;
   const notes = mode === "ABYSS" ? 149 : mode === "DEADLY" ? 110 : 142;
@@ -297,7 +302,7 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     heading(context, mode, width);
     rows.forEach((row, index) => {
       const y = 96 + index * rowHeight;
-      member(context, art, row, mode, y);
+      member(context, art, row, mode, y, width);
       if (season) return;
       if (mode === "HOLO_BOSS") {
         for (let idx = 0; idx < 3; idx++) holoTeam(context, art, row.holo?.bosses[idx], 762 + 467 * idx, y - 12);
@@ -320,7 +325,8 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     label(context, query, x, noteY, 19.2, { color: "#ffd700" });
     label(context, season ? ` 以登记爬塔 S${season} 战绩` : " 以登记本期战绩", x + context.measureText(query).width, noteY, 19.2, { color: "#979797" });
     const tie = mode === "ABYSS" ? "同分同评级" : mode === "DEADLY" ? "同星同分" : "同分";
-    const order = season ? "先比较总得分、爬塔层数，再比较无伤通关数" : mode === "HOLO_BOSS" ? "先比较星数、总用时、无伤间数，完全相同时以较早记录排前" :
+    const order = season ? ({ 1: "按爬塔层数排名", 2: "层数相同，再比较无伤通关数",
+      3: "先比较总得分、爬塔层数，再比较无伤通关数", 4: "先比较总得分、爬塔层数，再比较无伤通关数" })[season] : mode === "HOLO_BOSS" ? "先比较星数、总用时、无伤间数，完全相同时以较早记录排前" :
       mode === "VOID_FRONT_BATTLE" ? "总分持平时，最终关及普通关的最晚通关时间较早者排前" :
         `${tie}时，最后通关时间较早者排前`;
     label(context, `• ${order}`, 74, noteY + 39, 19.2, { color: "#979797", maxWidth: width - 145 });

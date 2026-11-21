@@ -83,7 +83,9 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
       const scope = groupFor(context);
       if (command.kind === "tower-help") {
         return [scope ? undefined : "请在群聊中查询排名！", "当前可查的爬塔排名：",
-          "%爬塔S3排名（鏖战试炼：荣耀）", "%爬塔S4排名（鏖战试炼：狂澜）"].filter(Boolean).join("\n");
+          "%爬塔S1排名（拟真鏖战试炼）", "%爬塔S2排名（鏖战试炼：末路）",
+          "%爬塔S3排名（鏖战试炼：荣耀）", "%爬塔S4排名（鏖战试炼：狂澜）",
+          "使用 %显示爬塔S1排名 或 %隐藏爬塔S1排名 设置该季，季号可换。"].filter(Boolean).join("\n");
       }
       if (!scope) return "请在群聊中使用该命令！";
       const redis = globalThis.redis;
@@ -137,10 +139,17 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         }
         if (signal.aborted) return;
         if (result) return { type: "image" as const, file: result.png };
-        return [`${name}排名`, ...rows.map((row, index) => row.holo ?
-          `${index + 1}. ${row.nickname} · ${row.bonus} 星 · ${holoBossDuration(row.score)} · 无伤 ${row.holo.undamaged}` :
-          row.tower ? `${index + 1}. ${row.nickname} · ${row.score} 分 · ${row.tower.layer} 层 · 无伤 ${row.tower.noDamage}` :
-            `${index + 1}. ${row.nickname} · ${row.score}`)].join("\n");
+        const season = rankTowerSeason(rankType(mode));
+        return [`${name}排名`, ...rows.map((row, index) => {
+          const member = `${index + 1}. ${row.nickname}`;
+          if (row.holo) return `${member} · ${row.bonus} 星 · ${holoBossDuration(row.score)} · 无伤 ${row.holo.undamaged}`;
+          if (row.tower && season) {
+            const metrics = [...(season >= 3 ? [`${row.score} 分`] : []), `${row.tower.layer} 层`];
+            if (row.tower.noDamage !== undefined) metrics.push(`无伤 ${row.tower.noDamage}`);
+            return [member, ...metrics].join(" · ");
+          }
+          return `${member} · ${row.score}`;
+        })].join("\n");
       } catch {
         if (!signal.aborted) return "绝区零群排名暂时不可用。";
       }

@@ -1,7 +1,7 @@
 import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import type { ZzzClimbingTowerSnapshot, ZzzDeadlyRoom, ZzzDeadlySnapshot, ZzzHoloBossRoom, ZzzHoloBossSnapshot, ZzzShiyuSnapshot, ZzzShiyuTeam, ZzzVoidFrontSnapshot, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 
-export const towerRanks = ["CLIMBING_TOWER_S3", "CLIMBING_TOWER_S4"] as const;
+export const towerRanks = ["CLIMBING_TOWER_S1", "CLIMBING_TOWER_S2", "CLIMBING_TOWER_S3", "CLIMBING_TOWER_S4"] as const;
 type TowerRank = typeof towerRanks[number];
 export type RankType = "ABYSS" | "DEADLY" | "HOLO_BOSS" | "VOID_FRONT_BATTLE" | TowerRank;
 export type RankMode = RankType | "DEADLY_HARD";
@@ -25,7 +25,7 @@ export interface RankRow extends RankProfile {
   readonly rating?: NonNullable<ZzzShiyuSnapshot["overall"]>["rating"];
   readonly holo?: { readonly undamaged: number; readonly bosses: readonly ZzzHoloBossRoom[] };
   readonly voidFront?: { readonly finalStage: ZzzVoidFrontStage; readonly stages: readonly ZzzVoidFrontStage[] };
-  readonly tower?: { readonly layer: number; readonly noDamage: number; readonly medal?: string };
+  readonly tower?: { readonly layer: number; readonly noDamage?: number; readonly medal?: string };
   readonly teams: readonly (ZzzShiyuTeam | ZzzDeadlyRoom)[];
   readonly source: "current" | "legacy";
 }
@@ -36,6 +36,8 @@ export const rankLabels = {
   DEADLY_HARD: "危局强袭战绝境",
   HOLO_BOSS: "拟境湮灭战",
   VOID_FRONT_BATTLE: "临界推演",
+  CLIMBING_TOWER_S1: "拟真鏖战试炼",
+  CLIMBING_TOWER_S2: "鏖战试炼：末路",
   CLIMBING_TOWER_S3: "鏖战试炼：荣耀",
   CLIMBING_TOWER_S4: "鏖战试炼：狂澜",
 } as const;
@@ -44,14 +46,18 @@ const shiyu = "(?:式舆防卫战|式舆|深渊|防卫战|防卫)";
 const deadly = "(?:危局强袭战|危局|强袭战|强袭)";
 const holo = "(?:拟境湮灭战|拟境|湮灭战|湮灭)";
 const voidFront = "(?:临界推演|临界|推演)";
+const towerS1 = "(?:爬塔 *S1|拟真鏖战试炼)";
+const towerS2 = "(?:爬塔 *S2|鏖战试炼[:：]?末路)";
 const towerS3 = "(?:爬塔 *S3|鏖战试炼[:：]?荣耀)";
 const towerS4 = "(?:爬塔 *S4|鏖战试炼[:：]?狂澜)";
 const hard = `(?:绝境|${deadly}绝境|绝境${deadly})`;
-const boardCommand = new RegExp(`^(${shiyu}|${hard}|${deadly}|${holo}|${voidFront}|${towerS3}|${towerS4})排名$`, "iu");
+const boardCommand = new RegExp(`^(${shiyu}|${hard}|${deadly}|${holo}|${voidFront}|${towerS1}|${towerS2}|${towerS3}|${towerS4})排名$`, "iu");
+const towerS1Label = new RegExp(`^${towerS1}$`, "iu");
+const towerS2Label = new RegExp(`^${towerS2}$`, "iu");
 const towerS3Label = new RegExp(`^${towerS3}$`, "iu");
 const towerS4Label = new RegExp(`^${towerS4}$`, "iu");
 const hidden = /^(?:隐藏|取消显示|关闭|关掉|off|禁用|停止)$/iu;
-const shareCommand = new RegExp(`^(隐藏|取消显示|关闭|关掉|off|禁用|停止|显示|展示|开启|打开|on|启用|启动)(${shiyu}|${hard}|${deadly}|${holo}|${voidFront}|${towerS3}|${towerS4})?(?:群(?:内)?)?排名\\s*([1-9]\\d{0,2})?$`, "iu");
+const shareCommand = new RegExp(`^(隐藏|取消显示|关闭|关掉|off|禁用|停止|显示|展示|开启|打开|on|启用|启动)(${shiyu}|${hard}|${deadly}|${holo}|${voidFront}|${towerS1}|${towerS2}|${towerS3}|${towerS4})?(?:群(?:内)?)?排名\\s*([1-9]\\d{0,2})?$`, "iu");
 const shiyuLabel = new RegExp(`^${shiyu}$`, "u");
 const voidFrontLabel = new RegExp(`^${voidFront}$`, "u");
 const holoLabel = new RegExp(`^${holo}$`, "u");
@@ -62,8 +68,11 @@ export function rankType(mode: RankMode): RankType {
   return mode === "DEADLY_HARD" ? "DEADLY" : mode;
 }
 
-export function rankTowerSeason(type: RankType): 3 | 4 | undefined {
-  return type === "CLIMBING_TOWER_S3" ? 3 : type === "CLIMBING_TOWER_S4" ? 4 : undefined;
+export function rankTowerSeason(type: RankType): 1 | 2 | 3 | 4 | undefined {
+  if (type === "CLIMBING_TOWER_S1") return 1;
+  if (type === "CLIMBING_TOWER_S2") return 2;
+  if (type === "CLIMBING_TOWER_S3") return 3;
+  if (type === "CLIMBING_TOWER_S4") return 4;
 }
 
 export function isOwnedRank(type: RankType): type is "HOLO_BOSS" | "VOID_FRONT_BATTLE" | TowerRank {
@@ -74,6 +83,8 @@ function namedRank(text: string): RankType {
   if (shiyuLabel.test(text)) return "ABYSS";
   if (holoLabel.test(text)) return "HOLO_BOSS";
   if (voidFrontLabel.test(text)) return "VOID_FRONT_BATTLE";
+  if (towerS1Label.test(text)) return "CLIMBING_TOWER_S1";
+  if (towerS2Label.test(text)) return "CLIMBING_TOWER_S2";
   if (towerS3Label.test(text)) return "CLIMBING_TOWER_S3";
   if (towerS4Label.test(text)) return "CLIMBING_TOWER_S4";
   return "DEADLY";
@@ -143,9 +154,11 @@ export function rankRow(mode: RankMode, profile: RankProfile, snapshot: RankSnap
   const season = rankTowerSeason(rankType(mode));
   if (season && "seasons" in snapshot) {
     const record = snapshot.seasons.find(item => item.number === season);
-    if (!record || !finite(record.score) || !finite(record.layer) || !finite(record.mvp)) return;
-    return { ...profile, score: record.score, bonus: 0, latest: 0, expiresAt, teams: [], source,
-      tower: { layer: record.layer, noDamage: record.mvp, medal: record.medal } };
+    if (!record || !finite(record.layer) || (season >= 2 && !finite(record.mvp))) return;
+    const score = season <= 2 ? record.layer : record.score;
+    if (!finite(score)) return;
+    return { ...profile, score, bonus: 0, latest: 0, expiresAt, teams: [], source,
+      tower: { layer: record.layer, noDamage: season >= 2 ? record.mvp : undefined, medal: record.medal } };
   }
   if (mode === "VOID_FRONT_BATTLE" && "stages" in snapshot) {
     if (snapshot.endingUnlocked !== true || !snapshot.finalStage || !finite(snapshot.totalScore)) return;
@@ -187,7 +200,7 @@ export function sortedRankRows(mode: RankMode, rows: readonly RankRow[]) {
   return [...rows].sort((a, b) => {
     const result = mode === "HOLO_BOSS" ? b.bonus - a.bonus || a.score - b.score || (b.holo?.undamaged ?? 0) - (a.holo?.undamaged ?? 0) :
       mode === "DEADLY" ? b.bonus - a.bonus || b.score - a.score : b.score - a.score || b.bonus - a.bonus;
-    const towerTie = a.tower && b.tower ? b.tower.layer - a.tower.layer || b.tower.noDamage - a.tower.noDamage : 0;
+    const towerTie = a.tower && b.tower ? b.tower.layer - a.tower.layer || (b.tower.noDamage ?? 0) - (a.tower.noDamage ?? 0) : 0;
     return result || towerTie || a.latest - b.latest || a.uid.localeCompare(b.uid) || a.region.localeCompare(b.region);
   });
 }

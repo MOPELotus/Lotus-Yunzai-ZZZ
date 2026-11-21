@@ -138,7 +138,7 @@ function parseProfile(raw: Json, qq: string, uid: string) {
 async function legacyRecord(root: string, type: RankType, uid: string, qq: string) {
   const season = rankTowerSeason(type);
   const folders = { ABYSS: "abyss", DEADLY: "deadly", HOLO_BOSS: "holoBoss", VOID_FRONT_BATTLE: "voidFrontBattle",
-    CLIMBING_TOWER_S3: "climbingTower", CLIMBING_TOWER_S4: "climbingTower" } as const;
+    CLIMBING_TOWER_S1: "climbingTower", CLIMBING_TOWER_S2: "climbingTower", CLIMBING_TOWER_S3: "climbingTower", CLIMBING_TOWER_S4: "climbingTower" } as const;
   const directory = join(root, folders[type]);
   const actual = await realpath(join(directory, `${uid}.json`)).catch(() => undefined);
   if (!actual?.startsWith(directory + sep)) return;
@@ -219,7 +219,7 @@ export function createChallengeRankStore(redis: Redis, legacyData = Bun.env.LOTU
           if (!("seasons" in snapshot) || !row?.tower) return;
           const { medal, layer, noDamage } = row.tower;
           selected = { uid: snapshot.uid, region: snapshot.region, status: "available",
-            seasons: [{ number: season, medal, layer, score: row.score, mvp: noDamage, avatars: [] }] };
+            seasons: [{ number: season, medal, layer, score: season >= 3 ? row.score : undefined, mvp: noDamage, avatars: [] }] };
           metadata = { requestedAt };
         } else if (type === "HOLO_BOSS") {
           if (!("bosses" in snapshot) || !snapshot.period || !row?.holo) return;

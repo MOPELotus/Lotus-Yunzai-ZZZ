@@ -107,8 +107,9 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
     }
     if (showVisibility && visibility) {
       const state = (value: boolean | undefined) => value === undefined ? "未登记" : value ? "显示" : "隐藏";
-      label(context, `本群爬塔排名 · S3 ${state(visibility[0])} · S4 ${state(visibility[1])}`, 40, y + 9, 20, { color: "#f3cb45" });
-      label(context, "使用 %显示爬塔S3排名 或 %显示爬塔S4排名 设置", 40, y + 37, 18, { color: "#a09ca3" });
+      const settings = visibility.map((value, index) => `S${index + 1} ${state(value)}`).join(" · ");
+      label(context, `本群爬塔排名 · ${settings}`, 40, y + 9, 20, { color: "#f3cb45" });
+      label(context, "发送 %爬塔排名 查看各季命令", 40, y + 37, 18, { color: "#a09ca3" });
     }
     label(context, zzzCardFooter, width / 2, height - 37, 17, { align: "center", color: "#a09ca3" });
   }, "gpu");
