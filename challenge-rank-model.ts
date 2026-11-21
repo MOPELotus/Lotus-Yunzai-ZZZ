@@ -1,9 +1,11 @@
 import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
-import type { ZzzDeadlyRoom, ZzzDeadlySnapshot, ZzzHoloBossRoom, ZzzHoloBossSnapshot, ZzzShiyuSnapshot, ZzzShiyuTeam, ZzzVoidFrontSnapshot, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
+import type { ZzzClimbingTowerSnapshot, ZzzDeadlyRoom, ZzzDeadlySnapshot, ZzzHoloBossRoom, ZzzHoloBossSnapshot, ZzzShiyuSnapshot, ZzzShiyuTeam, ZzzVoidFrontSnapshot, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 
-export type RankType = "ABYSS" | "DEADLY" | "HOLO_BOSS" | "VOID_FRONT_BATTLE";
+export const towerRanks = ["CLIMBING_TOWER_S3", "CLIMBING_TOWER_S4"] as const;
+type TowerRank = typeof towerRanks[number];
+export type RankType = "ABYSS" | "DEADLY" | "HOLO_BOSS" | "VOID_FRONT_BATTLE" | TowerRank;
 export type RankMode = RankType | "DEADLY_HARD";
-export type RankSnapshot = ZzzShiyuSnapshot | ZzzDeadlySnapshot | ZzzHoloBossSnapshot | ZzzVoidFrontSnapshot;
+export type RankSnapshot = ZzzShiyuSnapshot | ZzzDeadlySnapshot | ZzzHoloBossSnapshot | ZzzVoidFrontSnapshot | ZzzClimbingTowerSnapshot;
 
 export interface RankProfile {
   readonly qq: string;
@@ -23,6 +25,7 @@ export interface RankRow extends RankProfile {
   readonly rating?: NonNullable<ZzzShiyuSnapshot["overall"]>["rating"];
   readonly holo?: { readonly undamaged: number; readonly bosses: readonly ZzzHoloBossRoom[] };
   readonly voidFront?: { readonly finalStage: ZzzVoidFrontStage; readonly stages: readonly ZzzVoidFrontStage[] };
+  readonly tower?: { readonly layer: number; readonly noDamage: number; readonly medal?: string };
   readonly teams: readonly (ZzzShiyuTeam | ZzzDeadlyRoom)[];
   readonly source: "current" | "legacy";
 }
@@ -33,16 +36,22 @@ export const rankLabels = {
   DEADLY_HARD: "危局强袭战绝境",
   HOLO_BOSS: "拟境湮灭战",
   VOID_FRONT_BATTLE: "临界推演",
+  CLIMBING_TOWER_S3: "鏖战试炼：荣耀",
+  CLIMBING_TOWER_S4: "鏖战试炼：狂澜",
 } as const;
 const prefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)/iu;
 const shiyu = "(?:式舆防卫战|式舆|深渊|防卫战|防卫)";
 const deadly = "(?:危局强袭战|危局|强袭战|强袭)";
 const holo = "(?:拟境湮灭战|拟境|湮灭战|湮灭)";
 const voidFront = "(?:临界推演|临界|推演)";
+const towerS3 = "(?:爬塔 *S3|鏖战试炼[:：]?荣耀)";
+const towerS4 = "(?:爬塔 *S4|鏖战试炼[:：]?狂澜)";
 const hard = `(?:绝境|${deadly}绝境|绝境${deadly})`;
-const boardCommand = new RegExp(`^(${shiyu}|${hard}|${deadly}|${holo}|${voidFront})排名$`, "u");
+const boardCommand = new RegExp(`^(${shiyu}|${hard}|${deadly}|${holo}|${voidFront}|${towerS3}|${towerS4})排名$`, "iu");
+const towerS3Label = new RegExp(`^${towerS3}$`, "iu");
+const towerS4Label = new RegExp(`^${towerS4}$`, "iu");
 const hidden = /^(?:隐藏|取消显示|关闭|关掉|off|禁用|停止)$/iu;
-const shareCommand = new RegExp(`^(隐藏|取消显示|关闭|关掉|off|禁用|停止|显示|展示|开启|打开|on|启用|启动)(${shiyu}|${hard}|${deadly}|${holo}|${voidFront})?(?:群(?:内)?)?排名\\s*([1-9]\\d{0,2})?$`, "iu");
+const shareCommand = new RegExp(`^(隐藏|取消显示|关闭|关掉|off|禁用|停止|显示|展示|开启|打开|on|启用|启动)(${shiyu}|${hard}|${deadly}|${holo}|${voidFront}|${towerS3}|${towerS4})?(?:群(?:内)?)?排名\\s*([1-9]\\d{0,2})?$`, "iu");
 const shiyuLabel = new RegExp(`^${shiyu}$`, "u");
 const voidFrontLabel = new RegExp(`^${voidFront}$`, "u");
 const holoLabel = new RegExp(`^${holo}$`, "u");
@@ -53,25 +62,37 @@ export function rankType(mode: RankMode): RankType {
   return mode === "DEADLY_HARD" ? "DEADLY" : mode;
 }
 
-export function isOwnedRank(type: RankType): type is "HOLO_BOSS" | "VOID_FRONT_BATTLE" {
-  return type === "HOLO_BOSS" || type === "VOID_FRONT_BATTLE";
+export function rankTowerSeason(type: RankType): 3 | 4 | undefined {
+  return type === "CLIMBING_TOWER_S3" ? 3 : type === "CLIMBING_TOWER_S4" ? 4 : undefined;
+}
+
+export function isOwnedRank(type: RankType): type is "HOLO_BOSS" | "VOID_FRONT_BATTLE" | TowerRank {
+  return type === "HOLO_BOSS" || type === "VOID_FRONT_BATTLE" || rankTowerSeason(type) !== undefined;
+}
+
+function namedRank(text: string): RankType {
+  if (shiyuLabel.test(text)) return "ABYSS";
+  if (holoLabel.test(text)) return "HOLO_BOSS";
+  if (voidFrontLabel.test(text)) return "VOID_FRONT_BATTLE";
+  if (towerS3Label.test(text)) return "CLIMBING_TOWER_S3";
+  if (towerS4Label.test(text)) return "CLIMBING_TOWER_S4";
+  return "DEADLY";
 }
 
 export function rankCommand(command: string) {
   const text = command.replace(prefix, "");
   if (text === command) return;
+  if (/^(?:爬塔|鏖战)排名$/u.test(text)) return { kind: "tower-help" as const };
   const action = shareCommand.exec(text);
   if (action) {
     const profileId = Number(action[3] ?? 1);
     if (profileId > MAX_PROFILE_ID) return;
-    const types: RankType[] = action[2] ? [shiyuLabel.test(action[2]) ? "ABYSS" : holoLabel.test(action[2]) ? "HOLO_BOSS" :
-      voidFrontLabel.test(action[2]) ? "VOID_FRONT_BATTLE" : "DEADLY"] : ["ABYSS", "DEADLY"];
+    const types: RankType[] = action[2] ? [namedRank(action[2])] : ["ABYSS", "DEADLY"];
     return { kind: "visibility" as const, enabled: !hidden.test(action[1]!), types, profileId };
   }
   const board = boardCommand.exec(text)?.[1];
   if (board) {
-    const mode: RankMode = shiyuLabel.test(board) ? "ABYSS" : hardLabel.test(board) ? "DEADLY_HARD" : holoLabel.test(board) ? "HOLO_BOSS" :
-      voidFrontLabel.test(board) ? "VOID_FRONT_BATTLE" : "DEADLY";
+    const mode: RankMode = hardLabel.test(board) ? "DEADLY_HARD" : namedRank(board);
     return { kind: "board" as const, mode };
   }
 }
@@ -98,6 +119,7 @@ function timestamp(value: unknown) {
 }
 
 export function currentPeriod(snapshot: RankSnapshot, now: number) {
+  if ("seasons" in snapshot) return snapshot.status === "available" ? Number.MAX_SAFE_INTEGER : undefined;
   if (snapshot.scheduleType !== 1 || snapshot.status !== "available") return;
   if ("stages" in snapshot) {
     const start = timestamp(snapshot.start);
@@ -118,6 +140,13 @@ export function rankRow(mode: RankMode, profile: RankProfile, snapshot: RankSnap
   if (profile.uid !== snapshot.uid || profile.region !== snapshot.region) return;
   const expiresAt = currentPeriod(snapshot, now);
   if (!expiresAt) return;
+  const season = rankTowerSeason(rankType(mode));
+  if (season && "seasons" in snapshot) {
+    const record = snapshot.seasons.find(item => item.number === season);
+    if (!record || !finite(record.score) || !finite(record.layer) || !finite(record.mvp)) return;
+    return { ...profile, score: record.score, bonus: 0, latest: 0, expiresAt, teams: [], source,
+      tower: { layer: record.layer, noDamage: record.mvp, medal: record.medal } };
+  }
   if (mode === "VOID_FRONT_BATTLE" && "stages" in snapshot) {
     if (snapshot.endingUnlocked !== true || !snapshot.finalStage || !finite(snapshot.totalScore)) return;
     const start = timestamp(snapshot.start) ?? 0;
@@ -158,6 +187,7 @@ export function sortedRankRows(mode: RankMode, rows: readonly RankRow[]) {
   return [...rows].sort((a, b) => {
     const result = mode === "HOLO_BOSS" ? b.bonus - a.bonus || a.score - b.score || (b.holo?.undamaged ?? 0) - (a.holo?.undamaged ?? 0) :
       mode === "DEADLY" ? b.bonus - a.bonus || b.score - a.score : b.score - a.score || b.bonus - a.bonus;
-    return result || a.latest - b.latest || a.uid.localeCompare(b.uid) || a.region.localeCompare(b.region);
+    const towerTie = a.tower && b.tower ? b.tower.layer - a.tower.layer || b.tower.noDamage - a.tower.noDamage : 0;
+    return result || towerTie || a.latest - b.latest || a.uid.localeCompare(b.uid) || a.region.localeCompare(b.region);
   });
 }

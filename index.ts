@@ -19,7 +19,7 @@ import { renderZzzVoidFront } from "./void-front-card.ts";
 import { createZzzCinema, zzzCinemaCommand } from "./cinema.ts";
 import { createZzzMonthlyArchive } from "./monthly-archive.ts";
 import { createZzzMonthlyCommands, zzzMonthlyCommand } from "./monthly-command.ts";
-import { rankCommand } from "./challenge-rank-model.ts";
+import { rankCommand, towerRanks } from "./challenge-rank-model.ts";
 import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
 import { createZzzPoolHistory, zzzPoolHistoryCommand } from "./pool-history.ts";
@@ -292,7 +292,9 @@ export function createModule({ signal, lockFile }: {
       const rankVisibility = "seasons" in snapshot || "hollowMode" in snapshot ? undefined :
         await challengeRanks.remember(context, profileId, source.role, snapshot,
           "bosses" in snapshot ? "HOLO_BOSS" : "stages" in snapshot ? "VOID_FRONT_BATTLE" : mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive);
-      const theme = { qq, signal, rankVisibility, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
+      const towerVisibility = "seasons" in snapshot ? await Promise.all(towerRanks.map(type =>
+        challengeRanks.remember(context, profileId, source.role, snapshot, type, requestedAt, stillActive))) : undefined;
+      const theme = { qq, signal, rankVisibility, towerVisibility, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
       const result = await ("hollowMode" in snapshot ? renderZzzHollowZero(snapshot, source.role, theme) :
         "seasons" in snapshot ? renderZzzClimbingTower(snapshot, source.role, theme) :
         "stages" in snapshot ? renderZzzVoidFront(snapshot, source.role, theme) :

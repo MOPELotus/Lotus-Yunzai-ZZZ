@@ -1,7 +1,7 @@
 import type { createProfileStore, GameRole } from "@lotus-yunzai/account";
 import { previewRedeemIdentity } from "@lotus-yunzai/hoyo-client/redeem-submit";
 import {
-  currentPeriod, domesticRegion, idOf, isOwnedRank, rankCommand, rankIdentity, rankLabels, sortedRankRows,
+  currentPeriod, domesticRegion, idOf, isOwnedRank, rankCommand, rankIdentity, rankLabels, rankTowerSeason, rankType, sortedRankRows,
   type RankRow, type RankSnapshot, type RankType,
 } from "./challenge-rank-model.ts";
 import { createChallengeRankStore, readRankConfig } from "./challenge-rank-store.ts";
@@ -38,14 +38,17 @@ function groupFor(context: ChallengeRankContext) {
 
 export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfileStore>, signal: AbortSignal) {
   async function ownedRankRole(qq: string, profileId: number) {
-    const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
+    const before = await profiles.requestContext(qq, profileId, "zzz");
+    const selected = await profiles.savedRole(qq, profileId, "zzz");
+    const source = await profiles.requestContext(qq, profileId, "zzz", selected.uid);
     const account = source.account.stuid || source.account.ltuid;
-    if (source.role.gameBiz === "nap_cn" && rankIdentity(source.role.uid, source.role.region) &&
-        account && previewRedeemIdentity(source) === account) return source;
+    if (source.revision === before.revision && source.role.uid === selected.uid && source.role.region === selected.region &&
+        source.role.gameBiz === "nap_cn" && source.role.gameBiz === selected.gameBiz &&
+        rankIdentity(selected.uid, selected.region) && account && previewRedeemIdentity(source) === account) return source;
   }
 
   async function roleKeepsOwnership(row: RankRow) {
-    if (row.holo || row.voidFront) {
+    if (row.holo || row.voidFront || row.tower) {
       const active = row.profileId && await ownedRankRole(row.qq, row.profileId).catch(() => undefined);
       return !!active && active.role.uid === row.uid && active.role.region === row.region;
     }
@@ -78,6 +81,10 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
     },
     async handle(context: ChallengeRankContext, command: NonNullable<ReturnType<typeof rankCommand>>) {
       const scope = groupFor(context);
+      if (command.kind === "tower-help") {
+        return [scope ? undefined : "请在群聊中查询排名！", "当前可查的爬塔排名：",
+          "%爬塔S3排名（鏖战试炼：荣耀）", "%爬塔S4排名（鏖战试炼：狂澜）"].filter(Boolean).join("\n");
+      }
       if (!scope) return "请在群聊中使用该命令！";
       const redis = globalThis.redis;
       if (!redis) return "绝区零群排名暂时不可用。";
@@ -114,6 +121,8 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
           if (rows.length >= settings.maximum) break;
         }
         if (!rows.length) {
+          const season = rankTowerSeason(rankType(mode));
+          if (season) return `没有爬塔S${season}排名，请先 %显示爬塔S${season}排名，并在本群用 %爬塔 查询战绩。`;
           const include = mode === "ABYSS" ? "深渊" : mode === "HOLO_BOSS" ? "拟境" : mode === "VOID_FRONT_BATTLE" ? "临界" : "危局";
           return `没有${name}排名，请先 %显示${include}排名，并在本群用 %${include} 查询本期战绩。`;
         }
@@ -130,7 +139,8 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         if (result) return { type: "image" as const, file: result.png };
         return [`${name}排名`, ...rows.map((row, index) => row.holo ?
           `${index + 1}. ${row.nickname} · ${row.bonus} 星 · ${holoBossDuration(row.score)} · 无伤 ${row.holo.undamaged}` :
-          `${index + 1}. ${row.nickname} · ${row.score}`)].join("\n");
+          row.tower ? `${index + 1}. ${row.nickname} · ${row.score} 分 · ${row.tower.layer} 层 · 无伤 ${row.tower.noDamage}` :
+            `${index + 1}. ${row.nickname} · ${row.score}`)].join("\n");
       } catch {
         if (!signal.aborted) return "绝区零群排名暂时不可用。";
       }

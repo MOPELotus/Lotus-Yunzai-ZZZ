@@ -52,7 +52,7 @@ function metrics(context: Context, entries: readonly (readonly [string, string])
 }
 
 // Fixed 2057599 personal tower template uses the same page background and player header as the record cards.
-export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot, role: GameRole, options: ZzzCardOptions = {}) {
+export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot, role: GameRole, options: ZzzCardOptions & { readonly towerVisibility?: readonly (boolean | undefined)[] } = {}) {
   const local = await openZzzCardTheme(options);
   const fetched = new Map<string, Promise<Image | undefined>>();
   function official(url: string) {
@@ -74,7 +74,9 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
   ]);
   const art = { local: new Map(ranks), portraits };
   options.signal?.throwIfAborted();
-  const height = top + snapshot.seasons.reduce((sum, season) => sum + blockHeight(season) + 22, 0) + 57;
+  const visibility = options.towerVisibility;
+  const showVisibility = visibility?.some(value => value !== undefined);
+  const height = top + snapshot.seasons.reduce((sum, season) => sum + blockHeight(season) + 22, 0) + (showVisibility ? 118 : 57);
   return renderPng(width * 2, height * 2, context => {
     context.scale(2, 2);
     box(context, "#1d1a24", 0, 0, width, height);
@@ -102,6 +104,11 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
         label(context, percentage(entry.percentile), x + 195, row + 184, 21, { align: "right", maxWidth: 90 });
       }
       y += h + 22;
+    }
+    if (showVisibility && visibility) {
+      const state = (value: boolean | undefined) => value === undefined ? "未登记" : value ? "显示" : "隐藏";
+      label(context, `本群爬塔排名 · S3 ${state(visibility[0])} · S4 ${state(visibility[1])}`, 40, y + 9, 20, { color: "#f3cb45" });
+      label(context, "使用 %显示爬塔S3排名 或 %显示爬塔S4排名 设置", 40, y + 37, 18, { color: "#a09ca3" });
     }
     label(context, zzzCardFooter, width / 2, height - 37, 17, { align: "center", color: "#a09ca3" });
   }, "gpu");
