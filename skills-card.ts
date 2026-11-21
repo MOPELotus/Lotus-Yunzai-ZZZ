@@ -1,7 +1,6 @@
-import { renderPng } from "@lotus-yunzai/skia";
 import { Canvas, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
 import { box, cover, label, zzzCardFooter } from "./card-theme.ts";
-import { fillRound } from "./challenge-card.ts";
+import { fillRound, renderZzzBattlePng } from "./challenge-card.ts";
 import { drawZzzWikiLines, wrapZzzWikiText } from "./cinema.ts";
 import { zzzSkillText, type SkillSection, type SkillRate } from "./skills-data.ts";
 
@@ -32,12 +31,15 @@ const tableInset = xInset + padding + 21.6;
 const tableWidth = width - tableInset - xInset - padding;
 const outerBorder = 2;
 const innerBorder = 1;
-const bodyFont = '24px "Noto Sans CJK SC", sans-serif';
-const emphasisFont = '24px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
-const tableFont = '19.44px "Noto Sans CJK SC", sans-serif';
-const impressionFont = '19.2px "Noto Sans CJK SC", sans-serif';
-const tableNameFont = `${tableNameSize}px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif`;
-const descriptionTitleFont = `${descriptionTitleSize}px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif`;
+// The original skill body uses the system Latin face and Noto Sans CJK SC for Han glyphs.
+const bodyFamilies = '"DejaVu Sans", "Noto Sans CJK SC", sans-serif';
+const titleFamilies = `"LotusZzzRecordHongmeng", ${bodyFamilies}`;
+const bodyFont = `24px ${bodyFamilies}`;
+const emphasisFont = `24px ${titleFamilies}`;
+const tableFont = `19.44px ${bodyFamilies}`;
+const impressionFont = `19.2px ${bodyFamilies}`;
+const tableNameFont = `${tableNameSize}px ${titleFamilies}`;
+const descriptionTitleFont = `${descriptionTitleSize}px ${titleFamilies}`;
 const sectionGap = 48;
 const footerHeight = 183.6;
 const areaHeight = 10_000;
@@ -297,7 +299,7 @@ function drawSection(context: Context, block: ReturnType<typeof layout>, top: nu
 }
 
 // Box sizes follow Chromium's computed layout of ZZZure 2057599 skills/index.html and index.css.
-export async function renderZzzSkills(sections: readonly SkillSection[], source: SkillCardSource) {
+export async function renderZzzSkills(sections: readonly SkillSection[], source: SkillCardSource, inlineImageByteLimit?: number) {
   const measurement = new Canvas(1, 1).getContext("2d");
   const nameX = source.avatar ? 168 : 24;
   const impressions = source.impressions.flatMap(value => wrapZzzWikiText(measurement, value, width - nameX - 24, impressionFont));
@@ -319,8 +321,7 @@ export async function renderZzzSkills(sections: readonly SkillSection[], source:
   for (const page of pages) {
     const end = header + heightOf(page) + Math.max(0, page.length - 1) * sectionGap;
     const height = Math.ceil(end + footerHeight);
-    result.push(await renderPng(width * 4, height * 4, context => {
-      context.scale(4, 4);
+    result.push(await renderZzzBattlePng(width, height, context => {
       box(context, "#191722", 0, 0, width, height);
       if (source.background) cover(context, source.background, 0, 0, width, height);
       if (source.avatar) {
@@ -345,7 +346,7 @@ export async function renderZzzSkills(sections: readonly SkillSection[], source:
       }
       label(context, "数据来源于 Nanoka", width / 2, end + 64, 24, { color: "#a09ca3", align: "center" });
       label(context, zzzCardFooter, width / 2, end + 139, 16.8, { color: "#a09ca3", align: "center" });
-    }, "gpu", { allowHalfScale: true }));
+    }, 4, inlineImageByteLimit, { allowHalfScale: true }));
   }
   return result;
 }

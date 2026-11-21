@@ -524,7 +524,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const cinemaQuery = zzzCinemaCommand(context.normalizedMessage);
       if (cinemaQuery) return cinema(cinemaQuery, { inlineImageByteLimit: context.inlineImageByteLimit });
       const skillQuery = zzzSkillCommand(context.normalizedMessage);
-      if (skillQuery) return skills(skillQuery);
+      if (skillQuery) return skills(skillQuery, { inlineImageByteLimit: context.inlineImageByteLimit });
       const panel = zzzPanelCommand(context.normalizedMessage, context.message_type === "group");
       if (panel) return panelCommands(panel, context);
       const panelHint = zzzPanelCommandHint(context.normalizedMessage);
