@@ -17,6 +17,8 @@ import { renderZzzHollowZero, zzzHollowText, zzzHollowTitles } from "./hollow-ze
 import { holoBossDuration, renderZzzHoloBoss } from "./holo-boss-card.ts";
 import { renderZzzVoidFront } from "./void-front-card.ts";
 import { createZzzCinema, zzzCinemaCommand } from "./cinema.ts";
+import { createZzzMonthlyArchive } from "./monthly-archive.ts";
+import { createZzzMonthlyCommands, zzzMonthlyCommand } from "./monthly-command.ts";
 import { rankCommand } from "./challenge-rank-model.ts";
 import { createZzzChallengeRanks, type ChallengeRankContext } from "./challenge-rank.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
@@ -48,7 +50,7 @@ const hollowHelp = /^#绝区零(?:零号空洞|零号|空洞)$/u;
 const hollowCommand = /^#绝区零(枯萎苗圃|枯萎|苗圃|迷失之地|迷失)\s*([1-9]\d{0,2})?$/u;
 const zenkovCommand = /^#绝区零(?:迷宫诡域|迷宫|诡域|搜打撤|塔科夫|塔可夫|塔克夫|鸭科夫|绝科夫)(战绩|记录|详情|回顾)?\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,5}))?$/u;
 const explorationCommand = /^#绝区零(?:区域收集|收集|探索度|探索)\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,5}))?$/u;
-const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|拟真鏖战试炼|鏖战|爬塔|枯萎|苗圃|迷失|零号|空洞|迷宫|诡域|搜打撤|塔[科可克]夫|鸭科夫|绝科夫|区域收集|收集|探索|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
+const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|拟真鏖战试炼|鏖战|爬塔|枯萎|苗圃|迷失|零号|空洞|迷宫|诡域|搜打撤|塔[科可克]夫|鸭科夫|绝科夫|区域收集|收集|探索|monthly|菲林|邦布券|收入|月报|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
 const help = [
   "绝区零抽卡记录",
   "%更新抽卡记录 同步国服米游社的六个频段。",
@@ -63,6 +65,9 @@ const historyDirectory = fileURLToPath(new URL("../../data/zzzTuningStats/", imp
 const legacyHistoryDirectory = fileURLToPath(new URL("../../data/zzzGachaJson/", import.meta.url));
 const linkHistoryDirectory = fileURLToPath(new URL("../../data/zzzGachaRows/", import.meta.url));
 const retiredData = ["Lotus-Plugin", "Lotus-ReFactor"].map(name => new URL(`../${name}/data/`, import.meta.url));
+const monthlyDirectory = fileURLToPath(new URL("../../data/zzzMonthly/", import.meta.url));
+const monthlyLegacyDirectories = ["../../data/ZZZ-Plugin/monthly/", "../ZZZ-Plugin/data/monthly/"]
+  .map(path => fileURLToPath(new URL(path, import.meta.url)));
 const flatLegacyDirectories = ["../../data/ZZZ-Plugin/gacha/", "../ZZZ-Plugin/data/gacha/"]
   .map(path => fileURLToPath(new URL(path, import.meta.url)));
 
@@ -90,6 +95,9 @@ export function createModule({ signal, lockFile }: {
 }) {
   const profiles = createProfileStore(Bun.env.LOTUS_PROFILE_DIR || undefined);
   const client = createProfileHoyoClient(profiles);
+  const legacyMonthly = Bun.env.LOTUS_ZZZ_LEGACY_MONTHLY_DIR?.trim();
+  const monthly = createZzzMonthlyCommands(profiles, client,
+    createZzzMonthlyArchive(monthlyDirectory, legacyMonthly ? [legacyMonthly] : monthlyLegacyDirectories, lockFile), signal);
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);
   const cinema = createZzzCinema(signal);
@@ -457,6 +465,14 @@ export function createModule({ signal, lockFile }: {
       if (card) {
         const profileId = Number(card[1] ?? 1);
         if (profileId <= MAX_PROFILE_ID) return gameRecord(context, profileId);
+        return;
+      }
+      const ledger = zzzMonthlyCommand.exec(command);
+      if (ledger) {
+        const profileId = Number(ledger[4] ?? 1);
+        const page = ledger[5] ? Number(ledger[5]) : undefined;
+        if (profileId <= MAX_PROFILE_ID) return monthly(context, profileId,
+          { collect: !!ledger[1], year: ledger[2], month: ledger[3], page });
         return;
       }
       const collection = explorationCommand.exec(command);
