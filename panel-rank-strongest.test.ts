@@ -30,8 +30,8 @@ test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首�
     const owners = new Map([["42:1", `${region}:${first}`], ["43:1", `${region}:${second}`], ["44:1", `${region}:${outsider}`]]);
     let enabled = true;
     globalThis.redis = {
-      async get(key: string) {
-        return key === "lotus-yunzai:zzz-challenge-ranks:allow-group" ? (enabled ? "1" : "0") : null;
+      async mGet(keys: string[]) {
+        return keys.map(key => key === "lotus-yunzai:zzz-challenge-ranks:allow-group" ? (enabled ? "1" : "0") : null);
       },
       async *hScanIterator() { for (const [field, value] of owners) yield { field, value }; },
       async hGet(_key: string, field: string) { return owners.get(field) ?? null; },

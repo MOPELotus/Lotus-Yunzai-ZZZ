@@ -1,6 +1,6 @@
 import { constants } from "node:fs";
 import { open, readFile, realpath } from "node:fs/promises";
-import { dirname, join, sep } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import { normalizeZzzClimbingTower, normalizeZzzDeadly, normalizeZzzHoloBoss, normalizeZzzShiyu, normalizeZzzVoidFront } from "@lotus-yunzai/hoyo-client";
@@ -12,10 +12,11 @@ import {
 type Redis = NonNullable<typeof globalThis.redis>;
 type Json = Record<string, unknown>;
 const legacyUid = /^[1-9]\d{7}$/u;
-const defaultConfig = fileURLToPath(new URL("../../config/zzz-rank.yaml", import.meta.url));
+const installation = new URL("../../", import.meta.url);
 const defaultLegacyData = fileURLToPath(new URL("../../data/ZZZ-Plugin/", import.meta.url));
 const maxRecordBytes = 2 * 1024 * 1024;
 const groupRankSwitch = "lotus-yunzai:zzz-challenge-ranks:allow-group";
+const groupRankSwitchRevision = groupRankSwitch + ":revision";
 export type RankGeneration = string | null;
 
 function generationKey(group: string) {
@@ -31,7 +32,9 @@ async function readGeneration(redis: Redis, group: string, type: RankType): Prom
 }
 
 export async function setRankGroupEnabled(redis: Redis, enabled: boolean) {
-  return await redis.set(groupRankSwitch, enabled ? "1" : "0") === "OK";
+  const [value, revision] = await redis.multi().set(groupRankSwitch, enabled ? "1" : "0")
+    .set(groupRankSwitchRevision, crypto.randomUUID()).exec();
+  return value === "OK" && revision === "OK";
 }
 const rememberRecord = `
 local field, default_status, requested_at, snapshot, generation = unpack(ARGV)
@@ -110,21 +113,43 @@ export function parseRankConfig(input: unknown, group: string, override?: boolea
   return { allowed: enable ? !listed : listed, maximum: Math.max(1, Math.min(15, maximum)) };
 }
 
-export async function readRankConfig(group: string) {
-  const stored = await globalThis.redis?.get(groupRankSwitch);
+export async function readRankGroupSwitch() {
+  const [stored, revision] = await globalThis.redis?.mGet([groupRankSwitch, groupRankSwitchRevision]) ?? [null, null];
   if (stored != null && stored !== "0" && stored !== "1") throw new Error("群榜总开关无效");
-  const override = stored == null ? undefined : stored === "1";
+  return { value: stored == null ? undefined : stored === "1", stamp: stored == null ? null : `${stored}:${revision ?? ""}` };
+}
+
+export function zzzRankConfigFile(root = installation) {
+  const explicit = Bun.env.LOTUS_ZZZ_RANK_CONFIG;
+  return explicit ? resolve(explicit) : fileURLToPath(new URL("config/zzz-rank.yaml", root));
+}
+
+export async function readZzzRankConfigDocument(root = installation) {
   const resourceDirectory = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
   const explicit = Bun.env.LOTUS_ZZZ_RANK_CONFIG;
-  const files = explicit ? [explicit] : [defaultConfig, ...(resourceDirectory ? [join(dirname(resourceDirectory), "config", "rank.yaml")] : [])];
+  const files = [zzzRankConfigFile(root), ...(!explicit && resourceDirectory ? [join(dirname(resourceDirectory), "config", "rank.yaml")] : [])];
   for (const path of files) {
     try {
-      return parseRankConfig(Bun.YAML.parse(await readFile(path, "utf8")), group, override);
+      const document: unknown = Bun.YAML.parse(await readFile(path, "utf8"));
+      const record = object(document);
+      if (document !== undefined && !record) throw new Error("群榜配置无效");
+      return record ?? {};
     } catch (error) {
       if (explicit || (error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
   }
-  return parseRankConfig(undefined, group, override);
+  return {};
+}
+
+export function resolveRankGroupSwitch(document: Json, state: Awaited<ReturnType<typeof readRankGroupSwitch>>) {
+  // A panel save supersedes the chat override it read. The next chat change has a new revision.
+  return Object.hasOwn(document, "previous_chat_rank_switch") && document.previous_chat_rank_switch === state.stamp
+    ? undefined : state.value;
+}
+
+export async function readRankConfig(group: string) {
+  const [document, state] = await Promise.all([readZzzRankConfigDocument(), readRankGroupSwitch()]);
+  return parseRankConfig(document, group, resolveRankGroupSwitch(document, state));
 }
 
 function keys(group: string, type: RankType, generation: RankGeneration = null) {

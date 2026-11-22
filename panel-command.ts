@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProfileStore, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
 import { zzzCharacterGalleryRoot } from "@lotus-yunzai/atlas/gallery";
@@ -20,7 +20,7 @@ import { renderZzzProficiency } from "./proficiency-card.ts";
 import { buildZzzProficiency } from "./proficiency.ts";
 import { readZzzRoleAliases, zzzRoleAlias, zzzRoleName as safeName } from "./role-alias.ts";
 
-const settingsFile = fileURLToPath(new URL("../../config/zzz-panel.yaml", import.meta.url));
+const installation = new URL("../../", import.meta.url);
 const atlasRoot = fileURLToPath(new URL("../../data/atlas/", import.meta.url));
 const prefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)/iu;
 const formerPanelBrand = /^[#/%]?\s*(?:(?:zzz|绝区零)\s*)?[\[【]?(?:zzz[-_ ]*plugin|lotus[-_ ]*plugin|荷花(?:插件)?)/iu;
@@ -109,10 +109,18 @@ async function optionalYaml(path: string) {
   }
 }
 
-async function settings(resources: string | undefined) {
+export function zzzPanelConfigFile(root = installation) {
   const explicit = Bun.env.LOTUS_ZZZ_PANEL_CONFIG;
-  const inherited = (explicit ? await optionalYaml(explicit) : await optionalYaml(settingsFile) ??
-    (resources ? await optionalYaml(join(dirname(resources), "config", "panel.yaml")) : undefined));
+  return explicit ? resolve(explicit) : fileURLToPath(new URL("config/zzz-panel.yaml", root));
+}
+
+export async function readZzzPanelConfigDocument(resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, root = installation) {
+  const local = await optionalYaml(zzzPanelConfigFile(root));
+  if (local || Bun.env.LOTUS_ZZZ_PANEL_CONFIG || !resources) return local ?? {};
+  return await optionalYaml(join(dirname(resources), "config", "panel.yaml")) ?? {};
+}
+
+export function parseZzzPanelConfig(inherited: Json) {
   const interval = Number(inherited?.interval ?? 60);
   const roleInterval = Number(inherited?.roleInterval ?? 3000);
   if (!Number.isSafeInteger(interval) || interval < 0 || !Number.isSafeInteger(roleInterval) || roleInterval < 0 ||
@@ -350,7 +358,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       if (running.has(key)) return "该角色的绝区零面板正在更新，请稍后再试。";
       running.add(key);
       try {
-        const { interval, roleInterval } = await settings(resources);
+        const { interval, roleInterval } = parseZzzPanelConfig(await readZzzPanelConfigDocument(resources));
         const redis = globalThis.redis;
         const modernKey = `lotus-yunzai:zzz-panel:last-refresh:${key}`;
         const legacyKey = `ZZZ:PANEL:${role.uid}:LASTTIME`;
