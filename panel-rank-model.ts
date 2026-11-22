@@ -6,6 +6,7 @@ import { buildZzzPanelScore } from "./panel-score.ts";
 
 const visibility = /^(显示|隐藏|取消显示|关闭|开启)(?:群(?:内)?)?(国际服|海外服)?角色面板排名\s*([1-9]\d{0,2})?$/u;
 const query = /^([^\p{Cc}\p{Cf}]{1,80}?)(?:(?:面板|圣遗物|驱动盘)?(排名|排行|综合榜)|(?:圣遗物|驱动盘))\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,3}))?$/u;
+const strongest = /^(?:群内?)?最强\s*([^\p{Cc}\p{Cf}]{1,80}?)(?:面[板版]|详情)?(?:\s+([1-9]\d{0,2}))?$/u;
 
 export function zzzPanelRankCommand(raw: string) {
   const body = zzzPrefixedCommand(raw);
@@ -15,6 +16,15 @@ export function zzzPanelRankCommand(raw: string) {
     const profileId = Number(action[3] ?? 1);
     if (profileId <= MAX_PROFILE_ID) return { kind: "visibility", enable: action[1] === "显示" || action[1] === "开启",
       profileId, ...(action[2] && { international: true as const }) } as const;
+    return;
+  }
+  const leader = strongest.exec(body);
+  if (leader) {
+    const name = leader[1]!.trim();
+    const profileId = Number(leader[2] ?? 1);
+    if (name && !/^(?:面[板版]|详情)$/u.test(name) && profileId <= MAX_PROFILE_ID) {
+      return { kind: "strongest", name, weighted: false, profileId, page: 1 } as const;
+    }
     return;
   }
   const match = query.exec(body);

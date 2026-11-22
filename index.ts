@@ -123,10 +123,11 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const reminder = createZzzChallengeReminders(profiles, client, signal);
   const requestShowcase = createZzzShowcaseClient();
-  const panelRanks = createZzzPanelRanks(profiles, zzzPanelRankRoles ?? client.openHoYoLabZzzCheckin, signal, requestShowcase);
+  const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal, requestShowcase);
+  const panelRanks = createZzzPanelRanks(profiles, zzzPanelRankRoles ?? client.openHoYoLabZzzCheckin, signal, requestShowcase,
+    { renderStrongest: panelCommands.renderPublic });
   const roleAliases = createZzzRoleAliasCommands(signal);
   const roleGallery = createZzzRoleGallery(signal);
-  const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal, requestShowcase);
   const cinema = createZzzCinema(signal);
   const skills = createZzzSkillReader(signal);
   const poolHistory = createZzzPoolHistory(signal);

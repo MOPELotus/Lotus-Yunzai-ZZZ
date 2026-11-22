@@ -2,6 +2,7 @@ import { createGroupRankRefresh, MAX_PROFILE_ID, type createProfileStore } from 
 import { rankGroup, rankMembership, type ChallengeRankContext } from "./challenge-rank.ts";
 import { readRankConfig } from "./challenge-rank-store.ts";
 import { createPanelRankIdentityReader, panelRankMode, type ZzzPanelRankIdentity, type ZzzPanelRankRoleReader } from "./panel-rank-identity.ts";
+import { renderZzzPanelDetail } from "./panel-detail-card.ts";
 import { renderZzzPanelRank } from "./panel-rank-card.ts";
 import { buildZzzPanelRankRow, type zzzPanelRankCommand } from "./panel-rank-model.ts";
 import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
@@ -19,9 +20,11 @@ return 0
 `;
 
 type RegisteredPanel = ZzzPanelRankIdentity & { readonly field: string; readonly qq: string; readonly profileId: number };
+type StrongestRenderer = (...args: Parameters<typeof renderZzzPanelDetail>) => Promise<{ readonly png: Uint8Array }>;
 
 export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileStore>,
-  openHoYoLabZzzCheckin: ZzzPanelRankRoleReader, signal: AbortSignal, showcase: ReturnType<typeof createZzzShowcaseClient>) {
+  openHoYoLabZzzCheckin: ZzzPanelRankRoleReader, signal: AbortSignal, showcase: ReturnType<typeof createZzzShowcaseClient>,
+  { renderStrongest = renderZzzPanelDetail }: { readonly renderStrongest?: StrongestRenderer } = {}) {
   // Enka uses a single request slot across public panel updates and all group queries.
   const refresh = createGroupRankRefresh(1);
 
@@ -132,12 +135,18 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       const maxPage = Math.ceil(unique.length / settings.maximum);
       if (command.page > maxPage) return `当前榜单共 ${maxPage} 页。`;
       const first = (command.page - 1) * settings.maximum;
-      const selected = unique.slice(first, first + settings.maximum);
+      const strongest = command.kind === "strongest" ? unique[0]! : undefined;
+      const selected = strongest ? [strongest] : unique.slice(first, first + settings.maximum);
+      const leader = strongest && `本群最强${strongest.avatar.name_mi18n} · UID ${strongest.uid} · 驱动盘 ${strongest.drive.toFixed(2)} 分`;
       const title = `${selected[0]!.avatar.name_mi18n}${command.weighted ? "综合榜" : "排名"}`;
       const example = `%${command.name}${command.weighted ? "综合榜" : "排名"}${command.profileId === 1 ? "" : command.profileId}`;
       const next = command.page < maxPage ? `${example} 页${command.page + 1}` : undefined;
-      const image = await renderZzzPanelRank(title, selected,
-        { offset: first, weighted: command.weighted, overview, next, legacyResources: resources, signal }).catch(() => undefined);
+      const image = await (strongest
+        ? renderStrongest(strongest.avatar, strongest.uid, { showcase: true, legacyResources: resources, signal,
+          inlineImageByteLimit: context.adapter === "milky" ? context.inlineImageByteLimit : undefined })
+        : renderZzzPanelRank(title, selected,
+          { offset: first, weighted: command.weighted, overview, next, legacyResources: resources, signal }))
+        .catch(() => undefined);
       if (signal.aborted) return;
       const [currentMembers, currentRequester, currentSettings, activeRows] = await Promise.all([
         rankMembership(context, actor), verifyViewer(), readRankConfig(group),
@@ -148,6 +157,7 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       const visible = await redis.hmGet(key, selected.map(row => row.field));
       if (visible.some((value, index) => value !== selected[index]!.value)) return changed;
       if (signal.aborted) return;
+      if (leader) return image ? [`${leader}\n${overview}`, { type: "image" as const, file: image.png }] : `${leader}\n${overview}\n角色面板图片暂时无法发送。`;
       if (image) return [overview, { type: "image" as const, file: image.png }];
       return [title, overview, ...selected.map((row, index) => `${first + index + 1}. ${row.uid} · ${row[mode].toFixed(2)}`),
         ...(next ? [`下一页 ${next}`] : [])].join("\n");

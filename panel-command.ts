@@ -149,6 +149,13 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   const atlas = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
   const atlasPortrait = createZzzAtlasPortraitReader(atlas);
   const galleryDirectory = join(zzzCharacterGalleryRoot(), "zzz-character");
+  const portraitOptions = {
+    atlasPortrait, galleryDirectory,
+    async atlasNames(id: number) {
+      const entry = await findZzzAtlasCharacter(atlas, id);
+      return entry ? [entry.name, (await atlas.roleDetails(entry))?.overview.name ?? entry.name] : [];
+    },
+  };
   const running = new Set<string>();
   const lastSuccess = new Map<string, number>();
 
@@ -215,7 +222,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     return { ids: [...ids], missing };
   }
 
-  return async (command: NonNullable<ReturnType<typeof zzzPanelCommand>>, context: PanelContext) => {
+  const handle = async (command: NonNullable<ReturnType<typeof zzzPanelCommand>>, context: PanelContext) => {
     const user = context.user_id;
     if ((context.message_type !== "group" && context.message_type !== "private") || context.isDelegated ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
@@ -278,12 +285,8 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         const damageSummary = command.kind === "damage" ? undefined :
           await readDamage.summary(row, resources).catch(() => undefined);
         const { png, original } = await renderZzzPanelDetail(row, identity.uid, {
-          ...theme, showcase: !privateIds.has(row.id), damage, damageSummary, profileId, galleryDirectory,
+          ...theme, ...portraitOptions, showcase: !privateIds.has(row.id), damage, damageSummary, profileId,
           inlineImageByteLimit: context.adapter === "milky" ? context.inlineImageByteLimit : undefined,
-          async atlasNames(id) {
-            const entry = await findZzzAtlasCharacter(atlas, id);
-            return entry ? [entry.name, (await atlas.roleDetails(entry))?.overview.name ?? entry.name] : [];
-          },
         });
         await sameRole();
         const message = { type: "image" as const, file: png };
@@ -400,4 +403,8 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       return command.kind === "update" ? "绝区零面板暂时无法更新。" : "绝区零面板暂时无法查询。";
     }
   };
+  return Object.assign(handle, {
+    renderPublic: (avatar: ZzzPanelAvatar, uid: string, options: Parameters<typeof renderZzzPanelDetail>[2]) =>
+      renderZzzPanelDetail(avatar, uid, { ...options, ...portraitOptions, showcase: true }),
+  });
 }
