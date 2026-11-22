@@ -81,24 +81,30 @@ function metrics(context: Context, entries: readonly (readonly [string, string])
 
 function drawTowerPlayer(context: Context, role: GameRole, region: string,
   { frame, uidBar, avatar }: Awaited<ReturnType<typeof loadZzzCardPlayer>>) {
-  const x = 24, y = 64.8, size = 96;
+  const x = 24, centerY = 112.8, size = 96;
   const nickname = role.nickname || "绳匠";
   const level = role.level === undefined ? undefined : `Lv${role.level}`;
   const nicknameWidth = measureZzzCardLabel(context, nickname, 28.8, 700);
   const levelWidth = level ? measureZzzCardLabel(context, level, 21.6) + 19.2 : 0;
   const regionWidth = Math.min(166, measureZzzCardLabel(context, region, 21.6) + 19.2);
   const tagsWidth = regionWidth + (level ? levelWidth + 12 : 0);
-  const avatarWidth = Math.min(size, Math.max(37, width - x - 24 - 12 - 12 - tagsWidth - Math.min(nicknameWidth, 120) - 18));
-  if (frame) context.drawImage(frame, x - 5, y - 9.6, avatarWidth + 10, 115.2);
+  const diameter = Math.min(size, Math.max(37, width - x - 24 - 12 - 12 - tagsWidth - Math.min(nicknameWidth, 120) - 18));
+  const radius = diameter / 2;
+  const y = centerY - radius;
+  if (frame) {
+    const inset = diameter / 10;
+    const frameSize = diameter + 2 * inset;
+    context.drawImage(frame, x - inset, y - inset, frameSize, frameSize);
+  }
   context.save();
   context.beginPath();
-  context.ellipse(x + avatarWidth / 2, y + size / 2, avatarWidth / 2, size / 2, 0, 0, 2 * Math.PI);
+  context.arc(x + radius, centerY, radius, 0, 2 * Math.PI);
   context.clip();
-  if (avatar) contain(context, avatar, x, y, avatarWidth, size);
-  else label(context, "绳", x + avatarWidth / 2, y + size / 2, 25, { align: "center", weight: 700 });
+  if (avatar) cover(context, avatar, x, y, diameter, diameter);
+  else label(context, "绳", x + radius, centerY, Math.min(25, diameter / 2), { align: "center", weight: 700 });
   context.restore();
 
-  const info = x + avatarWidth + 24;
+  const info = x + diameter + 24;
   const available = width - 18 - info - 12 - 12 - tagsWidth;
   label(context, nickname, info + 12, 89.4, 28.8, { weight: 700, maxWidth: available, ellipsis: false });
   let tagX = info + 24 + Math.min(available, nicknameWidth);
