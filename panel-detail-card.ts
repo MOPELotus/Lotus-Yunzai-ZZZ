@@ -23,6 +23,7 @@ type DetailOptions = ZzzCardOptions & {
   readonly profileId?: number;
   readonly atlasPortrait?: ZzzAtlasPortraitReader;
   readonly galleryDirectory?: string;
+  readonly retainedGalleryDirectory?: Promise<string | undefined>;
   readonly atlasNames?: (roleId: number) => Promise<readonly string[]>;
 };
 const width = 840;
@@ -57,7 +58,8 @@ async function galleryPortrait(roleId: number, partner: Readonly<Record<string, 
   const known = [partner.name, partner.full_name].filter(name => typeof name === "string" && name.length > 0);
   const names = known.length ? known : await options.atlasNames?.(roleId).catch(() => undefined) ?? [];
   return await loadZzzRandomGalleryPortrait(options.galleryDirectory, names) ??
-    loadZzzRandomGalleryPortrait(options.legacyResources, names, true);
+    await loadZzzRandomGalleryPortrait(options.legacyResources, names, true) ??
+    loadZzzRandomGalleryPortrait(await options.retainedGalleryDirectory, names);
 }
 
 function propertyImage(stat: PanelStat) {

@@ -167,15 +167,21 @@ export async function loadZzzAtlasPanelOriginal(read: ZzzAtlasPortraitReader | u
 }
 
 export async function readZzzPanelOriginal(directory: string | undefined, original: PanelOriginal,
-  atlas?: ZzzAtlasPortraitReader, gallery?: string) {
+  atlas?: ZzzAtlasPortraitReader, gallery?: string | readonly (string | undefined)[]) {
   if (!originalDescriptor(original)) return;
   if (original.atlasRole !== undefined) {
     const asset = await atlas?.(original.atlasRole).catch(() => undefined);
     if (asset?.path === original.path && hash(asset.bytes) === original.sha256) return asset.bytes;
     return;
   }
-  const bytes = original.gallery ? await readGalleryImage(gallery, original.path)
-    : original.path.startsWith("images/panel/") ? await readGalleryImage(directory, original.path)
+  if (original.gallery) {
+    for (const root of typeof gallery === "string" ? [gallery] : gallery ?? []) {
+      const bytes = await readGalleryImage(root, original.path);
+      if (bytes && hash(bytes) === original.sha256) return bytes;
+    }
+    return;
+  }
+  const bytes = original.path.startsWith("images/panel/") ? await readGalleryImage(directory, original.path)
     : await readZzzCardLocalArtwork(directory, original.path).catch(() => undefined);
   if (bytes && hash(bytes) === original.sha256) return bytes;
 }

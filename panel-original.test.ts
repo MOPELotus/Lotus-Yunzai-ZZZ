@@ -34,12 +34,16 @@ test("图库仅从给定角色文件夹取可读图，回执区分图库挂载�
     const selected = await loadZzzRandomGalleryPortrait(gallery, [role]);
     expect(selected?.original).toMatchObject({ path: `${role}/立绘.png`, gallery: true });
     expect(await readZzzPanelOriginal(resources, selected!.original, undefined, gallery)).toEqual(png);
+    const retained = join(root, "retained");
+    await mkdir(join(retained, role), { recursive: true });
+    await writeFile(join(retained, selected!.original.path), png);
     expect(await readZzzPanelOriginal(resources, selected!.original)).toBeUndefined();
     expect(await loadZzzRandomGalleryPortrait(gallery, ["错误目录", "../角色乙"])).toBeUndefined();
     await rm(valid);
     await symlink(join(gallery, "角色乙", "立绘.png"), valid);
     expect(await loadZzzRandomGalleryPortrait(gallery, [role])).toBeUndefined();
     expect(await readZzzPanelOriginal(resources, selected!.original, undefined, gallery)).toBeUndefined();
+    expect(await readZzzPanelOriginal(resources, selected!.original, undefined, [gallery, retained])).toEqual(png);
     const installed = await loadZzzRandomGalleryPortrait(resources, [role], true);
     expect(installed?.original.path).toBe(`images/panel/${role}/立绘.png`);
     expect(await readZzzPanelOriginal(resources, installed!.original)).toEqual(png);

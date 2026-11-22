@@ -8,6 +8,7 @@ import { createProfileHoyoClient, GameRecordRequestError, HoyoRequestError } fro
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { ImageSizeLimitError } from "@lotus-yunzai/skia";
 import type { AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
+import { retainedPanelGalleryDirectory } from "../../lib/panel-gallery-paths.ts";
 import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
 import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
 import { createPanelDamageReader, ZzzDamageUnavailable } from "./panel-damage.ts";
@@ -149,8 +150,9 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   const atlas = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
   const atlasPortrait = createZzzAtlasPortraitReader(atlas);
   const galleryDirectory = join(zzzCharacterGalleryRoot(), "zzz-character");
+  const retainedGalleryDirectory = retainedPanelGalleryDirectory("zzz");
   const portraitOptions = {
-    atlasPortrait, galleryDirectory,
+    atlasPortrait, galleryDirectory, retainedGalleryDirectory,
     async atlasNames(id: number) {
       const entry = await findZzzAtlasCharacter(atlas, id);
       return entry ? [entry.name, (await atlas.roleDetails(entry))?.overview.name ?? entry.name] : [];
@@ -187,7 +189,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       }
       await verifyRole(qq, record.profileId, record);
       if (session?.aborted) return missing;
-      const file = await readZzzPanelOriginal(resources, record.original, atlasPortrait, galleryDirectory);
+      const file = await readZzzPanelOriginal(resources, record.original, atlasPortrait, [galleryDirectory, await retainedGalleryDirectory]);
       await verifyRole(qq, record.profileId, record);
       if (!file || session?.aborted) return missing;
       return { type: "image" as const, file };
