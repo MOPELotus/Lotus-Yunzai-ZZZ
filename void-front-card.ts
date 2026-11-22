@@ -62,8 +62,9 @@ async function loadVoidFrontArt(snapshot: ZzzVoidFrontSnapshot, stages: readonly
 function shadowText(context: Context, value: string, x: number, y: number, size: number, color: string, dx: number, dy: number, maxWidth?: number) {
   context.save();
   context.shadowColor = "#383434";
-  context.shadowOffsetX = dx * density;
-  context.shadowOffsetY = dy * density;
+  const pixelScale = context.getTransform().a;
+  context.shadowOffsetX = dx * pixelScale;
+  context.shadowOffsetY = dy * pixelScale;
   label(context, value, x, y, size, { color, maxWidth });
   context.restore();
 }
@@ -241,8 +242,9 @@ function drawSummary(context: Context, art: Art, snapshot: ZzzVoidFrontSnapshot)
   if (snapshot.ending) {
     context.save();
     context.shadowColor = "#121212";
-    context.shadowOffsetX = density;
-    context.shadowOffsetY = 2 * density;
+    const pixelScale = context.getTransform().a;
+    context.shadowOffsetX = pixelScale;
+    context.shadowOffsetY = 2 * pixelScale;
     label(context, snapshot.ending, 787.2, summaryY + summaryHeight - 35.18, 24,
       { align: "right", maxWidth: 570, color: "#999" });
     context.restore();
@@ -252,10 +254,11 @@ function drawSummary(context: Context, art: Art, snapshot: ZzzVoidFrontSnapshot)
 function drawBoss(context: Context, image: Image, layoutY: number, layoutHeight: number) {
   // The fixed template has four intersected alpha gradients. Keep their isolated source at the output density.
   const w = Math.min(375, layoutHeight * image.width / image.height);
-  const layer = new Canvas(Math.ceil(w * density), Math.ceil(layoutHeight * density));
+  const pixelScale = context.getTransform().a;
+  const layer = new Canvas(Math.ceil(w * pixelScale), Math.ceil(layoutHeight * pixelScale));
   layer.gpu = true;
   const mask = layer.getContext("2d");
-  mask.scale(density, density);
+  mask.scale(pixelScale, pixelScale);
   contain(mask, image, 0, 0, w, layoutHeight);
   mask.globalCompositeOperation = "destination-in";
   for (const [x0, y0, x1, y1] of [[0, 0, w, 0], [w, 0, 0, 0], [0, 0, 0, layoutHeight], [0, layoutHeight, 0, 0]] as const) {
