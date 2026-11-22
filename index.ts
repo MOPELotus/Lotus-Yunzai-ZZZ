@@ -28,6 +28,7 @@ import { createZzzChallengeReminders, zzzChallengeReminderCommand } from "./chal
 import { createZzzChallengeRanks } from "./challenge-rank.ts";
 import type { ZzzPanelRankRoleReader } from "./panel-rank-identity.ts";
 import { createZzzPanelRanks } from "./panel-rank.ts";
+import { createZzzShowcaseClient } from "./enka-showcase.ts";
 import { zzzPanelRankCommand } from "./panel-rank-model.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
 import { createZzzPoolHistory, zzzPoolHistoryCommand } from "./pool-history.ts";
@@ -120,10 +121,11 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     createZzzMonthlyArchive(monthlyDirectory, legacyMonthly ? [legacyMonthly] : monthlyLegacyDirectories, lockFile), signal);
   const challengeRanks = createZzzChallengeRanks(profiles, signal);
   const reminder = createZzzChallengeReminders(profiles, client, signal);
-  const panelRanks = createZzzPanelRanks(profiles, zzzPanelRankRoles ?? client.openHoYoLabZzzCheckin, lockFile, signal);
+  const requestShowcase = createZzzShowcaseClient();
+  const panelRanks = createZzzPanelRanks(profiles, zzzPanelRankRoles ?? client.openHoYoLabZzzCheckin, signal, requestShowcase);
   const roleAliases = createZzzRoleAliasCommands(signal);
   const roleGallery = createZzzRoleGallery(signal);
-  const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal);
+  const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal, requestShowcase);
   const cinema = createZzzCinema(signal);
   const skills = createZzzSkillReader(signal);
   const poolHistory = createZzzPoolHistory(signal);

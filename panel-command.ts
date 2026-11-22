@@ -138,10 +138,9 @@ interface PanelContext {
 }
 
 export function createZzzPanelCommands(profiles: ReturnType<typeof createProfileStore>, client: ReturnType<typeof createProfileHoyoClient>,
-  lock: AcquireRoleArchiveLock, signal: AbortSignal) {
+  lock: AcquireRoleArchiveLock, signal: AbortSignal, requestShowcase = createZzzShowcaseClient()) {
   const archive = createZzzPanelStorage(lock);
   const showcaseArchive = createZzzShowcaseStorage(lock);
-  const requestShowcase = createZzzShowcaseClient();
   const readDamage = createPanelDamageReader();
   const originals = createZzzPanelOriginalLedger({
     async get(key) { return globalThis.redis?.get(key); },

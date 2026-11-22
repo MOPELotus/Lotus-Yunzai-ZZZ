@@ -1,3 +1,4 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { panelInteger, panelObject } from "./panel-detail.ts";
 
 const userAgent = "Lotus-Yunzai/ZZZ (+https://github.com/MOPELotus/Lotus-Yunzai-ZZZ)";
@@ -18,7 +19,7 @@ const regions: Readonly<Record<string, string>> = {
 };
 
 export class ZzzShowcaseError extends Error {
-  constructor(readonly code: "identity" | "unavailable" | "response" | "rate-limited", message: string) {
+  constructor(readonly code: "identity" | "unavailable" | "not-listed" | "response" | "rate-limited", message: string) {
     super(message);
   }
 }
@@ -106,23 +107,25 @@ function rateLimited(seconds: number, reason: string) {
 
 export function createZzzShowcaseClient(transport: Transport = fetch, now = Date.now) {
   const nextRequestByUid = new Map<string, number>();
-  const inFlight = new Set<string>();
+  let inFlight: { uid: string; done: Promise<void> } | undefined;
   let nextRequest = 0, serviceBlockedUntil = 0;
-  return async (
+  async function read(
     target: PublicIdentity,
     signal: AbortSignal,
     beforeRequest: () => Promise<void> = async () => {},
-  ) => {
+    liveRank = false,
+  ) {
     const { uid } = target;
     signal.throwIfAborted();
     if (!/^[1-9]\d{7,9}$/u.test(uid)) throw new ZzzShowcaseError("identity", "当前档案的绝区零 UID 无效。");
-    if (inFlight.has(uid)) throw rateLimited(1, "此 UID 的公开展柜正在更新");
-    if (inFlight.size) throw rateLimited(1, "Enka 公开展柜请求正在进行");
-    inFlight.add(uid);
+    if (inFlight?.uid === uid) throw rateLimited(1, "此 UID 的公开展柜正在更新");
+    if (inFlight) throw rateLimited(1, "Enka 公开展柜请求正在进行");
+    const active = Promise.withResolvers<void>();
+    inFlight = { uid, done: active.promise };
     try {
       const started = now();
       const perUid = nextRequestByUid.get(uid) ?? 0;
-      if (perUid > started) throw rateLimited((perUid - started) / 1000, "Enka 展柜数据仍在缓存期");
+      if (!liveRank && perUid > started) throw rateLimited((perUid - started) / 1000, "Enka 展柜数据仍在缓存期");
       if (serviceBlockedUntil > started) throw rateLimited((serviceBlockedUntil - started) / 1000, "Enka 公开展柜限流中");
       if (nextRequest > started) throw rateLimited((nextRequest - started) / 1000, "Enka 公开展柜请求间隔未到");
       for (const [key, expires] of nextRequestByUid) if (expires <= started) nextRequestByUid.delete(key);
@@ -144,16 +147,39 @@ export function createZzzShowcaseClient(transport: Transport = fetch, now = Date
           serviceBlockedUntil = now() + retry * 1000;
           throw rateLimited(retry, "Enka 公开展柜限流中");
         }
-        throw new ZzzShowcaseError("unavailable", response.status === 404
-          ? "找不到该 UID 的公开展柜，请确认游戏内已开启角色展示。"
-          : "Enka 公开展柜暂时不可用。");
+        if (response.status === 404) throw new ZzzShowcaseError("not-listed", "找不到该 UID 的公开展柜，请确认游戏内已开启角色展示。");
+        throw new ZzzShowcaseError("unavailable", "Enka 公开展柜暂时不可用。");
       }
       const result = decodeEnkaShowcase(await payload(response), target);
       signal.throwIfAborted();
       nextRequestByUid.set(uid, now() + result.ttl * 1000);
       return result;
     } finally {
-      inFlight.delete(uid);
+      inFlight = undefined;
+      active.resolve();
     }
-  };
+  }
+
+  async function forGroupRank(target: PublicIdentity, signal: AbortSignal, verify: () => Promise<void>) {
+    for (;;) {
+      signal.throwIfAborted();
+      const time = now();
+      if (serviceBlockedUntil > time) throw rateLimited((serviceBlockedUntil - time) / 1000, "Enka 公开展柜限流中");
+      if (inFlight) {
+        await inFlight.done;
+        continue;
+      }
+      if (nextRequest > time) {
+        await delay(nextRequest - time, undefined, { signal });
+        continue;
+      }
+      try {
+        return await read(target, signal, verify, true);
+      } catch (error) {
+        if (error instanceof ZzzShowcaseError && error.code === "not-listed") return undefined;
+        throw error;
+      }
+    }
+  }
+  return Object.assign(read, { forGroupRank });
 }

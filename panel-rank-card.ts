@@ -39,7 +39,7 @@ function nameLines(ctx: Context, name: string, font: string) {
 
 // Lotus e28c6df source-cards.js zzz-rank uses the rank-profile-list strips over the original miao hydro background.
 export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelRankRow[],
-  options: ZzzCardOptions & { readonly offset: number; readonly weighted: boolean; readonly next?: string }) {
+  options: ZzzCardOptions & { readonly offset: number; readonly weighted: boolean; readonly overview?: string; readonly next?: string }) {
   const [theme, local, weapons] = await Promise.all([
     openProfileCardTheme(Bun.env.LOTUS_PASSPORT_QR_RESOURCES?.trim() || undefined),
     openZzzCardTheme(options), readPanelArtMap(options.legacyResources, "WeaponId2Data"),
@@ -59,7 +59,8 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
     const lines = nameLines(measure, row.avatar.name_mi18n, theme.text);
     return { lines, height: Math.max(74, 28 + lines.length * 24) };
   });
-  const height = Math.max(240, 86 + strips.reduce((sum, strip) => sum + strip.height + 10, 0) + 50 +
+  const rowsY = options.overview ? 106 : 86;
+  const height = Math.max(240, rowsY + strips.reduce((sum, strip) => sum + strip.height + 10, 0) + 50 +
     (options.next ? 21 : 0));
   return renderPng(width * 4, height * 4, ctx => {
     ctx.scale(4, 4);
@@ -70,9 +71,10 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
     ctx.shadowOffsetX = 1;
     ctx.shadowOffsetY = 1;
     text(ctx, title, 35, 30, width - 70, 36, theme.title);
+    if (options.overview) text(ctx, options.overview, 35, 76, width - 70, 15, theme.text, "#f4e3c6");
     ctx.restore();
 
-    let y = 86;
+    let y = rowsY;
     rows.forEach((row, index) => {
       const x = 10;
       const { lines, height: h } = strips[index]!;
