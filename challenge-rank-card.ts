@@ -1,8 +1,9 @@
-import type { ZzzDeadlyRoom, ZzzHoloBossRoom, ZzzShiyuPortrait, ZzzShiyuTeam, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
+import type { ZzzDeadlyRoom, ZzzShiyuPortrait, ZzzShiyuTeam, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, renderZzzBattlePng, type ZzzChallengeArt } from "./challenge-card.ts";
-import { holoBossDuration } from "./holo-boss-card.ts";
+import { renderClimbingTowerRank } from "./climbing-tower-rank-card.ts";
+import { holoRankHeight, holoRankWidth, paintHoloRank } from "./holo-boss-rank-card.ts";
 import { rankLabels, rankTowerSeason, rankType, type RankMode, type RankRow } from "./challenge-rank-model.ts";
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
@@ -60,8 +61,7 @@ function score(context: Context, art: Art, value: number | undefined, cap: numbe
   return Math.min(159, context.measureText(text).width);
 }
 
-function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: number, width: number) {
-  if (row.tower) frame(context, theme(art, mode, "BgFrame01"), 24, y + 12, width - 47, 175);
+function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: number) {
   const voidFront = mode === "VOID_FRONT_BATTLE";
   const playerY = voidFront ? y + 24 : y;
   const avatar = art.memberAvatars.get(row.qq);
@@ -93,33 +93,9 @@ function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: num
   else fillRound(context, "#111", 156, uidY, 225, 42, 12);
   label(context, `UID ${row.uid}`, 268.5, uidY + 21, 22, { align: "center", color: "#ffffff99" });
 
-  if (row.tower) {
-    const season = rankTowerSeason(rankType(mode));
-    const metrics: [string, number][] = [];
-    if (season && season >= 3) metrics.push(["总得分", row.score]);
-    metrics.push(["爬塔层数", row.tower.layer]);
-    if (row.tower.noDamage !== undefined) metrics.push(["无伤通关数", row.tower.noDamage]);
-    for (const [index, [name, value]] of metrics.entries()) {
-      const x = 504 + index * 175;
-      label(context, name, x, y + 91, 27, { color: "#ddd", align: "center" });
-      label(context, String(value), x, y + 140, 35, { weight: 700, align: "center", maxWidth: 152 });
-    }
-    const image = row.tower.medal && art.buffIcons.get(row.tower.medal);
-    if (image) contain(context, image, width - 155, y + 74, 83, 71);
-    return;
-  }
   if (row.voidFront) {
     label(context, "总得分", 489, y + 114, 36, { color: "#ddd", align: "center" });
     score(context, art, row.score, 663000, 422, y + 163, true);
-    return;
-  }
-  if (row.holo) {
-    for (const [i, [field, value]] of [["总用时", holoBossDuration(row.score)], ["星级", String(row.bonus)],
-      ["无伤", String(row.holo.undamaged)]].entries()) {
-      const x = 424 + 107 * i;
-      label(context, field!, x, y + 88, 27, { color: "#ddd", align: "center" });
-      label(context, value!, x, y + 133, 28, { weight: 700, align: "center" });
-    }
     return;
   }
   if (mode === "DEADLY_HARD") return;
@@ -172,35 +148,6 @@ function team(context: Context, art: Art, mode: RankMode, entry: ZzzShiyuTeam | 
   const top = y + (isShiyu ? 100.8 : 94.6);
   entry.avatars.slice(0, 3).forEach((entry, i) => drawPortrait(context, art, entry, infoX + i * 123.25, top, 99.25));
   drawPortrait(context, art, entry.buddy, infoX + 369.75, top + 29.8, 69.5, true);
-}
-
-function holoTeam(context: Context, art: Art, room: ZzzHoloBossRoom | undefined, x: number, y: number) {
-  frame(context, theme(art, "HOLO_BOSS", "BgFrame01"), x, y, 454, 217);
-  if (!room) return;
-  const medal = room.medalIcon && art.buffIcons.get(room.medalIcon);
-  const frameIcon = theme(art, "HOLO_BOSS", "PetSelectBG");
-  if (medal) {
-    if (frameIcon) context.drawImage(frameIcon, x + 403, y, 51, 51);
-    contain(context, medal, x + 408, y + 5, 41, 41);
-  }
-  label(context, `${room.name || "首领"}${room.undamaged ? " · 无伤" : ""}`,
-    x + 42, y + 47, 25, { color: "#e6e6e6", maxWidth: 355 });
-  label(context, holoBossDuration(room.duration), x + 42, y + 77, 26, { color: "#ddd", maxWidth: 110 });
-  if (room.stars !== undefined) {
-    for (let i = 0; i < 4; i++) {
-      const lit = i < room.stars;
-      const asset = theme(art, "HOLO_BOSS", lit ? "star-light.d591d065" : "star-gray.53e3ee51");
-      const left = x + 171 + i * 26;
-      if (asset) contain(context, asset, left, y + 62, 28, 28);
-      else label(context, lit ? "★" : "☆", left + 10, y + 77, 22, { color: lit ? "#ffd700" : "#999" });
-    }
-  }
-  for (let i = 0; i < 3; i++) {
-    const entry = room.avatars[i];
-    const left = x + 41 + i * 120;
-    if (entry) drawPortrait(context, art, entry, left, y + 107, 91);
-    else fillRound(context, "#151517", left, y + 107, 91, 91, 8, "#343534");
-  }
 }
 
 function voidFrontTeam(context: Context, art: Art, stage: ZzzVoidFrontStage | undefined, x: number, y: number, index: number) {
@@ -257,11 +204,9 @@ async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, 
     return pending;
   }
   async function loadRow(row: RankRow) {
-    const medal = row.tower?.medal;
     const teams = row.teams.slice(0, mode === "DEADLY_HARD" ? 1 : 3);
     await Promise.all([
       artwork(fetchZzzQqAvatar(row.qq, signal)).then(avatar => members.set(row.qq, avatar)),
-      medal && official(medal).then(image => books.set(medal, image)),
       ...(row.holo?.bosses.slice(0, 3).map(async room => {
         await Promise.all([
           ...room.avatars.slice(0, 3).map(entry => loadChallengePortrait(entry, false, local, official, portraits)),
@@ -296,12 +241,13 @@ async function loadRankArt(local: Awaited<ReturnType<typeof openZzzCardTheme>>, 
 // ZZZure/ZZZ-Plugin 2057599 resources/rank/{abyss,deadly,deadlyHard}.
 export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow[], options: ZzzCardOptions = {}) {
   const season = rankTowerSeason(rankType(mode));
-  const width = season ? ({ 1: 900, 2: 1000, 3: 1150, 4: 1150 })[season] : mode === "DEADLY_HARD" ? 1000 : mode === "HOLO_BOSS" ? 2200 : 2400;
+  if (season) return renderClimbingTowerRank(season, rows, options);
+  const width = mode === "DEADLY_HARD" ? 1000 : mode === "HOLO_BOSS" ? holoRankWidth : 2400;
   const voidFront = mode === "VOID_FRONT_BATTLE";
-  const rowHeight = season ? 190 : voidFront ? 288 : 240;
+  const rowHeight = voidFront ? 288 : 240;
   const startNotes = 96 + rows.length * rowHeight;
   const notes = mode === "ABYSS" ? 149 : mode === "DEADLY" || voidFront ? 110 : 142;
-  const height = startNotes + notes + 80;
+  const height = mode === "HOLO_BOSS" ? holoRankHeight(rows.length) : startNotes + notes + 80;
   const art = await loadRankArt(await openZzzCardTheme(options), mode, rows, options.signal);
   options.signal?.throwIfAborted();
   return renderZzzBattlePng(width, height, (context) => {
@@ -309,13 +255,14 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     const background = art.local.get("common/images/bg.jpg");
     if (background) cover(context, background, 0, 0, width, height);
     heading(context, mode, width);
+    if (mode === "HOLO_BOSS") {
+      paintHoloRank(context, art, rows);
+      return;
+    }
     rows.forEach((row, index) => {
       const y = 96 + index * rowHeight;
-      member(context, art, row, mode, y, width);
-      if (season) return;
-      if (mode === "HOLO_BOSS") {
-        for (let idx = 0; idx < 3; idx++) holoTeam(context, art, row.holo?.bosses[idx], 762 + 467 * idx, y - 12);
-      } else if (voidFront) {
+      member(context, art, row, mode, y);
+      if (voidFront) {
         const stages = [row.voidFront?.finalStage, ...(row.voidFront?.stages ?? [])];
         // Fixed upstream card grid: 425px-wide stages separated by a 24px gap.
         for (let idx = 0; idx < 4; idx++) voidFrontTeam(context, art, stages[idx], 604.5 + 448.875 * idx, y - 12, idx);
@@ -332,18 +279,15 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     const intro = "• 请在本群查询 ";
     label(context, intro, 74, noteY, noteSize, { color: "#979797" });
     const x = 74 + context.measureText(intro).width;
-    const query = season ? "%拟真鏖战试炼" : `%${rankLabels[mode === "DEADLY_HARD" ? "DEADLY" : mode]}`;
+    const query = `%${rankLabels[mode === "DEADLY_HARD" ? "DEADLY" : mode]}`;
     label(context, query, x, noteY, noteSize, { color: "#ffd700" });
-    label(context, season ? ` 以登记爬塔 S${season} 战绩` : " 以登记本期战绩", x + context.measureText(query).width, noteY, noteSize, { color: "#979797" });
+    label(context, " 以登记本期战绩", x + context.measureText(query).width, noteY, noteSize, { color: "#979797" });
     const tie = mode === "ABYSS" ? "同分同评级" : mode === "DEADLY" ? "同星同分" : "同分";
-    const order = season ? ({ 1: "按爬塔层数排名", 2: "层数相同，再比较无伤通关数",
-      3: "先比较总得分、爬塔层数，再比较无伤通关数", 4: "先比较总得分、爬塔层数，再比较无伤通关数" })[season] : mode === "HOLO_BOSS" ? "先比较星数、总用时、无伤间数，完全相同时以较早记录排前" :
-      mode === "VOID_FRONT_BATTLE" ? "总分持平时，最终关及普通关的最晚通关时间较早者排前" :
-        `${tie}时，最后通关时间较早者排前`;
+    const order = voidFront ? "总分持平时，最终关及普通关的最晚通关时间较早者排前" :
+      `${tie}时，最后通关时间较早者排前`;
     label(context, `• ${order}`, 74, noteY + (voidFront ? 32 : 39), noteSize, { color: "#979797", maxWidth: width - 145 });
-    if (season || mode === "HOLO_BOSS" || mode === "VOID_FRONT_BATTLE") {
-      const name = season ? `爬塔S${season}` : mode === "HOLO_BOSS" ? "拟境" : "临界";
-      label(context, `• 使用 %显示${name}排名 或 %隐藏${name}排名 设置本群可见性`, 74, noteY + (voidFront ? 63 : 78), 19.2, { color: "#f3cb45" });
+    if (voidFront) {
+      label(context, `• 使用 %显示临界排名 或 %隐藏临界排名 设置本群可见性`, 74, noteY + (voidFront ? 63 : 78), 19.2, { color: "#f3cb45" });
     }
     label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
