@@ -178,19 +178,44 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       return "请从登录档案对应的 QQ 会话查询绝区零战绩。";
     }
     const qq = String(user);
+    const changed = "绝区零档案已变化，请重新查询战绩。";
     try {
-      const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
+      const source = await profiles.requestSelectedContext(qq, profileId, "zzz").catch((error: unknown) => {
+        if (!(error instanceof ProfileError) || error.code !== "role-missing") throw error;
+      });
+      if (!source || overseasRegion(source.role)) {
+        const international = await profiles.internationalRoleContext(qq, profileId, "zzz");
+        if (!source && !international) return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
+        if (context.message_type !== "private" || context.isDelegated || !context.privateCredentialSignal) {
+          return "绝区零国际服战绩请从本人私聊查询。";
+        }
+        const activeSignal = AbortSignal.any([signal, context.privateCredentialSignal]);
+        if (activeSignal.aborted) return [];
+        if (!international) return `[zzz] 请先在 profile ${profileId} 绑定已核验的 HoYoLAB 账号。`;
+        if (source && source.revision !== international.revision) return changed;
+        const { revision } = international;
+        async function verifyProfile() {
+          const active = await profiles.internationalRoleContext(qq, profileId, "zzz").catch(() => undefined);
+          if (active?.revision !== revision) throw new HoyoRequestError("profile-changed", changed);
+        }
+        const record = await client.fetchHoYoLabZzzGameRecord(international, { signal: activeSignal, verifyProfile });
+        const { png } = await renderZzzGameRecord(record, record.role, {
+          qq, signal: activeSignal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
+        });
+        await verifyProfile();
+        return activeSignal.aborted ? [] : { type: "image" as const, file: png };
+      }
       const record = await client.fetchZzzGameRecord(source, { signal });
       const { png } = await renderZzzGameRecord(record, source.role,
         { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR });
       const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return [];
       if (active?.revision !== record.revision || active.role.uid !== record.uid) {
-        return "绝区零档案已变化，请重新查询战绩。";
+        return changed;
       }
       return { type: "image" as const, file: png };
     } catch (error) {
-      if (signal.aborted) return [];
+      if (signal.aborted || context.privateCredentialSignal?.aborted) return [];
       if (error instanceof ProfileError) {
         if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
         if (error.code === "role-missing") return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
@@ -199,7 +224,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         return error.message;
       }
       if (error instanceof HoyoRequestError) {
-        if (error.code === "profile-changed") return "绝区零档案已变化，请重新查询战绩。";
+        if (error.code === "profile-changed") return changed;
         if (error.code === "invalid-input") return error.message;
       }
       return "绝区零战绩暂时无法查询。";
