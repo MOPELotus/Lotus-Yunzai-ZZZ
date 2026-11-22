@@ -170,7 +170,10 @@ export async function renderZzzMonthly(view: View, role: GameRole, region: strin
     }
     label(ctx, "* 数据统计存在约 2 小时延迟", 51, footer, 18, { color: "#dfdfdf" });
     label(ctx, "* 菲林收入不含充值获得底片后兑换的菲林", 51, footer + 28, 18, { color: "#dfdfdf" });
-    if (view.collect) label(ctx, "* 米游社已不可查且从未存档的月份不会显示", 51, footer + 56, 18, { color: "#dfdfdf" });
+    if (view.collect) {
+      const service = region.endsWith("_cn") ? "米游社" : "HoYoLAB";
+      label(ctx, `* ${service} 已不可查且从未存档的月份不会显示`, 51, footer + 56, 18, { color: "#dfdfdf" });
+    }
     const bottom = images.get("bottom-deco.gif");
     if (bottom) cover(ctx, bottom, 0, height - 28, width, 28);
     label(ctx, zzzCardFooter, 420, height - 14, 16, { align: "center", color: "#fff" });
