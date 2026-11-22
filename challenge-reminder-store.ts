@@ -26,6 +26,7 @@ const users = "lotus-yunzai:zzz-challenge-reminders:users";
 const settings = "lotus-yunzai:zzz-challenge-reminders:settings";
 const oldSettings = fileURLToPath(new URL("../ZZZ-Plugin/config/remind.yaml", import.meta.url));
 const defaults: ChallengeReminderDefaults = { enable: true, abyssCheckLevel: 5, deadlyStars: 6, remindTime: "每日20时" };
+const globalFields = ["enable", "abyssCheckLevel", "deadlyStars", "remindTime"] as const;
 
 const replaceUser = `
 local current = redis.call('HGET', KEYS[1], ARGV[1])
@@ -45,6 +46,22 @@ const releaseSlot = `
 if redis.call('GET', KEYS[1]) == ARGV[1] then
   redis.call('DEL', KEYS[1])
 end
+`;
+
+const replaceGlobalSettings = `
+for index = 1, #ARGV, 4 do
+  local present = redis.call('HEXISTS', KEYS[1], ARGV[index])
+  if tostring(present) ~= ARGV[index + 1] or
+     (present == 1 and redis.call('HGET', KEYS[1], ARGV[index]) ~= ARGV[index + 2]) then
+    return 0
+  end
+end
+for index = 1, #ARGV, 4 do
+  if ARGV[index + 3] ~= '' then
+    redis.call('HSET', KEYS[1], ARGV[index], ARGV[index + 3])
+  end
+end
+return 1
 `;
 
 const reminderTimePattern = /^(每日|每周[日天一二三四五六])(\d{1,2})时(?:(\d{1,2})分)?$/u;
@@ -114,21 +131,39 @@ export function createZzzChallengeReminderStore(redis: Redis, configPath = Bun.e
     return { modern, value: parseUser(await redis.hGet(oldUsers, qq), false) };
   }
 
+  async function readGlobalSettings() {
+    const [current, legacy] = await Promise.all([redis.hGetAll(settings), readOldSettings(configPath)]);
+    const value: ChallengeReminderDefaults = {
+      enable: current.enable === "1" ? true : current.enable === "0" ? false :
+        typeof legacy.enable === "boolean" ? legacy.enable : defaults.enable,
+      abyssCheckLevel: count(current.abyssCheckLevel === undefined ? undefined : Number(current.abyssCheckLevel), 6) ??
+        count(legacy.abyssCheckLevel, 6) ?? defaults.abyssCheckLevel,
+      deadlyStars: count(current.deadlyStars === undefined ? undefined : Number(current.deadlyStars), 9) ??
+        count(legacy.deadlyStars, 9) ?? defaults.deadlyStars,
+      remindTime: time(current.remindTime) ?? time(legacy.globalRemindTime) ?? defaults.remindTime,
+    };
+    return { current, value };
+  }
+
+  const encode = (value: ChallengeReminderDefaults[keyof ChallengeReminderDefaults]) =>
+    typeof value === "boolean" ? value ? "1" : "0" : String(value);
+
   return {
     async global(): Promise<ChallengeReminderDefaults> {
-      const [current, legacy] = await Promise.all([redis.hGetAll(settings), readOldSettings(configPath)]);
-      return {
-        enable: current.enable === "1" ? true : current.enable === "0" ? false :
-          typeof legacy.enable === "boolean" ? legacy.enable : defaults.enable,
-        abyssCheckLevel: count(current.abyssCheckLevel === undefined ? undefined : Number(current.abyssCheckLevel), 6) ??
-          count(legacy.abyssCheckLevel, 6) ?? defaults.abyssCheckLevel,
-        deadlyStars: count(current.deadlyStars === undefined ? undefined : Number(current.deadlyStars), 9) ??
-          count(legacy.deadlyStars, 9) ?? defaults.deadlyStars,
-        remindTime: time(current.remindTime) ?? time(legacy.globalRemindTime) ?? defaults.remindTime,
-      };
+      return (await readGlobalSettings()).value;
     },
     async updateGlobal<Field extends keyof ChallengeReminderDefaults>(key: Field, value: ChallengeReminderDefaults[Field]) {
-      await redis.hSet(settings, key, typeof value === "boolean" ? value ? "1" : "0" : String(value));
+      await redis.hSet(settings, key, encode(value));
+    },
+    async updateGlobalBatch(previous: ChallengeReminderDefaults, next: ChallengeReminderDefaults, canWrite: () => boolean) {
+      const { current, value } = await readGlobalSettings();
+      if (!canWrite()) return "permission";
+      if (globalFields.some(key => value[key] !== previous[key])) return "conflict";
+      const arguments_ = globalFields.flatMap(key => [
+        key, Object.hasOwn(current, key) ? "1" : "0", current[key] ?? "", value[key] === next[key] ? "" : encode(next[key]),
+      ]);
+      const result = await redis.eval(replaceGlobalSettings, { keys: [settings], arguments: arguments_ });
+      return result === 1 ? "saved" : "conflict";
     },
     async user(qq: string) {
       return (await readUser(qq)).value;
