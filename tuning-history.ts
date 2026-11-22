@@ -64,10 +64,10 @@ function updatedAt(value: unknown): string {
   return raw;
 }
 
-function record(value: unknown): TuningRecord {
+function record(value: unknown, allowAbsentFirstUp = false): TuningRecord {
   const row = object(value, "S 级记录");
   const itemId = text(row.itemId, "物品编号", true);
-  if (itemId === "0") invalid("物品编号");
+  if (itemId === "0" && !allowAbsentFirstUp) invalid("物品编号");
   if (typeof row.isUp !== "boolean") invalid("UP 标记");
   return {
     itemId, name: text(row.name, "物品名称"), icon: text(row.icon, "物品图标"),
@@ -81,16 +81,18 @@ function record(value: unknown): TuningRecord {
 function period(value: unknown): Period {
   const row = object(value, "期次");
   const version = text(row.version, "期次编号", true);
-  const records = list(row.records, "期次 S 级明细").map(record);
-  const items = list(row.items, "期次物品").map(record);
-  const firstUp = row.firstUp == null ? null : record(row.firstUp);
+  const records = list(row.records, "期次 S 级明细").map(item => record(item));
+  const items = list(row.items, "期次物品").map(item => record(item));
+  const firstUp = row.firstUp == null ? null : record(row.firstUp, true);
   if ([...records, ...items, ...(firstUp ? [firstUp] : [])].some((item) => item.version !== version)) {
     invalid("物品与期次的归属");
   }
   return {
     version, status: text(row.status, "期次状态"), startAt: optionalCount(row.startAt, "期次开始时间"),
     endAt: optionalCount(row.endAt, "期次结束时间"), leftStartAt: optionalCount(row.leftStartAt, "左侧期次开始时间"),
-    leftEndAt: optionalCount(row.leftEndAt, "左侧期次结束时间"), firstUp, records, items,
+    leftEndAt: optionalCount(row.leftEndAt, "左侧期次结束时间"),
+    // The old writer serialized the official string "0" as a record in this optional slot.
+    firstUp: firstUp?.itemId === "0" ? null : firstUp, records, items,
   };
 }
 
@@ -134,7 +136,7 @@ function pool(value: unknown): Pool {
   if (row.name !== name) invalid("频段名称");
   const totalDraws = count(row.totalDraws, `${name}总抽数`);
   const totalS = count(row.totalS, `${name} S 级数量`);
-  const records = list(row.records, `${name} S 级明细`).map(record);
+  const records = list(row.records, `${name} S 级明细`).map(item => record(item));
   const periods = list(row.periods, `${name}期次列表`).map(period);
   if (totalS > totalDraws || records.length !== totalS || records.some((item) => item.rarity !== "S" || !item.time || !item.count) ||
       !consistentRecords(records, periods)) {
