@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
 import { zzzCharacterGalleryRoot } from "@lotus-yunzai/atlas/gallery";
+import { batchInlineImagePages, type InlineImage } from "@lotus-yunzai/skia/forward-images";
 import { loadImage } from "skia-canvas";
 import { rankGroup, rankMembership, type ChallengeRankContext } from "./challenge-rank.ts";
 import { zzzPrefixedCommand } from "./panel-command.ts";
@@ -77,7 +78,11 @@ async function readRaster(path: string) {
 
 const digest = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 
+type GalleryNode = string | readonly [string, InlineImage];
+
 export interface ZzzRoleGalleryContext extends ChallengeRankContext {
+  readonly forward?: (nodes: readonly GalleryNode[]) => Promise<boolean>;
+  readonly inlineImageByteLimit?: number;
   readonly self_id?: number;
   readonly characterGallerySignal?: AbortSignal;
   readonly readCharacterGalleryImages?: () => Promise<readonly (Uint8Array | undefined)[] | "too-many">;
@@ -187,31 +192,48 @@ export function createZzzRoleGallery(signal: AbortSignal) {
       if (!pages) return `${role.name} 暂无角色图。`;
       if (command.page > pages) return `只有 ${pages} 页角色图。`;
       const start = (command.page - 1) * pageSize;
-      const nodes: (string | (string | { type: "image"; file: Uint8Array })[])[] = [
-        `${role.name} 角色图第 ${command.page}/${pages} 页，查询指定页请在指令后加页码。`,
-      ];
-      const ids: Record<number, string> = {};
+      const title = `${role.name} 角色图第 ${command.page}/${pages} 页，查询指定页请在指令后加页码。`;
+      const listing: { id: number; node: GalleryNode; size: number; editableFile?: string }[] = [];
       for (const [offset, entry] of entries.slice(start, start + pageSize).entries()) {
         const id = start + offset + 1;
         const image = await readRaster(join(entry.directory, entry.filename));
         const editable = entry.editable && image && digest(image) === managedName.exec(entry.filename)?.[1];
-        if (editable) ids[id] = entry.filename;
-        nodes.push(image ? [`ID：${id}${editable ? "" : "（只读）"}`, { type: "image", file: image }] : `ID：${id} 暂无法读取。`);
+        const node: GalleryNode = image
+          ? [`ID：${id}${editable ? "" : "（只读）"}`, { type: "image", file: image }]
+          : `ID：${id} 暂无法读取。`;
+        listing.push({ id, node, size: image?.byteLength ?? 0, editableFile: editable ? entry.filename : undefined });
       }
       const key = owns() && listingKey(context, role.id, command.page);
-      const pending = "待回执:" + randomUUID();
-      if (!key || !redis || !await redis.set(key, pending, { EX: listingTtl }).catch(() => undefined)) {
-        return { type: "forward" as const, nodes };
-      }
-      nodes.push("主人可在合并转发确认后五分钟内删除本页自建角色图。");
-      return {
-        type: "forward" as const, nodes,
-        async onDelivered() {
-          if (!owns()) return;
-          await redis.eval(listingDelivery, { keys: [key], arguments: [pending, JSON.stringify(ids), String(listingTtl)] })
+      const ticket = randomUUID();
+      let receipt = "待回执:" + ticket;
+      const pending = key && redis && await redis.set(key, receipt, { EX: listingTtl }).catch(() => undefined);
+      const batches = batchInlineImagePages(listing, context.inlineImageByteLimit, entry => entry.size);
+      if (!batches) return "本页有角色原图超过当前会话大小上限，未发送本页。";
+      if (!context.forward) return "当前会话无法合并转发角色图。";
+
+      // A unique ticket keeps late confirmations from updating a newer listing of the same page.
+      const delivered: Record<string, string> = { listing: ticket };
+      for (const [index, batch] of batches.entries()) {
+        if (signal.aborted) return [];
+        if (pending && !owns()) return "角色图库管理权限已变化，请重新查看。";
+        const heading = batches.length === 1 ? title : `${title}（第 ${index + 1}/${batches.length} 段）`;
+        const nodes = [heading, ...batch.map(entry => entry.node)];
+        if (pending) nodes.push("主人可在本段确认送达后五分钟内删除本段自建角色图。");
+        try {
+          if (!await context.forward(nodes)) return `第 ${index + 1} 段角色图合并转发未发送，其余段落已停止。`;
+        } catch {
+          return `第 ${index + 1} 段角色图合并转发结果未确认，请在聊天中核对。`;
+        }
+        if (pending && key && redis && owns()) {
+          for (const { id, editableFile } of batch) if (editableFile) delivered[id] = editableFile;
+          const confirmed = JSON.stringify(delivered);
+          const saved = await redis.eval(listingDelivery, { keys: [key], arguments: [receipt, confirmed, String(listingTtl)] })
             .catch(() => undefined);
-        },
-      };
+          if (saved !== 1) return "角色图已发送，但本页删除回执未登记，请重新查看。";
+          receipt = confirmed;
+        }
+      }
+      return [];
     } catch {
       return "角色图库暂时不可用。";
     }
