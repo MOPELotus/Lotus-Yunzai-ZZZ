@@ -171,7 +171,7 @@ export async function renderZzzProficiency(model: Proficiency, role: GameRole, o
     context.save();
     context.translate(0, 2);
     context.scale(0.9, 0.9);
-    drawZzzCardPlayer(context, role, role.regionName || role.region, art.player);
+    drawZzzCardPlayer(context, role, role.region, art.player);
     context.restore();
     metricsFrame(context, art.frame);
     [

@@ -156,7 +156,7 @@ export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole,
     if (background) cover(context, background, 0, 0, width, height);
     context.save();
     context.translate(-24, 24);
-    drawZzzCardPlayer(context, role, role.regionName || snapshot.region, player);
+    drawZzzCardPlayer(context, role, snapshot.region, player);
     context.restore();
     const { period } = snapshot;
     const cycle = period ? `${period.start} - ${period.end}` : "暂无记录";

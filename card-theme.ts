@@ -1,15 +1,11 @@
 import { constants } from "node:fs";
 import { open, realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
-import type { GameRole } from "@lotus-yunzai/account";
+import { gameRegionDisplayName, type GameRole } from "@lotus-yunzai/account";
 import { FontLibrary, loadImage, type CanvasGradient, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
 const font = '"LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
-const regionNames = new Map([
-  ["prod_gf_cn", "国服"], ["prod_qd_cn", "渠道服"],
-  ["prod_gf_jp", "亚服"], ["prod_gf_us", "美服"], ["prod_gf_eu", "欧服"], ["prod_gf_sg", "港澳台服"],
-]);
 export const zzzCardFooter = "Lotus-Yunzai · ZZZ";
 export const zzzScoreColors = { C: "#5ed559", B: "#5ebdf9", A: "#d256ff", S: "#ffdabe", SS: "#ffe174",
   SSS: "#ffa33b", ACE: "#ff5656", MAX: "#ff5656" } as const;
@@ -88,10 +84,7 @@ export function measureZzzCardLabel(context: Context, text: string, size: number
 }
 
 export function zzzRegionName(region: string, reported?: string) {
-  const label = reported?.trim();
-  if (label && !/^prod_/iu.test(label)) return label;
-  const confirmed = region.trim();
-  return regionNames.get(confirmed) ?? (!confirmed || /^prod_/iu.test(confirmed) ? "未知区服" : confirmed);
+  return gameRegionDisplayName("zzz", region, reported);
 }
 
 export function label(context: Context, text: string, x: number, y: number, size: number, settings: {

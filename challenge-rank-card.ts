@@ -1,6 +1,6 @@
 import type { ZzzDeadlyRoom, ZzzShiyuPortrait, ZzzShiyuTeam, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
+import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, zzzRegionName, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, renderZzzBattlePng, type ZzzChallengeArt } from "./challenge-card.ts";
 import { renderClimbingTowerRank } from "./climbing-tower-rank-card.ts";
 import { holoRankHeight, holoRankWidth, paintHoloRank } from "./holo-boss-rank-card.ts";
@@ -82,7 +82,7 @@ function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: num
     fillRound(context, "#f3cb45", 168, labelY + 29, 73, 35, 5);
     label(context, `Lv${row.level}`, 204.5, labelY + 47, 22, { color: "#2b2628", align: "center" });
   }
-  const server = row.regionName || (row.region === "prod_qd_cn" ? "渠道服" : "国服");
+  const server = zzzRegionName(row.region, row.regionName);
   const serverWidth = Math.min(392 - rx, Math.max(64, Array.from(server).length * 22 + 16));
   fillRound(context, "#51b1fd", rx, labelY + 29, serverWidth, 35, 5);
   label(context, server, rx + serverWidth / 2, labelY + 47, 22,

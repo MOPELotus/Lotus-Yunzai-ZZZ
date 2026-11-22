@@ -1,6 +1,6 @@
 import type { ZzzHoloBossRoom } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { box, drawTag, label, measureZzzCardLabel, zzzCardFooter } from "./card-theme.ts";
+import { box, drawTag, label, measureZzzCardLabel, zzzCardFooter, zzzRegionName } from "./card-theme.ts";
 import { contain, drawPortrait, fillRound, frame, type ZzzChallengeArt } from "./challenge-card.ts";
 import { holoBossDuration } from "./holo-boss-card.ts";
 import type { RankRow } from "./challenge-rank-model.ts";
@@ -42,7 +42,7 @@ function paintMember(context: Context, art: HoloRankArt, row: RankRow, y: number
     label(context, level, 168 + width / 2, y + 124.5, 21.6, { color: "#2b2628", align: "center" });
     serverX += width + 12;
   }
-  const server = row.regionName || (row.region === "prod_qd_cn" ? "渠道服" : "国服");
+  const server = zzzRegionName(row.region, row.regionName);
   const serverWidth = Math.min(399 - serverX, measureZzzCardLabel(context, server, 21.6) + 17.28);
   drawTag(context, "#51b1fd", serverX, y + 110, serverWidth, 29, 4.32);
   label(context, server, serverX + serverWidth / 2, y + 124.5, 21.6,

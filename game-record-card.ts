@@ -130,7 +130,7 @@ export async function renderZzzGameRecord(record: ZzzGameRecordSnapshot, role: G
     context.fillRect(0, 0, width, height);
     if (background) cover(context, background, 0, 0, width, height);
 
-    drawZzzCardPlayer(context, role, record.worldLevel || role.regionName || record.region, player);
+    drawZzzCardPlayer(context, role, record.worldLevel || record.region, player);
 
     if (status) {
       context.save();

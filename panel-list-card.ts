@@ -79,7 +79,7 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
     const playerScale = 0.7;
     context.save();
     context.scale(playerScale, playerScale);
-    drawZzzCardPlayer(context, role, role.regionName || role.region, player, (countLeft - 16) / playerScale);
+    drawZzzCardPlayer(context, role, role.region, player, (countLeft - 16) / playerScale);
     context.restore();
 
     fillRound(context, "#101315", countLeft, 33.2, countWidth, 46.1, 13, "#302c48");

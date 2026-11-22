@@ -1,5 +1,6 @@
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { artwork, box, cover, drawTag, label, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
+import { artwork, box, cover, drawTag, label, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter, zzzRegionName,
+  type ZzzCardOptions } from "./card-theme.ts";
 import { contain, frame, renderZzzBattlePng } from "./challenge-card.ts";
 import { rankLabels, towerRanks, type RankRow } from "./challenge-rank-model.ts";
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
@@ -65,7 +66,7 @@ function playerRow(context: Context, season: Season, row: RankRow, y: number, ar
     label(context, level, x + w / 2, y + 82.5, 21.6, { align: "center", color: "#2b2628" });
     x += w + 12;
   }
-  const server = row.regionName || (row.region === "prod_qd_cn" ? "渠道服" : "国服");
+  const server = zzzRegionName(row.region, row.regionName);
   const serverWidth = Math.min(result - x - 28, measureZzzCardLabel(context, server, 21.6) + 17.28);
   drawTag(context, "#51b1fd", x, y + 68, serverWidth, 29, 4.32);
   label(context, server, x + serverWidth / 2, y + 82.5, 21.6, { align: "center", color: "#2b2628", maxWidth: serverWidth - 12 });
