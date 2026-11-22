@@ -3,7 +3,7 @@ import type { ZzzShiyuPortrait, ZzzVoidFrontRound, ZzzVoidFrontSnapshot, ZzzVoid
 import { renderPng } from "@lotus-yunzai/skia";
 import { Canvas, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
 import { artwork, box, cover, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter,
-  type ZzzCardOptions } from "./card-theme.ts";
+  zzzRegionName, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound, frame, loadChallengePortrait, rankBand, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
@@ -374,7 +374,7 @@ export async function renderZzzVoidFront(snapshot: ZzzVoidFrontSnapshot, role: G
     box(context, "#191720", 0, 0, width, height);
     const background = art.local.get(themePath + "bg.png");
     if (background) cover(context, background, 0, 0, width, height);
-    drawPlayer(context, role, snapshot.region, player);
+    drawPlayer(context, role, zzzRegionName(snapshot.region, role.regionName), player);
     label(context, `统计周期：${snapshot.start ?? "起始未知"} ~ ${snapshot.end ?? "结束未知"}`, 43.2, 216.8, 19.2,
       { color: "#979797" });
     drawSummary(context, art, snapshot);

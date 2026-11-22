@@ -11,6 +11,7 @@ import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
 import { ImageSizeLimitError } from "@lotus-yunzai/skia";
+import { zzzRegionName } from "./card-theme.ts";
 import { ZzzInlineImageLimitError } from "./challenge-card.ts";
 import { renderZzzClimbingTower, zzzClimbingTowerText } from "./climbing-tower-card.ts";
 import { createZzzExplorationRenderer, zzzExplorationText } from "./exploration-card.ts";
@@ -447,7 +448,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
 
       const nickname = role.nickname || "绳匠";
       const level = role.level === undefined ? undefined : Number(role.level);
-      const display = { level: Number.isFinite(level) ? level : undefined, regionName: role.regionName || region };
+      const display = { level: Number.isFinite(level) ? level : undefined, regionName: zzzRegionName(region, role.regionName) };
       let png: Uint8Array;
       let flatRevision: string | undefined;
       if (useOfficial) {

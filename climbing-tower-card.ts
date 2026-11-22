@@ -3,7 +3,7 @@ import type { ZzzClimbingTowerSnapshot, ZzzShiyuPortrait, ZzzTowerSeason } from 
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, label, loadZzzCardPlayer, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter,
-  type ZzzCardOptions } from "./card-theme.ts";
+  zzzRegionName, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, drawPortrait, fillRound, loadChallengePortrait } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
@@ -155,7 +155,7 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
     context.scale(4, 4);
     box(context, "#1d1a24", 0, 0, width, height);
     if (background) cover(context, background, 0, 0, width, height);
-    drawTowerPlayer(context, role, snapshot.region, player);
+    drawTowerPlayer(context, role, zzzRegionName(snapshot.region, role.regionName), player);
     let y = top;
     for (const [index, season] of snapshot.seasons.entries()) {
       const layout = layouts[index]!;
