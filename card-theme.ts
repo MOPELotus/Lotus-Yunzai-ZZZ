@@ -63,9 +63,7 @@ export function box(context: Context, color: string, x: number, y: number, w: nu
   context.fillRect(x, y, w, h);
 }
 
-function drawTag(context: Context, color: string, x: number, y: number, w: number) {
-  const cut = 5;
-  const h = 35;
+export function drawTag(context: Context, color: string, x: number, y: number, w: number, h = 35, cut = 5) {
   context.beginPath();
   context.moveTo(x + cut, y);
   context.lineTo(x + w - cut, y);

@@ -1,7 +1,7 @@
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { box, cover, label, openZzzCardTheme, zzzCardFooter, zzzScoreColors, type ZzzCardOptions } from "./card-theme.ts";
+import { box, cover, drawTag, label, openZzzCardTheme, zzzCardFooter, zzzScoreColors, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
 import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
 import { drawPanelDamage, panelDamageHeight, panelDamageSections } from "./panel-damage-card.ts";
@@ -299,9 +299,9 @@ function drawOriginalEngine(context: Context, model: Detail, art: Awaited<Return
   rarity(context, images, weapon.rarity, 433, y + 46, 55);
   label(context, weapon.name, 502, y + 75, 27.65, { maxWidth: 295 });
   const stars = weapon.star === undefined ? undefined : images.get(`panel/images/star/${weapon.star}.png`);
-  if (stars) contain(context, stars, 433, y + 102, 121.65, 33);
+  if (stars) cover(context, stars, 433, y + 102, 121.65, 33);
   else if (weapon.star !== undefined) label(context, `改装 ${weapon.star}`, 433, y + 118, 19, { color: gold });
-  fillRound(context, "#f3cb45", 563, y + 105, 73, 27, 5);
+  drawTag(context, "#f3cb45", 563, y + 105, 73, 27, 4);
   label(context, weapon.level === undefined ? "Lv.—" : `Lv.${weapon.level}`, 599.5, y + 118, 20, {
     color: "#2b2628", align: "center",
   });
