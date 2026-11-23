@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createAtlasCatalog } from "@lotus-yunzai/atlas/catalog";
+import { readSyncedPanelGalleryRoot } from "../../lib/panel-gallery-paths.ts";
 import { panelSpriteName } from "./panel-artwork.ts";
 import { buildZzzPanelDetail } from "./panel-detail.ts";
 import { createZzzAtlasPortraitReader, loadZzzAtlasPanelOriginal, loadZzzRandomGalleryPortrait, readZzzPanelOriginal } from "./panel-original.ts";
@@ -80,6 +81,38 @@ test("图鉴回退按角色编号核对，并按送达时的图鉴路径与哈�
     expect(await loadZzzAtlasPanelOriginal(read, 1601)).toBeUndefined();
     await writeFile(join(root, selected!.original.path), Buffer.concat([png, Buffer.from([0])]));
     expect(await readZzzPanelOriginal(undefined, selected!.original, read)).toBeUndefined();
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("绝区零托管立绘的引用回执绑定实际世代，过期后不取同名新图", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lotus-zzz-synced-gallery-"));
+  const base = join(root, "data", "character-gallery-synced");
+  const current = join(base, "current");
+  const firstGeneration = "gallery-00000000-0000-4000-8000-000000000001";
+  const secondGeneration = "gallery-00000000-0000-4000-8000-000000000002";
+  const second = Buffer.concat([png, Buffer.from([0])]);
+  const source = async (generation?: string) => {
+    const snapshot = await readSyncedPanelGalleryRoot(root, generation);
+    if (snapshot) return join(snapshot, "zzz-character");
+  };
+  try {
+    for (const [generation, bytes] of [[firstGeneration, png], [secondGeneration, second]] as const) {
+      const directory = join(base, "snapshots", generation, "zzz-character", "角色甲");
+      await mkdir(directory, { recursive: true });
+      await writeFile(join(directory, "立绘.png"), bytes);
+    }
+    await symlink(`snapshots/${firstGeneration}`, current);
+    const selected = await loadZzzRandomGalleryPortrait(await source(), ["角色甲"], false, firstGeneration);
+    expect(selected?.original).toMatchObject({ gallery: true, snapshot: firstGeneration, path: "角色甲/立绘.png" });
+    await symlink(`snapshots/${secondGeneration}`, join(base, "next"));
+    await rename(join(base, "next"), current);
+    expect(await readZzzPanelOriginal(undefined, selected!.original, undefined, await source(), source)).toEqual(png);
+    expect(await readZzzPanelOriginal(undefined, { ...selected!.original, snapshot: secondGeneration }, undefined, await source(), source)).toBeUndefined();
+    expect(await readZzzPanelOriginal(undefined, { ...selected!.original, snapshot: `../${secondGeneration}` }, undefined, await source(), source)).toBeUndefined();
+    await rm(join(base, "snapshots", firstGeneration), { recursive: true });
+    expect(await readZzzPanelOriginal(undefined, selected!.original, undefined, await source(), source)).toBeUndefined();
   } finally {
     await rm(root, { recursive: true, force: true });
   }

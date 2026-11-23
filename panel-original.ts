@@ -5,6 +5,7 @@ import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import type { createAtlasRuntimeCatalog } from "@lotus-yunzai/atlas/catalog";
 import { readAtlasGalleryImage } from "@lotus-yunzai/atlas/gallery";
 import { loadImage, type Image } from "skia-canvas";
+import { isSyncedPanelGallerySnapshot } from "../../lib/panel-gallery-paths.ts";
 import { readZzzCardLocalArtwork } from "./card-theme.ts";
 import { zzzPanelRegion } from "./panel-storage.ts";
 
@@ -13,6 +14,7 @@ export interface PanelOriginal {
   readonly sha256: string;
   readonly atlasRole?: number;
   readonly gallery?: true;
+  readonly snapshot?: string;
 }
 
 export type ZzzAtlasPortraitReader = (roleId: number, preferIcon?: boolean) =>
@@ -81,6 +83,7 @@ function originalDescriptor(value: unknown): value is PanelOriginal {
   if (!value || typeof value !== "object") return false;
   const descriptor = value as Partial<PanelOriginal>;
   if (typeof descriptor.sha256 !== "string" || !/^[0-9a-f]{64}$/u.test(descriptor.sha256)) return false;
+  if (descriptor.snapshot !== undefined && (descriptor.gallery !== true || !isSyncedPanelGallerySnapshot(descriptor.snapshot))) return false;
   if (descriptor.gallery !== undefined) {
     return descriptor.gallery === true && descriptor.atlasRole === undefined && galleryPath(descriptor.path);
   }
@@ -112,7 +115,7 @@ async function readGalleryImage(root: string | undefined, path: string) {
   return readZzzCardLocalArtwork(directory, path.slice(folder.length + 1)).catch(() => undefined);
 }
 
-export async function loadZzzRandomGalleryPortrait(root: string | undefined, names: readonly unknown[], installed = false) {
+export async function loadZzzRandomGalleryPortrait(root: string | undefined, names: readonly unknown[], installed = false, snapshot?: string) {
   if (!root) return;
   const paths: string[] = [];
   for (const name of new Set(names)) {
@@ -131,7 +134,7 @@ export async function loadZzzRandomGalleryPortrait(root: string | undefined, nam
     const bytes = await readGalleryImage(root, path);
     const image = bytes && await loadImage(bytes).catch(() => undefined);
     if (bytes && image) {
-      const original: PanelOriginal = { path, sha256: hash(bytes), ...(installed ? {} : { gallery: true }) };
+      const original: PanelOriginal = { path, sha256: hash(bytes), ...(installed ? {} : { gallery: true, ...(snapshot && { snapshot }) }) };
       return { image, original };
     }
   }
@@ -167,7 +170,8 @@ export async function loadZzzAtlasPanelOriginal(read: ZzzAtlasPortraitReader | u
 }
 
 export async function readZzzPanelOriginal(directory: string | undefined, original: PanelOriginal,
-  atlas?: ZzzAtlasPortraitReader, gallery?: string | readonly (string | undefined)[]) {
+  atlas?: ZzzAtlasPortraitReader, gallery?: string | readonly (string | undefined)[],
+  readSyncedGallery?: (snapshot: string) => Promise<string | undefined>) {
   if (!originalDescriptor(original)) return;
   if (original.atlasRole !== undefined) {
     const asset = await atlas?.(original.atlasRole).catch(() => undefined);
@@ -175,7 +179,8 @@ export async function readZzzPanelOriginal(directory: string | undefined, origin
     return;
   }
   if (original.gallery) {
-    for (const root of typeof gallery === "string" ? [gallery] : gallery ?? []) {
+    const roots = original.snapshot ? [await readSyncedGallery?.(original.snapshot)] : typeof gallery === "string" ? [gallery] : gallery ?? [];
+    for (const root of roots) {
       const bytes = await readGalleryImage(root, original.path);
       if (bytes && hash(bytes) === original.sha256) return bytes;
     }

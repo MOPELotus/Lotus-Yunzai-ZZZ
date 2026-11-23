@@ -8,7 +8,7 @@ import { createProfileHoyoClient, GameRecordRequestError, HoyoRequestError } fro
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { ImageSizeLimitError } from "@lotus-yunzai/skia";
 import type { AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
-import { retainedPanelGalleryDirectory } from "../../lib/panel-gallery-paths.ts";
+import { readSyncedPanelGalleryRoot, retainedPanelGalleryDirectory } from "../../lib/panel-gallery-paths.ts";
 import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
 import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
 import { createPanelDamageReader, ZzzDamageUnavailable } from "./panel-damage.ts";
@@ -160,6 +160,9 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   const retainedGalleryDirectory = retainedPanelGalleryDirectory("zzz");
   const portraitOptions = {
     atlasPortrait, galleryDirectory, retainedGalleryDirectory,
+    async syncedGalleryRoot() {
+      if (!Bun.env.LOTUS_CHARACTER_GALLERY_DIR?.trim()) return readSyncedPanelGalleryRoot();
+    },
     async atlasNames(id: number) {
       const entry = await findZzzAtlasCharacter(atlas, id);
       return entry ? [entry.name, (await atlas.roleDetails(entry))?.overview.name ?? entry.name] : [];
@@ -195,7 +198,11 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       }
       await verifyRole(qq, record.profileId, record);
       if (session?.aborted) return missing;
-      const file = await readZzzPanelOriginal(resources, record.original, atlasPortrait, [galleryDirectory, await retainedGalleryDirectory]);
+      const file = await readZzzPanelOriginal(resources, record.original, atlasPortrait,
+        [galleryDirectory, await retainedGalleryDirectory], async snapshot => {
+          const root = await readSyncedPanelGalleryRoot(undefined, snapshot);
+          if (root) return join(root, "zzz-character");
+        });
       await verifyRole(qq, record.profileId, record);
       if (!file || session?.aborted) return missing;
       return { type: "image" as const, file };

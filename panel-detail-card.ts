@@ -1,3 +1,4 @@
+import { basename, join } from "node:path";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -23,6 +24,7 @@ type DetailOptions = ZzzCardOptions & {
   readonly profileId?: number;
   readonly atlasPortrait?: ZzzAtlasPortraitReader;
   readonly galleryDirectory?: string;
+  readonly syncedGalleryRoot?: () => Promise<string | undefined>;
   readonly retainedGalleryDirectory?: Promise<string | undefined>;
   readonly atlasNames?: (roleId: number) => Promise<readonly string[]>;
 };
@@ -57,8 +59,11 @@ const attributeElements: Readonly<Record<number, string>> = {
 async function galleryPortrait(roleId: number, partner: Readonly<Record<string, unknown>>, options: DetailOptions) {
   const known = [partner.name, partner.full_name].filter(name => typeof name === "string" && name.length > 0);
   const names = known.length ? known : await options.atlasNames?.(roleId).catch(() => undefined) ?? [];
-  return await loadZzzRandomGalleryPortrait(options.galleryDirectory, names) ??
-    await loadZzzRandomGalleryPortrait(options.legacyResources, names, true) ??
+  const local = await loadZzzRandomGalleryPortrait(options.galleryDirectory, names) ??
+    await loadZzzRandomGalleryPortrait(options.legacyResources, names, true);
+  if (local) return local;
+  const synced = await options.syncedGalleryRoot?.();
+  return await loadZzzRandomGalleryPortrait(synced && join(synced, "zzz-character"), names, false, synced && basename(synced)) ??
     loadZzzRandomGalleryPortrait(await options.retainedGalleryDirectory, names);
 }
 
