@@ -36,6 +36,7 @@ import { zzzPanelIntervalCommand } from "./panel-interval-command.ts";
 import { createZzzPoolHistory, zzzPoolHistoryCommand } from "./pool-history.ts";
 import { createZzzCurrentPool, zzzCurrentPoolCommand } from "./current-pool.ts";
 import { createZzzRoleAliasCommands, zzzRoleAliasCommand } from "./role-alias-command.ts";
+import { createZzzRecallSettings } from "./recall-settings.ts";
 import { createZzzRoleGallery, zzzRoleGalleryCommand, type ZzzRoleGalleryContext } from "./role-gallery.ts";
 import { renderZzzShiyu } from "./shiyu-card.ts";
 import { createZzzSkillReader } from "./skills-command.ts";
@@ -129,6 +130,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     { renderStrongest: panelCommands.renderPublic });
   const roleAliases = createZzzRoleAliasCommands(signal);
   const roleGallery = createZzzRoleGallery(signal);
+  const recall = createZzzRecallSettings(signal);
   const cinema = createZzzCinema(signal);
   const skills = createZzzSkillReader(signal);
   const poolHistory = createZzzPoolHistory(signal);
@@ -541,14 +543,19 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       return [];
     },
     async fallback(_message: string, context: GachaContext) {
+      const recallSetting = recall.setting(context.normalizedMessage, context);
+      if (recallSetting !== undefined) return recallSetting;
       const inventoryRequest = zzzInventoryCommand.exec(context.normalizedMessage);
       if (inventoryRequest) return inventory(Number(inventoryRequest[1] ?? 1), context);
       const gallery = zzzRoleGalleryCommand(context.normalizedMessage);
-      if (gallery) return roleGallery(context, gallery);
+      if (gallery) return recall.transient(roleGallery(context, gallery));
       const alias = zzzRoleAliasCommand(context.normalizedMessage);
-      if (alias) return roleAliases(context, alias);
+      if (alias) return recall.transient(roleAliases(context, alias));
       const rank = rankCommand(context.normalizedMessage);
-      if (rank) return challengeRanks.handle(context, rank);
+      if (rank) {
+        const reply = challengeRanks.handle(context, rank);
+        return rank.kind === "admin-toggle" || rank.kind === "admin-clear" ? recall.transient(reply) : reply;
+      }
       const panelRank = zzzPanelRankCommand(context.normalizedMessage);
       if (panelRank) return panelRanks(context, panelRank);
       const remind = zzzChallengeReminderCommand(context.normalizedMessage);
@@ -558,7 +565,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const skillQuery = zzzSkillCommand(context.normalizedMessage);
       if (skillQuery) return skills(skillQuery, { inlineImageByteLimit: context.inlineImageByteLimit });
       const setting = zzzPanelIntervalCommand(context.normalizedMessage, context, signal);
-      if (setting !== undefined) return setting;
+      if (setting !== undefined) return recall.transient(setting);
       const panel = zzzPanelCommand(context.normalizedMessage, context.message_type === "group");
       if (panel) return panelCommands(panel, context);
       const panelHint = zzzPanelCommandHint(context.normalizedMessage);
@@ -652,11 +659,11 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const link = linkCommand.exec(command);
       if (link) {
         const profileId = Number(link[1] ?? 1);
-        if (profileId <= MAX_PROFILE_ID) return linkSession(context, profileId);
+        if (profileId <= MAX_PROFILE_ID) return recall.transient(linkSession(context, profileId));
         return;
       }
       const continuation = await linkSession(context);
-      if (continuation !== undefined) return continuation;
+      if (continuation !== undefined) return recall.transient(continuation);
       const update = updateCommand.exec(command);
       const linkedOnly = linkedViewCommand.exec(command);
       const matched = update ?? linkedOnly ?? viewCommand.exec(command);
@@ -681,7 +688,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         }
       } catch (error) {
         if (signal.aborted) return;
-        if (error instanceof ZzzManualGachaLinkRequired) return linkSession(context, profileId);
+        if (error instanceof ZzzManualGachaLinkRequired) return recall.transient(linkSession(context, profileId));
         if (error instanceof ZzzTuningHistoryChangedError) return "该角色的绝区零抽卡记录已由另一条请求更新。";
         if (error instanceof ProfileError) {
           if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
