@@ -32,6 +32,7 @@ import { createZzzPanelRanks } from "./panel-rank.ts";
 import { createZzzShowcaseClient } from "./enka-showcase.ts";
 import { zzzPanelRankCommand } from "./panel-rank-model.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
+import { zzzPanelIntervalCommand } from "./panel-interval-command.ts";
 import { createZzzPoolHistory, zzzPoolHistoryCommand } from "./pool-history.ts";
 import { createZzzCurrentPool, zzzCurrentPoolCommand } from "./current-pool.ts";
 import { createZzzRoleAliasCommands, zzzRoleAliasCommand } from "./role-alias-command.ts";
@@ -556,6 +557,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (cinemaQuery) return cinema(cinemaQuery, { inlineImageByteLimit: context.inlineImageByteLimit });
       const skillQuery = zzzSkillCommand(context.normalizedMessage);
       if (skillQuery) return skills(skillQuery, { inlineImageByteLimit: context.inlineImageByteLimit });
+      const setting = zzzPanelIntervalCommand(context.normalizedMessage, context, signal);
+      if (setting !== undefined) return setting;
       const panel = zzzPanelCommand(context.normalizedMessage, context.message_type === "group");
       if (panel) return panelCommands(panel, context);
       const panelHint = zzzPanelCommandHint(context.normalizedMessage);
