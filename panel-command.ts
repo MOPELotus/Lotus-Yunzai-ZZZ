@@ -117,8 +117,13 @@ export function zzzPanelConfigFile(root = installation) {
 
 export async function readZzzPanelConfigDocument(resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, root = installation) {
   const local = await optionalYaml(zzzPanelConfigFile(root));
-  if (local || Bun.env.LOTUS_ZZZ_PANEL_CONFIG || !resources) return local ?? {};
-  return await optionalYaml(join(dirname(resources), "config", "panel.yaml")) ?? {};
+  if (Bun.env.LOTUS_ZZZ_PANEL_CONFIG || !resources) return local ?? {};
+  const legacy = dirname(resources);
+  const [defaults, configured] = await Promise.all([
+    optionalYaml(join(legacy, "defSet", "panel.yaml")),
+    optionalYaml(join(legacy, "config", "panel.yaml")),
+  ]);
+  return { ...defaults, ...configured, ...local };
 }
 
 export function parseZzzPanelConfig(inherited: Json) {

@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 import { sendCommandReply } from "../../lib/commands.ts";
 import { createModule } from "./index.ts";
 import { createZzzRecallSettings } from "./recall-settings.ts";
+import { readZzzPanelConfigDocument } from "./panel-command.ts";
 
 test("绝区零撤回时间继承旧设置，主人写入后即时生效且保留面板字段", async () => {
   const root = await mkdtemp(join(tmpdir(), "lotus-zzz-recall-settings-"));
@@ -37,6 +38,36 @@ test("绝区零撤回时间继承旧设置，主人写入后即时生效且保�
     connection.abort();
     expect(await config.setting("%设置撤回时间8", owner)).toBe("仅限当前机器人的主人设置。");
     expect(await readFile(current, "utf8")).toContain("recallMsg: 0");
+  } finally {
+    lifecycle.abort();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("在聊天第一次保存撤回时间时继承旧面板设置，且旧文件保持原样", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lotus-zzz-recall-inherit-"));
+  const lifecycle = new AbortController();
+  const connection = new AbortController();
+  const location = pathToFileURL(root + "/");
+  const resources = join(root, "legacy", "resources");
+  const legacyPanel = join(root, "legacy", "config", "panel.yaml");
+  const legacyDefaults = join(root, "legacy", "defSet");
+  try {
+    await mkdir(legacyDefaults, { recursive: true });
+    await mkdir(join(root, "legacy", "config"));
+    await writeFile(join(legacyDefaults, "config.yaml"), "recallMsg: 7\n");
+    await writeFile(join(legacyDefaults, "panel.yaml"), "roleInterval: 3000\nbuttons: false\n");
+    await writeFile(legacyPanel, "roleInterval: 535\nuserSetting: retained\n");
+    const config = createZzzRecallSettings(lifecycle.signal, location, resources);
+    const owner = { self_id: 99, user_id: 42, adapter: "onebot", message_type: "private", isMaster: true,
+      privateCredentialSignal: connection.signal, isBotMaster: (id: number) => id === 42 };
+    expect(await config.transient("临时提示")).toMatchObject({ seconds: 7 });
+    expect(await config.setting("%设置撤回时间7", owner)).toContain("7 秒");
+    const saved = await readFile(join(root, "config", "zzz-panel.yaml"), "utf8");
+    const expected = { roleInterval: 535, buttons: false, userSetting: "retained", recallMsg: 7 };
+    expect(Bun.YAML.parse(saved)).toEqual(expected);
+    expect(await readZzzPanelConfigDocument(resources, location)).toEqual(expected);
+    expect(await readFile(legacyPanel, "utf8")).toBe("roleInterval: 535\nuserSetting: retained\n");
   } finally {
     lifecycle.abort();
     await rm(root, { recursive: true, force: true });
