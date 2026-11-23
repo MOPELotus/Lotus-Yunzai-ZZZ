@@ -25,7 +25,8 @@ const atlasRoot = fileURLToPath(new URL("../../data/atlas/", import.meta.url));
 const prefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)/iu;
 const formerPanelBrand = /^[#/%]?\s*(?:(?:zzz|绝区零)\s*)?[\[【]?(?:zzz[-_ ]*plugin|lotus[-_ ]*plugin|荷花(?:插件)?)/iu;
 const listCommand = /^(?:面板|.*面板列表)\s*([1-9]\d{0,2})?$/u;
-const showcaseCommand = /^(?:(?:刷新|更新)展柜面板|展柜面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
+const showcaseCommand = /^(?:(?:刷新|更新)(?:展柜|展板)面板|(?:展柜|展板)(?:全部面板更新|更新全部面板|(?:刷新|更新)面板|面板(?:刷新|更新)))\s*([1-9]\d{0,2})?$/u;
+const showcaseName = /展柜|展板/u;
 const proficiencyCommand = /^(展柜)?练度(?:统计)?\s*([1-9]\d{0,2})?$/u;
 const updateCommand = /^(?:更新全部面板|全部面板更新|(?:刷新|更新)(.*?)面板|面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const detailCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)面板\s*([1-9]\d{0,2})?$/u;
@@ -66,7 +67,7 @@ export function zzzPanelCommand(raw: string, inGroup = false) {
   const refresh = updateCommand.exec(command);
   if (refresh) {
     const profileId = Number(refresh[2] ?? 1);
-    if (profileId > MAX_PROFILE_ID || refresh[1]?.includes("展柜")) return;
+    if (profileId > MAX_PROFILE_ID || showcaseName.test(refresh[1] ?? "")) return;
     const names = (refresh[1] ?? "").split(/[\s,，、]+/u).filter(Boolean);
     return { kind: "update" as const, profileId, names };
   }
@@ -91,7 +92,7 @@ export function zzzPanelCommandHint(raw: string) {
   const command = zzzPrefixedCommand(raw);
   if (!command || showcaseCommand.test(command)) return;
   const refresh = updateCommand.exec(command);
-  if (refresh?.[1]?.includes("展柜") && Number(refresh[2] ?? 1) <= MAX_PROFILE_ID) {
+  if (refresh && showcaseName.test(refresh[1] ?? "") && Number(refresh[2] ?? 1) <= MAX_PROFILE_ID) {
     return "展柜更新不支持指定角色，请使用%更新展柜面板";
   }
 }

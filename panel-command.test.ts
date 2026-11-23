@@ -18,10 +18,19 @@ test("旧的全部更新前置和后置写法沿用档案号选择整份官方�
 
 test("旧版指定角色展柜更新收到提示，展柜全量与官方单角色仍正常分流", () => {
   expect(zzzPanelCommandHint("%更新客服展柜面板2")).toBe("展柜更新不支持指定角色，请使用%更新展柜面板");
+  expect(zzzPanelCommandHint("%更新安比展板面板2")).toBe("展柜更新不支持指定角色，请使用%更新展柜面板");
+  expect(zzzPanelCommand("%更新安比展板面板2")).toBeUndefined();
   for (const raw of ["%更新展柜面板2", "更新客服展柜面板2", "%更新客服展柜面板256", "%更新客服面板2"]) {
     expect(zzzPanelCommandHint(raw)).toBeUndefined();
   }
-  expect(zzzPanelCommand("%更新展柜面板2")).toEqual({ kind: "showcase-update", profileId: 2 });
+  for (const raw of ["%更新展柜面板2", "#绝区零展柜面板更新2", "%展板更新面板2", "%更新展板面板2",
+    "％展板全部面板更新 2", "#绝区零展板更新全部面板2"]) {
+    expect(zzzPanelCommand(raw)).toEqual({ kind: "showcase-update", profileId: 2 });
+    expect(zzzPanelCommandHint(raw)).toBeUndefined();
+  }
+  for (const raw of ["%展板更新面板0", "%展板更新面板256", "#展板更新面板2"]) {
+    expect(zzzPanelCommand(raw)).toBeUndefined();
+  }
 });
 
 test("仅有绑定 UID 的旧档可按普通全量更新读取公开展柜，指定角色仍先登录", async () => {
@@ -40,6 +49,7 @@ test("仅有绑定 UID 的旧档可按普通全量更新读取公开展柜，指
     ].join("\n"));
     await write();
     expect(await update(zzzPanelCommand("%更新面板")!, context)).toBe("绝区零公开展柜所需的本地游戏资料不可用。");
+    expect(await update(zzzPanelCommand("%展板更新面板")!, context)).toBe("绝区零公开展柜所需的本地游戏资料不可用。");
     expect(await update(zzzPanelCommand("%更新艾莲面板")!, context)).toMatch(/指定角色更新需要登录档案/u);
     expect(await update(zzzPanelCommand("%更新面板")!, { ...context, user_id: 43 })).toMatch(/请先登录/u);
     await write("  cookie: 'ltoken=fixture;ltuid=42'");
