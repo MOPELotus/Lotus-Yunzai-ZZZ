@@ -94,7 +94,7 @@ export function fetchZzzQqAvatar(qq: string, signal?: AbortSignal, transport: Ar
   if (/^[1-9]\d*$/u.test(qq)) return fetchArtwork(new URL(`https://q1.qlogo.cn/g?b=qq&nk=${qq}&s=640`), transport, signal);
 }
 
-export function createZzzRecordPortraits<T extends ArtRecord>(kind: "character" | "bangboo", signal?: AbortSignal) {
+export function createZzzRecordPortraits<T extends ArtRecord>(kind: Kind, signal?: AbortSignal) {
   return createArtwork<T>({ qq: "", signal, transport: fetch, kindOfRecord: () => kind });
 }
 

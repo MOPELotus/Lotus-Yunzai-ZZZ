@@ -40,7 +40,7 @@
 
 该角色的图库图片都不可用时，先读取旧插件中对应服装或默认立绘，再按角色编号从宿主 Atlas 图鉴读取同一角色的默认立绘。图鉴数据沿用宿主的 `LOTUS_ATLAS_DATA_DIR` 设置。
 
-发送 `%更新展柜面板` 或 `%展柜面板刷新2`，将对应档案的游戏 UID 提交给第三方 Enka 公开展柜。它只读取游戏内已公开展示的角色，需在 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 对应的 `map/` 提供角色、音擎及驱动盘资料。结果按区服、QQ 与 UID 独立保存到 `data/zzzShowcasePanels/`，可通过 `LOTUS_ZZZ_SHOWCASE_DIR` 改变该目录。`%客服展柜面板2` 查看单个公开角色。`%客服面板2` 优先使用已保存的米游社或旧面板，再查同档案的公开展柜。公开属性根据本地游戏资料计算。
+发送 `%更新展柜面板`、`%展板更新面板` 或 `%展柜面板刷新2`，将对应档案的游戏 UID 提交给第三方 Enka 公开展柜。它只读取游戏内已公开展示的角色。模块自带展柜和面板群榜共用的角色、音擎与驱动盘数值表，也可在 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 对应的 `map/` 提供完整的新版资料。结果按区服、QQ 与 UID 独立保存到 `data/zzzShowcasePanels/`，可通过 `LOTUS_ZZZ_SHOWCASE_DIR` 改变该目录。`%客服展柜面板2` 查看单个公开角色。`%客服面板2` 优先使用已保存的米游社或旧面板，再查同档案的公开展柜。公开属性根据本地游戏资料计算。
 
 ## 练度统计
 
@@ -75,6 +75,8 @@
 挑战群榜沿用同版本的 `dist/apps/rank.js`、`dist/lib/rank.js` 和 `resources/rank/{abyss,deadly,deadlyHard}/`。
 
 面板名册、官方刷新和角色详情沿用同版本的 `dist/apps/panel.js`、`dist/lib/avatar.js` 和 `resources/panel/{list.html,refresh.html,refresh.css,card.html,card.css}`。
+
+`enka-data/map/` 的角色晋阶、音擎和套装数值取自同版本的 `resources/map/{PartnerId2Data,WeaponId2Data,SuitData}.json`，仅保留 Enka 展柜转换使用的名称、职业及数值字段，沿用该版本的 AGPL-3.0 许可。
 
 驱动盘评分沿用同版本的 `dist/model/score/Score.js`、`dist/lib/score.js`、角色评分规则、`EquipScore.json`、`EquipMainStats.json` 和 `EquipBaseValue.json`。内置规则随模块发布。
 

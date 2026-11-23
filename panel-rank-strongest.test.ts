@@ -22,9 +22,10 @@ test("绝区零最强角色的两种前缀进入群榜分派，私聊拒绝", as
 test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首，撤回后不发送", async () => {
   const root = await mkdtemp(join(tmpdir(), "lotus-zzz-strongest-"));
   const profileDirectory = join(root, "profiles");
-  const mapDirectory = join(root, "map");
   const config = join(root, "rank.yaml");
-  const previous = { redis: globalThis.redis, resources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, config: Bun.env.LOTUS_ZZZ_RANK_CONFIG };
+  const previous = Object.fromEntries(["LOTUS_ZZZ_LEGACY_RESOURCES_DIR", "LOTUS_ZZZ_RANK_CONFIG",
+    "LOTUS_ATLAS_THEME_DIR", "LOTUS_PASSPORT_QR_RESOURCES"].map(key => [key, Bun.env[key]]));
+  const previousRedis = globalThis.redis;
   try {
     const first = "12345678", second = "23456789", outsider = "34567890", region = "prod_gf_cn";
     const owners = new Map([["42:1", `${region}:${first}`], ["43:1", `${region}:${second}`], ["44:1", `${region}:${outsider}`]]);
@@ -37,18 +38,12 @@ test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首�
       async hGet(_key: string, field: string) { return owners.get(field) ?? null; },
       async hmGet(_key: string, fields: readonly string[]) { return fields.map(field => owners.get(field) ?? null); },
     } as unknown as NonNullable<typeof globalThis.redis>;
-    Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR = root;
+    delete Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
     Bun.env.LOTUS_ZZZ_RANK_CONFIG = config;
-    await Promise.all([mkdir(profileDirectory), mkdir(mapDirectory), writeFile(config, "allow_group: true\n")]);
+    Bun.env.LOTUS_ATLAS_THEME_DIR = root;
+    Bun.env.LOTUS_PASSPORT_QR_RESOURCES = root;
+    await Promise.all([mkdir(profileDirectory), writeFile(config, "allow_group: true\n")]);
     await Promise.all([
-      writeFile(join(mapDirectory, "PartnerId2Data.json"), JSON.stringify({ 1011: {
-        name: "安比", full_name: "安比·德玛拉", Rarity: "A", WeaponType: 2, ElementType: 203,
-      } })),
-      writeFile(join(mapDirectory, "WeaponId2Data.json"), JSON.stringify({
-        14101: { Name: "相同职业测试音擎", Rarity: "A", Profession: 2 },
-        14102: { Name: "不同职业测试音擎", Rarity: "A", Profession: 1 },
-      })),
-      writeFile(join(mapDirectory, "SuitData.json"), JSON.stringify({ 31000: { name: "啄木鸟电音" } })),
       ...([[42, first], [43, second], [44, outsider]] as const).map(([qq, uid]) =>
         writeFile(join(profileDirectory, `${qq}.yaml`), Bun.YAML.stringify({
           user: { qq: String(qq) }, profile: { id: 1 }, enabled: true,
@@ -67,7 +62,7 @@ test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首�
       expect(new Headers(init.headers).has("cookie")).toBe(false);
       const row = {
         Id: 1011, Level: 60, TalentLevel: 2,
-        Weapon: { Id: uid === first ? 14101 : 14102, Level: 60, UpgradeLevel: 1, BreakLevel: 5 },
+        Weapon: { Id: uid === first ? 13101 : 13004, Level: 60, UpgradeLevel: 1, BreakLevel: 5 },
         EquippedList: [{ Slot: 1, Equipment: { Id: 31041, Level: 15,
           MainPropertyList: [{ PropertyId: 11103, PropertyValue: 550 }],
           RandomPropertyList: [{ PropertyId: 20103, PropertyValue: 240, PropertyLevel: uid === currentWinner ? 5 : 1 }],
@@ -107,9 +102,18 @@ test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首�
     enabled = false;
     expect(await ranks(context, query)).toBe("当前群角色面板排名功能已关闭！");
     expect(queried).toEqual([first, second, first, second, first, second]);
+    enabled = true;
+    owners.set("42:1", `${region}:${first}`);
+    for (const command of ["%安比排名", "%安比综合榜"]) {
+      const reply = await ranks(context, zzzPanelRankCommand(command)!);
+      expect(reply).toEqual([expect.stringContaining("2 个 UID 入榜"), { type: "image", file: expect.any(Uint8Array) }]);
+      const file = Array.isArray(reply) && typeof reply[1] === "object" ? reply[1].file : undefined;
+      expect(file && Buffer.from(file).readUInt32BE(16)).toBe(3280);
+    }
+    expect(queried.slice(-4)).toEqual([first, second, first, second]);
   } finally {
-    globalThis.redis = previous.redis;
-    for (const [key, value] of [["LOTUS_ZZZ_LEGACY_RESOURCES_DIR", previous.resources], ["LOTUS_ZZZ_RANK_CONFIG", previous.config]] as const) {
+    globalThis.redis = previousRedis;
+    for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) delete Bun.env[key];
       else Bun.env[key] = value;
     }

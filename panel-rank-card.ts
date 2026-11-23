@@ -1,17 +1,32 @@
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { createAtlasRuntimeCatalog } from "@lotus-yunzai/atlas/catalog";
 import { renderPng } from "@lotus-yunzai/skia";
 import { openProfileCardTheme } from "@lotus-yunzai/skia/profile";
-import { Canvas, type CanvasRenderingContext2D as Context } from "skia-canvas";
+import { Canvas, loadImage, type CanvasRenderingContext2D as Context } from "skia-canvas";
 import { artwork, cover, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
 import { cachedPanelWeaponImage, readPanelArtMap } from "./panel-artwork.ts";
 import { panelObject } from "./panel-detail.ts";
 import { loadPanelPortraits } from "./panel-list-card.ts";
+import { createZzzAtlasPortraitReader } from "./panel-original.ts";
 import type { ZzzPanelRankRow } from "./panel-rank-model.ts";
-import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
+import { createZzzRecordPortraits, fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 820;
 const gold = "#d3bc8e";
 const skillNames = ["普攻", "闪避", "支援", "特殊", "连携", "核心"];
+const atlasRoot = fileURLToPath(new URL("../../data/atlas/", import.meta.url));
+const fallbackFont = '"Noto Sans CJK SC", sans-serif';
+
+async function readRankTheme() {
+  const profileDirectory = Bun.env.LOTUS_PASSPORT_QR_RESOURCES?.trim();
+  const original = await openProfileCardTheme(profileDirectory).catch(() => undefined);
+  if (original) return original;
+  const atlasDirectory = Bun.env.LOTUS_ATLAS_THEME_DIR?.trim() || join(atlasRoot, "theme");
+  const background = await loadImage(join(atlasDirectory, "bg/bg-hydro.webp")).catch(() => undefined);
+  return { background, text: fallbackFont, number: fallbackFont, title: fallbackFont };
+}
 
 function text(ctx: Context, value: string, x: number, y: number, max: number, px: number, font: string,
   color = "#fff", align: CanvasTextAlign = "left") {
@@ -40,17 +55,23 @@ function nameLines(ctx: Context, name: string, font: string) {
 // Lotus e28c6df source-cards.js zzz-rank uses the rank-profile-list strips over the original miao hydro background.
 export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelRankRow[],
   options: ZzzCardOptions & { readonly offset: number; readonly weighted: boolean; readonly overview?: string; readonly next?: string }) {
+  const atlas = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
+  const atlasPortrait = createZzzAtlasPortraitReader(atlas);
+  const atlasWeapons = createZzzRecordPortraits("equipment", options.signal);
   const [theme, local, weapons] = await Promise.all([
-    openProfileCardTheme(Bun.env.LOTUS_PASSPORT_QR_RESOURCES?.trim() || undefined),
+    readRankTheme(),
     openZzzCardTheme(options), readPanelArtMap(options.legacyResources, "WeaponId2Data"),
   ]);
   const [portraits, weaponImages] = await Promise.all([
-    loadPanelPortraits(rows.map(row => row.avatar), local, options),
+    loadPanelPortraits(rows.map(row => row.avatar), local, { ...options, atlasPortrait }),
     Promise.all(rows.map(async ({ avatar, weapon }) => {
       if (!weapon) return;
       const cached = await cachedPanelWeaponImage(local, weapons[weapon.id]);
       const icon = panelObject(avatar.weapon).icon;
-      return cached ?? (typeof icon === "string" ? await artwork(fetchZzzOfficialArtwork(icon, options.signal)) : undefined);
+      const official = !cached && typeof icon === "string" ? await artwork(fetchZzzOfficialArtwork(icon, options.signal)) : undefined;
+      if (cached || official) return cached ?? official;
+      const key = atlasWeapons.resolveIcon({ itemId: String(weapon.id), name: weapon.name });
+      return key ? await artwork(atlasWeapons.loadArtwork(key)) : undefined;
     })),
   ]);
   options.signal?.throwIfAborted();
@@ -64,7 +85,11 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
     (options.next ? 21 : 0));
   return renderPng(width * 4, height * 4, ctx => {
     ctx.scale(4, 4);
-    ctx.drawImage(theme.background, 0, 0, width, height);
+    if (theme.background) ctx.drawImage(theme.background, 0, 0, width, height);
+    else {
+      ctx.fillStyle = "#243344";
+      ctx.fillRect(0, 0, width, height);
+    }
     ctx.save();
     ctx.shadowColor = "#000";
     ctx.shadowBlur = 2;

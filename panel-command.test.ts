@@ -4,7 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createProfileStore } from "@lotus-yunzai/account";
 import { createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
+import { createZzzShowcaseClient } from "./enka-showcase.ts";
 import { createZzzPanelCommands, zzzPanelCommand, zzzPanelCommandHint } from "./panel-command.ts";
+import { createZzzShowcaseStorage } from "./panel-storage.ts";
 
 test("旧的全部更新前置和后置写法沿用档案号选择整份官方面板", () => {
   expect(zzzPanelCommand("%更新全部面板")).toEqual({ kind: "update", profileId: 1, names: [] });
@@ -35,28 +37,52 @@ test("旧版指定角色展柜更新收到提示，展柜全量与官方单角�
 
 test("仅有绑定 UID 的旧档可按普通全量更新读取公开展柜，指定角色仍先登录", async () => {
   const directory = await mkdtemp(join(tmpdir(), "lotus-zzz-bound-update-"));
-  const before = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+  const previousResources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+  const previousShowcase = Bun.env.LOTUS_ZZZ_SHOWCASE_DIR;
   const profileFile = join(directory, "42.yaml");
   const profiles = createProfileStore(directory);
-  const update = createZzzPanelCommands(profiles, createProfileHoyoClient(profiles),
-    async () => { throw new Error("缺少公开展柜游戏资料时不写入"); }, new AbortController().signal);
-  const context = { message_type: "group", user_id: 42, reply: () => { throw new Error("不应发送请求提示"); } };
+  const lockFile = async () => ({ close() {} });
+  const requested: string[] = [], replies: string[] = [];
+  const uid = "12345678", region = "prod_gf_cn";
+  let now = 1_000;
+  const showcase = createZzzShowcaseClient(async (url, init) => {
+    requested.push(url.href);
+    expect(new Headers(init?.headers).has("cookie")).toBe(false);
+    return Response.json({ uid, region, ttl: 60, PlayerInfo: {
+      SocialDetail: { ProfileDetail: { Uid: uid } }, ShowcaseDetail: { AvatarList: [
+        { Id: 1011, Level: 60, TalentLevel: 2, PromotionLevel: 6, CoreSkillEnhancement: 6 },
+      ] },
+    } });
+  }, () => now);
+  const context = { message_type: "group", user_id: 42, reply: (message: string) => { replies.push(message); } };
   try {
-    Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR = directory;
+    delete Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+    Bun.env.LOTUS_ZZZ_SHOWCASE_DIR = join(directory, "showcase");
+    const client = createProfileHoyoClient(profiles, async () => { throw new Error("公开展柜不访问米游社"); });
+    const update = createZzzPanelCommands(profiles, client, lockFile, new AbortController().signal, showcase);
+    const archive = createZzzShowcaseStorage(lockFile);
     const write = (credential = "") => writeFile(profileFile, [
       "version: 1", "user: {qq: 42}", "profile: {id: 1}", "account:",
-      '  current_uid: {zzz: "12345678"}', credential,
+      `  current_uid: {zzz: "${uid}"}`, credential,
     ].join("\n"));
     await write();
-    expect(await update(zzzPanelCommand("%更新面板")!, context)).toBe("绝区零公开展柜所需的本地游戏资料不可用。");
-    expect(await update(zzzPanelCommand("%展板更新面板")!, context)).toBe("绝区零公开展柜所需的本地游戏资料不可用。");
+    await update(zzzPanelCommand("%更新面板")!, context);
+    expect(await archive.read({ qq: "42", uid, region })).toEqual([expect.objectContaining({ id: 1011 })]);
+    now += 61_000;
+    Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR = directory;
+    await update(zzzPanelCommand("%展板更新面板")!, context);
+    expect(requested).toEqual(Array(2).fill(`https://enka.network/api/zzz/uid/${uid}`));
+    expect(replies).toEqual(Array(2).fill("正在查询第三方 Enka 公开展柜。此请求只发送当前档案的游戏 UID。"));
+    expect(await archive.read({ qq: "42", uid, region })).toEqual([expect.objectContaining({ id: 1011 })]);
     expect(await update(zzzPanelCommand("%更新艾莲面板")!, context)).toMatch(/指定角色更新需要登录档案/u);
     expect(await update(zzzPanelCommand("%更新面板")!, { ...context, user_id: 43 })).toMatch(/请先登录/u);
     await write("  cookie: 'ltoken=fixture;ltuid=42'");
     expect(await update(zzzPanelCommand("%更新面板")!, context)).toMatch(/请先登录/u);
   } finally {
-    if (before === undefined) delete Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
-    else Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR = before;
+    if (previousResources === undefined) delete Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+    else Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR = previousResources;
+    if (previousShowcase === undefined) delete Bun.env.LOTUS_ZZZ_SHOWCASE_DIR;
+    else Bun.env.LOTUS_ZZZ_SHOWCASE_DIR = previousShowcase;
     await rm(directory, { recursive: true, force: true });
   }
 });

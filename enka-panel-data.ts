@@ -1,8 +1,10 @@
+import { fileURLToPath } from "node:url";
 import { normalizeZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { panelInteger, panelObject } from "./panel-detail.ts";
 import { readPanelJson } from "./panel-storage.ts";
 
 type Json = Record<string, unknown>;
+const bundledResources = fileURLToPath(new URL("./enka-data/", import.meta.url));
 const statDefinitions: Readonly<Record<number, readonly [string, string]>> = {
   111: ["生命值", "HpMax"], 121: ["攻击力", "Attack"], 122: ["冲击力", "BreakStun"], 131: ["防御力", "Defence"],
   201: ["暴击率", "Crit"], 211: ["暴击伤害", "CritDamage"], 231: ["穿透率", "PenRate"], 232: ["穿透值", "PenDelta"],
@@ -206,12 +208,15 @@ export function formatEnkaPanel(raw: Json, { partners, weapons, suits }: { partn
   });
 }
 
-export async function loadEnkaPanelTables(resources: string | undefined) {
-  if (!resources) return;
+async function readEnkaPanelTables(resources: string) {
   const names = ["PartnerId2Data", "WeaponId2Data", "SuitData"] as const;
   const [partners, weapons, suits] = await Promise.all(names.map(async name =>
     panelObject(await readPanelJson(resources, `map/${name}.json`).catch(() => undefined))));
   if (partners && weapons && suits && Object.keys(partners).length && Object.keys(weapons).length && Object.keys(suits).length) {
     return { partners, weapons, suits };
   }
+}
+
+export async function loadEnkaPanelTables(resources: string | undefined) {
+  return (resources ? await readEnkaPanelTables(resources) : undefined) ?? await readEnkaPanelTables(bundledResources);
 }
