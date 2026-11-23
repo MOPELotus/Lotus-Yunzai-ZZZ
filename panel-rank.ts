@@ -61,7 +61,7 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
         if (signal.aborted) return;
         await redis.hSet(key, participant, viewer.value);
         const label = panelRankMode(viewer.value) === "cn" ? "角色面板排名" : `国际服角色面板排名（UID ${viewer.uid}）`;
-        return `本群已显示该档案的${label}。查榜时仅将游戏 UID 发给 Enka 请求公开展柜。发送 %隐藏角色面板排名${command.profileId === 1 ? "" : command.profileId} 可撤回。`;
+        return `本群已显示该档案的${label}。查榜时仅将游戏 UID 发给 Enka 请求公开展柜。发送 %隐藏${command.international ? "国际服" : ""}角色面板排名${command.profileId} 可撤回。`;
       }
 
       const localViewer = await roleFor(actor, command.profileId, "cn");

@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import type { InboundSegment } from "../../lib/messages.ts";
-import { createProfileStore, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
+import { createProfileStore, gameCommandProfileId, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
 import { createGachaUpdater } from "@lotus-yunzai/gacha/update";
 import {
   createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
@@ -577,7 +577,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const recallSetting = recall.setting(context.normalizedMessage, context);
       if (recallSetting !== undefined) return recallSetting;
       const inventoryRequest = zzzInventoryCommand.exec(context.normalizedMessage);
-      if (inventoryRequest) return inventory(Number(inventoryRequest[1] ?? 1), context);
+      if (inventoryRequest) return inventory(gameCommandProfileId("zzz", inventoryRequest[1]), context);
       const gallery = zzzRoleGalleryCommand(context.normalizedMessage);
       if (gallery) return recall.transient(roleGallery(context, gallery));
       const alias = zzzRoleAliasCommand(context.normalizedMessage);
@@ -607,18 +607,18 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
       const buddies = ownedBuddyCommand.exec(command);
       if (buddies) {
-        const profileId = Number(buddies[1] ?? 1);
+        const profileId = gameCommandProfileId("zzz", buddies[1]);
         return profileId <= MAX_PROFILE_ID ? gameRecord(context, profileId, true) : "档案编号须在 1 到 255 之间。";
       }
       const card = gameRecordCommand.exec(command);
       if (card) {
-        const profileId = Number(card[1] ?? 1);
+        const profileId = gameCommandProfileId("zzz", card[1]);
         if (profileId <= MAX_PROFILE_ID) return gameRecord(context, profileId);
         return;
       }
       const ledger = zzzMonthlyCommand.exec(command);
       if (ledger) {
-        const profileId = Number(ledger[4] ?? 1);
+        const profileId = gameCommandProfileId("zzz", ledger[4]);
         const page = ledger[5] ? Number(ledger[5]) : undefined;
         if (profileId <= MAX_PROFILE_ID) return monthly(context, profileId,
           { collect: !!ledger[1], year: ledger[2], month: ledger[3], page });
@@ -626,14 +626,14 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       }
       const collection = explorationCommand.exec(command);
       if (collection) {
-        const profileId = Number(collection[1] ?? 1);
+        const profileId = gameCommandProfileId("zzz", collection[1]);
         const page = collection[2] === undefined ? undefined : Number(collection[2]);
         if (profileId <= MAX_PROFILE_ID) return exploration(context, profileId, page);
         return;
       }
       const expedition = zenkovCommand.exec(command);
       if (expedition) {
-        const profileId = Number(expedition[2] ?? 1);
+        const profileId = gameCommandProfileId("zzz", expedition[2]);
         if (profileId > MAX_PROFILE_ID) return;
         const page = expedition[3] === undefined ? undefined : Number(expedition[3]);
         if (!expedition[1] && page !== undefined) return `发送 %迷宫战绩${profileId === 1 ? "" : profileId} 页 ${page} 查看指定战绩页。`;
@@ -642,13 +642,13 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (hollowHelp.test(command)) return "当前可供查询的零号空洞数据有：\n- %枯萎苗圃\n- %迷失之地";
       const hollow = hollowCommand.exec(command);
       if (hollow) {
-        const profileId = Number(hollow[2] ?? 1);
+        const profileId = gameCommandProfileId("zzz", hollow[2]);
         if (profileId <= MAX_PROFILE_ID) return battleRecord(context, profileId, 1, hollow[1]!.startsWith("迷失") ? "lost" : "withered");
         return;
       }
       const tower = climbingTowerCommand.exec(command);
       if (tower) {
-        const profileId = Number(tower[1] ?? 1);
+        const profileId = gameCommandProfileId("zzz", tower[1]);
         if (profileId <= MAX_PROFILE_ID) return battleRecord(context, profileId, 1, "climbingTower");
         return;
       }
@@ -657,7 +657,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const holoBoss = shiyu || deadly ? null : holoBossCommand.exec(command);
       const battle = shiyu ?? deadly ?? holoBoss ?? voidFrontCommand.exec(command);
       if (battle) {
-        const profileId = Number(battle[2] ?? 1);
+        const profileId = gameCommandProfileId("zzz", battle[2]);
         if (profileId <= MAX_PROFILE_ID) {
           const scheduleType = battle[1] === "上期" || battle[1] === "往期" ? 2 : 1;
           return battleRecord(context, profileId, scheduleType, shiyu ? "shiyu" : deadly ? "deadly" : holoBoss ? "holoBoss" : "voidFront");
@@ -667,7 +667,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (helpCommand.test(command)) return help;
       const generateLink = generateLinkCommand.exec(command);
       if (generateLink) {
-        const profileId = Number(generateLink[1] ?? 1);
+        const profileId = gameCommandProfileId("zzz", generateLink[1]);
         if (profileId > MAX_PROFILE_ID) return;
         if (context.message_type !== "private" || !context.self_id || !Number.isSafeInteger(context.self_id) || context.self_id < 1 ||
             !context.user_id || !Number.isSafeInteger(context.user_id) || context.user_id < 1) {
@@ -694,7 +694,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       }
       const link = linkCommand.exec(command);
       if (link) {
-        const profileId = Number(link[1] ?? 1);
+        const profileId = gameCommandProfileId("zzz", link[1]);
         if (profileId <= MAX_PROFILE_ID) return recall.transient(linkSession(context, profileId));
         return;
       }
@@ -704,7 +704,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const linkedOnly = linkedViewCommand.exec(command);
       const matched = update ?? linkedOnly ?? viewCommand.exec(command);
       if (!matched) return;
-      const profileId = Number(matched[1] ?? 1);
+      const profileId = gameCommandProfileId("zzz", matched[1]);
       if (profileId > MAX_PROFILE_ID) return;
       const { user_id } = context;
       if (typeof user_id !== "number" || !Number.isSafeInteger(user_id) || user_id < 1) {

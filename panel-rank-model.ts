@@ -1,4 +1,4 @@
-import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
+import { gameCommandProfileId, MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { zzzPrefixedCommand } from "./panel-command.ts";
 import { buildZzzPanelDetail, panelInteger, panelObject } from "./panel-detail.ts";
@@ -13,7 +13,7 @@ export function zzzPanelRankCommand(raw: string) {
   if (!body || /^(?:更新|刷新)/u.test(body)) return;
   const action = visibility.exec(body);
   if (action) {
-    const profileId = Number(action[3] ?? 1);
+    const profileId = action[2] ? Number(action[3] ?? 1) : gameCommandProfileId("zzz", action[3]);
     if (profileId <= MAX_PROFILE_ID) return { kind: "visibility", enable: action[1] === "显示" || action[1] === "开启",
       profileId, ...(action[2] && { international: true as const }) } as const;
     return;
@@ -21,7 +21,7 @@ export function zzzPanelRankCommand(raw: string) {
   const leader = strongest.exec(body);
   if (leader) {
     const name = leader[1]!.trim();
-    const profileId = Number(leader[2] ?? 1);
+    const profileId = gameCommandProfileId("zzz", leader[2]);
     if (name && !/^(?:面[板版]|详情)$/u.test(name) && profileId <= MAX_PROFILE_ID) {
       return { kind: "strongest", name, weighted: false, profileId, page: 1 } as const;
     }
@@ -30,7 +30,7 @@ export function zzzPanelRankCommand(raw: string) {
   const match = query.exec(body);
   if (!match) return;
   const name = match[1]!.trim();
-  const profileId = Number(match[3] ?? 1);
+  const profileId = gameCommandProfileId("zzz", match[3]);
   if (name && profileId <= MAX_PROFILE_ID) return {
     kind: "board", name, weighted: match[2] === "综合榜", profileId, page: Number(match[4] ?? 1),
   } as const;

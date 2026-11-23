@@ -1,4 +1,4 @@
-import { MAX_PROFILE_ID, ProfileError, type createProfileStore } from "@lotus-yunzai/account";
+import { gameCommandProfileId, MAX_PROFILE_ID, ProfileError, type createProfileStore } from "@lotus-yunzai/account";
 import { GameRecordRequestError, HoyoRequestError, type createProfileHoyoClient, type ZzzDeadlySnapshot, type ZzzShiyuSnapshot } from "@lotus-yunzai/hoyo-client";
 import { challengeReminderTime, createZzzChallengeReminderStore, type ChallengeReminderDefaults,
   type ChallengeReminderPreferences, type ChallengeReminderUser } from "./challenge-reminder-store.ts";
@@ -21,7 +21,7 @@ export function zzzChallengeReminderCommand(text: string) {
   const command = text.replace(prefix, "#绝区零");
   const status = /^#绝区零查询挑战状态\s*([1-9]\d{0,2})?$/u.exec(command);
   if (status) {
-    const profileId = Number(status[1] ?? 1);
+    const profileId = gameCommandProfileId("zzz", status[1]);
     if (profileId <= MAX_PROFILE_ID) return { kind: "status", profileId } as const;
   }
   const enable = /^#绝区零(开启|启用|关闭|禁用)(全局)?挑战提醒$/u.exec(command);

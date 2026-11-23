@@ -1,4 +1,4 @@
-import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
+import { gameCommandProfileId, MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import type { ZzzClimbingTowerSnapshot, ZzzDeadlyRoom, ZzzDeadlySnapshot, ZzzHoloBossRoom, ZzzHoloBossSnapshot, ZzzShiyuSnapshot, ZzzShiyuTeam, ZzzVoidFrontSnapshot, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 
 export const towerRanks = ["CLIMBING_TOWER_S1", "CLIMBING_TOWER_S2", "CLIMBING_TOWER_S3", "CLIMBING_TOWER_S4"] as const;
@@ -101,7 +101,7 @@ export function rankCommand(command: string) {
   if (/^(?:爬塔|鏖战)排名$/u.test(text)) return { kind: "tower-help" as const };
   const action = shareCommand.exec(text);
   if (action) {
-    const profileId = Number(action[3] ?? 1);
+    const profileId = gameCommandProfileId("zzz", action[3]);
     if (profileId > MAX_PROFILE_ID) return;
     const types: RankType[] = action[2] ? [namedRank(action[2])] : ["ABYSS", "DEADLY"];
     return { kind: "visibility" as const, enabled: !hidden.test(action[1]!), types, profileId };

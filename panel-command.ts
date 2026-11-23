@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createProfileStore, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
+import { createProfileStore, gameCommandProfileId, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
 import { zzzCharacterGalleryRoot } from "@lotus-yunzai/atlas/gallery";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
 import { createProfileHoyoClient, GameRecordRequestError, HoyoRequestError } from "@lotus-yunzai/hoyo-client";
@@ -46,7 +46,7 @@ export function zzzPanelCommand(raw: string, inGroup = false) {
   if (command === "原图") return { kind: "original" as const };
   const damage = damageCommand.exec(command);
   if (damage) {
-    const profileId = Number(damage[3] ?? 1);
+    const profileId = gameCommandProfileId("zzz", damage[3]);
     const name = damage[1]!.trim();
     if (name && profileId <= MAX_PROFILE_ID) {
       return { kind: "damage" as const, profileId, name, skill: damage[2] === undefined ? undefined : Number(damage[2]) };
@@ -55,33 +55,33 @@ export function zzzPanelCommand(raw: string, inGroup = false) {
   }
   const proficiency = proficiencyCommand.exec(command);
   if (proficiency) {
-    const profileId = Number(proficiency[2] ?? 1);
+    const profileId = gameCommandProfileId("zzz", proficiency[2]);
     if (profileId <= MAX_PROFILE_ID) return { kind: "proficiency" as const, profileId, showcase: Boolean(proficiency[1]) };
     return;
   }
   const showcase = showcaseCommand.exec(command);
   if (showcase) {
-    const profileId = Number(showcase[1] ?? 1);
+    const profileId = gameCommandProfileId("zzz", showcase[1]);
     if (profileId <= MAX_PROFILE_ID) return { kind: "showcase-update" as const, profileId };
     return;
   }
   const refresh = updateCommand.exec(command);
   if (refresh) {
-    const profileId = Number(refresh[2] ?? 1);
+    const profileId = gameCommandProfileId("zzz", refresh[2]);
     if (profileId > MAX_PROFILE_ID || showcaseName.test(refresh[1] ?? "")) return;
     const names = (refresh[1] ?? "").split(/[\s,，、]+/u).filter(Boolean);
     return { kind: "update" as const, profileId, names };
   }
   const list = listCommand.exec(command);
   if (list) {
-    const profileId = Number(list[1] ?? 1);
+    const profileId = gameCommandProfileId("zzz", list[1]);
     if (profileId <= MAX_PROFILE_ID) return { kind: "list" as const, profileId };
     return;
   }
   const detail = detailCommand.exec(command);
   if (!detail) return;
   const name = detail[1]!.trim();
-  const profileId = Number(detail[2] ?? 1);
+  const profileId = gameCommandProfileId("zzz", detail[2]);
   if (!name || profileId > MAX_PROFILE_ID) return;
   if (name.endsWith("展柜") && name.length > 2) {
     return { kind: "showcase-detail" as const, profileId, name: name.slice(0, -2).trim() };
