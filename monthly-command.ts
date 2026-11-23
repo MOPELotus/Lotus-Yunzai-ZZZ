@@ -1,4 +1,4 @@
-import { ProfileError, type createProfileStore, type GameRole, type ProfileRequestContext } from "@lotus-yunzai/account";
+import { ProfileError, type createProfileStore, type GameRole } from "@lotus-yunzai/account";
 import { GameRecordRequestError, HoyoRequestError, resolveZzzGachaLinkRole, type createProfileHoyoClient,
   type ZzzMonthlyRecord } from "@lotus-yunzai/hoyo-client";
 import { previewRedeemIdentity } from "@lotus-yunzai/hoyo-client/redeem-submit";
@@ -29,11 +29,6 @@ async function selectedMonthlyRole(profiles: Pick<ReturnType<typeof createProfil
     throw new ProfileError("role-missing", "档案没有已同步的绝区零角色。");
   }
   return source;
-}
-
-function archiveAccountId(source: ProfileRequestContext) {
-  const accountId = source.account.stuid || source.account.ltuid;
-  if (accountId && previewRedeemIdentity(source) === accountId) return accountId;
 }
 
 export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfileStore>, client: ReturnType<typeof createProfileHoyoClient>,
@@ -95,7 +90,7 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
         if (!source) throw profileChanged();
         role = source.role;
         let revision = source.revision;
-        const account = archiveAccountId(source);
+        const account = previewRedeemIdentity(source);
         query = async () => {
           if (overseas) {
             throw new HoyoRequestError("invalid-input", `[zzz] 请先在 profile ${profileId} 绑定已核验的 HoYoLAB 账号。`);
@@ -110,7 +105,7 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
           if (!active || active.revision !== revision || active.role.uid !== role.uid || active.role.region !== role.region ||
               active.role.gameBiz !== role.gameBiz) throw profileChanged();
           activeSignal.throwIfAborted();
-          return Boolean(account && archiveAccountId(active) === account);
+          return Boolean(account && previewRedeemIdentity(active) === account);
         };
       }
       const { uid, region } = resolveZzzGachaLinkRole(role);

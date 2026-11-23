@@ -45,10 +45,9 @@ export async function ownedRankRole(profiles: ReturnType<typeof createProfileSto
   const before = await profiles.requestContext(qq, profileId, "zzz");
   const selected = await profiles.savedRole(qq, profileId, "zzz");
   const source = await profiles.requestContext(qq, profileId, "zzz", selected.uid);
-  const account = source.account.stuid || source.account.ltuid;
   if (source.revision === before.revision && source.role.uid === selected.uid && source.role.region === selected.region &&
       source.role.gameBiz === "nap_cn" && source.role.gameBiz === selected.gameBiz &&
-      rankIdentity(selected.uid, selected.region) && account && previewRedeemIdentity(source) === account) return source;
+      rankIdentity(selected.uid, selected.region) && previewRedeemIdentity(source)) return source;
 }
 
 type AdminCommand = { readonly kind: "admin-toggle"; readonly enabled: boolean } | { readonly kind: "admin-clear" };
