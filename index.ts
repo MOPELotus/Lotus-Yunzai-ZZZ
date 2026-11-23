@@ -50,6 +50,7 @@ import { createZzzInventoryQuery, zzzInventoryCommand } from "./tuning-inventory
 import { renderZzzTuningFailure, renderZzzTuningResult } from "./tuning-result-card.ts";
 import { createZzzTuningSync, ZzzTuningHistoryChangedError } from "./tuning-sync.ts";
 import { renderZzzZenkov, zzzZenkovFollowUp, zzzZenkovText } from "./zenkov-card.ts";
+import { zzzCommandProfileSuffix } from "./profile-command.ts";
 
 const updateCommand = /^#绝区零(?:更新|刷新)抽卡(?:记录|链接)?([1-9]\d{0,2})?$/u;
 const viewCommand = /^#绝区零抽卡(?:记录|分析|统计)([1-9]\d{0,2})?$/u;
@@ -172,7 +173,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const records = mergeZzzLegacyWithLinked(legacy, stats)!.pools;
       const lines = stats.pools.map(({ name, type }) =>
         `${name} · 本次录入 ${added[type]} 条，合并旧档共 ${records.find((pool) => pool.type === type)?.records.length ?? 0} 条`);
-      const command = `%逐抽记录${profileId === 1 ? "" : profileId}`;
+      const command = `%逐抽记录${zzzCommandProfileSuffix(profileId)}`;
       return { type: "forward", nodes: ["绝区零抽卡链接录入完成。", ...lines, `发送 ${command} 查看。`] };
     },
   });
@@ -274,7 +275,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const record = await client.fetchZzzZenkov(source, { kind, page, signal });
       if (record.status === "empty") return kind === "detail" ? "暂无迷宫诡域详细战绩数据" : "暂无迷宫诡域数据";
-      const command = `%迷宫战绩${profileId === 1 ? "" : profileId}`;
+      const command = `%迷宫战绩${zzzCommandProfileSuffix(profileId)}`;
       if (record.kind === "detail" && record.firstPage > record.pageCount) {
         return `迷宫诡域战绩共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
       }
@@ -320,7 +321,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const record = await client.fetchZzzExploration(source, { page, whole: page === undefined, signal });
       if (record.status === "empty") return "暂无探索详情数据";
-      const command = `%区域收集${profileId === 1 ? "" : profileId}`;
+      const command = `%区域收集${zzzCommandProfileSuffix(profileId)}`;
       if (record.page > record.pageCount) return `区域收集共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
       const renderer = createZzzExplorationRenderer(record, source.role, command, {
         qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit: context.inlineImageByteLimit,
@@ -636,7 +637,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         const profileId = gameCommandProfileId("zzz", expedition[2]);
         if (profileId > MAX_PROFILE_ID) return;
         const page = expedition[3] === undefined ? undefined : Number(expedition[3]);
-        if (!expedition[1] && page !== undefined) return `发送 %迷宫战绩${profileId === 1 ? "" : profileId} 页 ${page} 查看指定战绩页。`;
+        if (!expedition[1] && page !== undefined) return `发送 %迷宫战绩${zzzCommandProfileSuffix(profileId)} 页 ${page} 查看指定战绩页。`;
         return zenkov(context, profileId, expedition[1] ? "detail" : "summary", page);
       }
       if (hollowHelp.test(command)) return "当前可供查询的零号空洞数据有：\n- %枯萎苗圃\n- %迷失之地";

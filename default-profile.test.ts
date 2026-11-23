@@ -49,8 +49,8 @@ test("本人战绩和调频从模块实际聊天派发读取默认档号", async
   try {
     Bun.env.LOTUS_PROFILE_DIR = directory;
     const { fallback } = createModule({ signal, lockFile: async () => { throw new Error("没有档案时不应写入"); } });
-    const reply = (entry: string) => fallback(entry, {
-      normalizedMessage: entry, self_id: 100, user_id: user, message_type: "private",
+    const reply = (entry: string, message_type = "private") => fallback(entry, {
+      normalizedMessage: entry, self_id: 100, user_id: user, message_type,
       privateCredentialSignal: signal, reply() { throw new Error("无登录档案不应发起网络请求"); },
     });
     const entries = ["#绝区零母带", "#绝区零邦布", "#绝区零卡片", "#绝区零区域收集",
@@ -63,7 +63,13 @@ test("本人战绩和调频从模块实际聊天派发读取默认档号", async
         expect(JSON.stringify(await reply(entry + "1"))).toContain("profile 1");
       });
     }
-    expect(await withGameCommandProfiles(scope, () => reply("#绝区零月报 页2"))).toContain("%月报统计4 页 2");
+    await withGameCommandProfiles(scope, async () => {
+      for (const alias of ["zzz角色", "/zzz角色", "/绝区零角色"]) expect(await reply(alias)).toContain("profile 4");
+      expect(await reply("#绝区零月报 页2")).toContain("%月报统计4 页 2");
+      expect(await reply("#绝区零月报1 页2")).toContain("%月报统计1 页 2");
+      expect(await reply("#绝区零迷宫1 页2")).toContain("%迷宫战绩1 页 2");
+      expect(JSON.stringify(await reply("#绝区零抽卡链接1", "group"))).toContain("%抽卡链接1");
+    });
     expect(await withGameCommandProfiles({ ...scope, isCurrent: () => false }, () => reply("#绝区零卡片"))).toContain("profile 1");
     expect(await reply("#绝区零卡片")).toContain("profile 1");
   } finally {

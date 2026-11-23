@@ -2,6 +2,7 @@ import type { CanvasRenderingContext2D as Context } from "skia-canvas";
 import { box, label } from "./card-theme.ts";
 import { fillRound } from "./challenge-card.ts";
 import type { PanelDamage, PanelDamageCell } from "./panel-damage.ts";
+import { zzzCommandProfileSuffix } from "./profile-command.ts";
 
 type Cell = { text: string; detail?: string; background?: string };
 interface Section {
@@ -44,7 +45,8 @@ function differences(english: string, title: string, data: readonly (readonly Pa
 export function panelDamageSections(model: PanelDamage, name: string, level: number, profileId: number) {
   const { selected, skillIndex } = model;
   const areas = selected.areas;
-  const command = `%${name}伤害${skillIndex + 1}${profileId === 1 ? "" : ` 档案${profileId}`}`;
+  const suffix = zzzCommandProfileSuffix(profileId);
+  const command = `%${name}伤害${skillIndex + 1}${suffix ? ` 档案${suffix}` : ""}`;
   const sections: Section[] = [{
     english: "DAMAGE", title: "伤害统计", columns: [0.28, 2, 1, 1],
     selection: skillIndex + 1,

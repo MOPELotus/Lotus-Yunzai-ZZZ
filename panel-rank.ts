@@ -9,6 +9,7 @@ import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
 import { panelObject } from "./panel-detail.ts";
 import type { createZzzShowcaseClient } from "./enka-showcase.ts";
 import { readZzzRoleAliases, zzzRoleAlias, zzzRoleName } from "./role-alias.ts";
+import { zzzCommandProfileSuffix } from "./profile-command.ts";
 
 const rankKey = (group: string) => `lotus-yunzai:zzz-panel-ranks:${group}:owners`;
 const hideInternational = `
@@ -139,7 +140,7 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       const selected = strongest ? [strongest] : unique.slice(first, first + settings.maximum);
       const leader = strongest && `本群最强${strongest.avatar.name_mi18n} · UID ${strongest.uid} · 驱动盘 ${strongest.drive.toFixed(2)} 分`;
       const title = `${selected[0]!.avatar.name_mi18n}${command.weighted ? "综合榜" : "排名"}`;
-      const example = `%${command.name}${command.weighted ? "综合榜" : "排名"}${command.profileId === 1 ? "" : command.profileId}`;
+      const example = `%${command.name}${command.weighted ? "综合榜" : "排名"}${zzzCommandProfileSuffix(command.profileId)}`;
       const next = command.page < maxPage ? `${example} 页${command.page + 1}` : undefined;
       const image = await (strongest
         ? renderStrongest(strongest.avatar, strongest.uid, { showcase: true, legacyResources: resources, signal,

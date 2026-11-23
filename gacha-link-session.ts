@@ -3,6 +3,7 @@ import {
   HoyoRequestError, isZzzGachaLinkMessage, parseZzzGachaLink, resolveZzzGachaLinkRole, ZzzGachaLinkError,
   type ZzzGachaLink,
 } from "@lotus-yunzai/hoyo-client";
+import { zzzCommandProfileSuffix } from "./profile-command.ts";
 
 const timeout = 120_000;
 
@@ -65,7 +66,7 @@ export function createZzzGachaLinkSession({ signal, savedRole, importLink }: {
     const { message_type, user_id, self_id, adapter } = context;
     if (message_type !== "private" || !validId(user_id) || !validId(self_id)) {
       if (profileId !== undefined) {
-        const alias = `%抽卡链接${profileId === 1 ? "" : profileId}`;
+        const alias = `%抽卡链接${zzzCommandProfileSuffix(profileId)}`;
         return `请私聊发送 ${alias}，再按提示录入。`;
       }
       return;

@@ -5,6 +5,7 @@ import { previewRedeemIdentity } from "@lotus-yunzai/hoyo-client/redeem-submit";
 import { createZzzMonthlyArchive } from "./monthly-archive.ts";
 import { renderZzzMonthly, zzzMonthlyPageSize, zzzMonthlyText } from "./monthly-card.ts";
 import { zzzMonthlyDate } from "./monthly-model.ts";
+import { zzzCommandProfileSuffix } from "./profile-command.ts";
 
 export const zzzMonthlyCommand = /^#绝区零(?:monthly|菲林|邦布券|收入|月报)(?:(统计)|(?:(\d{4})年)?(?:(\d{1,2}|上)月)?)\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,5}))?$/iu;
 
@@ -43,7 +44,7 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
       return "请从登录档案对应的 QQ 会话查询绝区零月报。";
     }
-    const command = `%月报统计${profileId === 1 ? "" : profileId}`;
+    const command = `%月报统计${zzzCommandProfileSuffix(profileId)}`;
     const month = zzzMonthlyDate(options.year, options.month);
     if (month === undefined) return "获取月报数据失败，请检查日期是否正确";
     if (!options.collect && options.page !== undefined) return `发送 ${command} 页 ${options.page} 查看指定统计页。`;
