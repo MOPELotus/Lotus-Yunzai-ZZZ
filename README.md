@@ -54,7 +54,7 @@
 
 `「湍流」-斧型`按触发后的冲击力计算，`电波漫步`按叠满三层计算。两件音擎各档精炼用旧版资料构造的合成面板逐级核验。
 
-计算需要原版本的角色倍率、异常和装备资料，沿用 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 及其相邻的 `dist/model/damage/character/`。部署方可用 `LOTUS_ZZZ_DAMAGE_DATA_DIR` 指定角色倍率目录。资料缺失、版本不符或配装资料无法核实时提示无法计算。
+计算默认使用随模块提供的原版角色倍率、异常、属性及装备资料。设置 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 时读取完整的旧公共表及其相邻的 `dist/model/damage/character/`，也可用 `LOTUS_ZZZ_DAMAGE_DATA_DIR` 单独指定角色倍率目录。资料缺失、版本不符或配装资料无法核实时提示无法计算。
 
 原版计算器未产出柏妮思六影「强化 E 双份额外灼烧」的数值，图卡会提示该技能暂无原版计算结果，其他技能按旧版序号显示。
 
@@ -82,7 +82,7 @@
 
 练度统计沿用同版本的 `dist/apps/panel.js`、`dist/model/avatar.js` 及 `resources/proficiency/{index.html,index.css}`。
 
-伤害计算沿用对应构建的 [ZZZure/ZZZ-Plugin 源码提交 bf47b77](https://github.com/ZZZure/ZZZ-Plugin/tree/bf47b77790aa7540f03a1e3c6866be0876b12b82/src/model/damage)，45 个代理人、68 件音擎和 21 套驱动盘的规则均以 TypeScript 加载，保留作者的 AGPL-3.0 规则及原始乘区和词条公式。图卡以同版本 `resources/panel/{damage.html,damage.css}` 为基准。角色倍率、装备数据和美术由部署方提供。
+伤害计算沿用对应构建的 [ZZZure/ZZZ-Plugin 源码提交 bf47b77](https://github.com/ZZZure/ZZZ-Plugin/tree/bf47b77790aa7540f03a1e3c6866be0876b12b82/src/model/damage)，45 个代理人、68 件音擎和 21 套驱动盘的规则均以 TypeScript 加载，保留作者的 AGPL-3.0 规则及原始乘区和词条公式。同一提交的倍率、异常和属性表，以及装备校验使用的名称和职业字段，保存在 `damage-data/`。图卡以同版本 `resources/panel/{damage.html,damage.css}` 为基准。
 
 调频详图沿用同版本的 `resources/gachalog/{index.html,index.css}` 和 `resources/common/layout/`。现有图卡由 Lotus-Yunzai 的 Skia 模板绘制。
 

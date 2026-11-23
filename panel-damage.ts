@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { BuffManager, elementEnum, runtime } from "./damage-engine/BuffManager.ts";
 import { Calculator, type damage } from "./damage-engine/Calculator.ts";
@@ -74,6 +75,13 @@ const maps = {
   Property2Name: "e64ceb9fa44330cf82dc579e54e97e46cb67c54ed8b6daaf6785e43b5336dd3f",
   WeaponId2Data: "48c194cc8fb519a12e795a72cbd695392d109240fb760362a6b62e39d1826389",
   SuitData: "1f929b2dc0684ea22e95186771ae5d75456d5e7b4376da114c27e67a763129fd",
+} as const;
+const bundledDirectory = fileURLToPath(new URL("./damage-data/", import.meta.url));
+// The bundled gear maps keep only the fields consumed by adapt().
+const bundledMaps = {
+  ...maps,
+  WeaponId2Data: "fdf34fa726e9f4d6052e4d3d68a887b3f866538ff52cd068f3091cec3f89cd63",
+  SuitData: "23e353c90cedb3867f3f64650fb7cf95ce409194cfdf406e53e1391384ccd857",
 } as const;
 const elements = [31503, 31603, 31703, 31803, 32303, 31903] as const;
 const skillTypes = [0, 1, 2, 3, 5, 6];
@@ -284,17 +292,21 @@ export function calculatePanelDamage(avatar: ZzzPanelAvatar, data: DamageData, g
 }
 
 export function createPanelDamageReader() {
-  let common: { resources: string; value: Promise<readonly unknown[]> } | undefined;
+  let common: { directory: string; hashes: typeof maps | typeof bundledMaps; value: Promise<readonly unknown[]> } | undefined;
   async function load(avatar: ZzzPanelAvatar, resources?: string) {
     const character = supported[avatar.id];
     if (!character) throw new ZzzDamageUnavailable("该角色的原版伤害计算规则尚未核验。");
-    if (!resources) throw new ZzzDamageUnavailable("本机未配置旧版伤害计算资料目录。");
-    if (!common || common.resources !== resources) {
-      const pending = Promise.all(Object.entries(maps).map(([name, hash]) => verified(resources, `map/${name}.json`, hash)));
-      common = { resources, value: pending };
+    const legacy = resources?.trim();
+    const directory = legacy || bundledDirectory;
+    const hashes = legacy ? maps : bundledMaps;
+    if (!common || common.directory !== directory || common.hashes !== hashes) {
+      const pending = Promise.all(Object.entries(hashes).map(([name, hash]) => verified(directory, `map/${name}.json`, hash)));
+      common = { directory, hashes, value: pending };
       void pending.catch(() => { if (common?.value === pending) common = undefined; });
     }
-    const root = Bun.env.LOTUS_ZZZ_DAMAGE_DATA_DIR || join(dirname(resources), "dist", "model", "damage", "character");
+    const root = Bun.env.LOTUS_ZZZ_DAMAGE_DATA_DIR?.trim() || (legacy
+      ? join(dirname(legacy), "dist", "model", "damage", "character")
+      : join(bundledDirectory, "character"));
     const [[anomalyData, properties, weapons, suits], rankData] = await Promise.all([
       common.value, verified(root, `${character.name}/data.json`, character.sha256),
     ]);

@@ -1,0 +1,430 @@
+{
+  "12001": {
+    "Name": "「月相」-望",
+    "Profession": 1
+  },
+  "12002": {
+    "Name": "「月相」-晦",
+    "Profession": 1
+  },
+  "12003": {
+    "Name": "「月相」-朔",
+    "Profession": 1
+  },
+  "12004": {
+    "Name": "「残响」-Ⅰ型",
+    "Profession": 4
+  },
+  "12005": {
+    "Name": "「残响」-Ⅱ型",
+    "Profession": 4
+  },
+  "12006": {
+    "Name": "「残响」-Ⅲ型",
+    "Profession": 4
+  },
+  "12007": {
+    "Name": "「湍流」-铳型",
+    "Profession": 2
+  },
+  "12008": {
+    "Name": "「湍流」-矢型",
+    "Profession": 2
+  },
+  "12009": {
+    "Name": "「湍流」-斧型",
+    "Profession": 2
+  },
+  "12010": {
+    "Name": "「电磁暴」-壹式",
+    "Profession": 3
+  },
+  "12011": {
+    "Name": "「电磁暴」-贰式",
+    "Profession": 3
+  },
+  "12012": {
+    "Name": "「电磁暴」-叁式",
+    "Profession": 3
+  },
+  "12013": {
+    "Name": "「恒等式」-本格",
+    "Profession": 5
+  },
+  "12014": {
+    "Name": "「恒等式」-变格",
+    "Profession": 5
+  },
+  "12015": {
+    "Name": "「灰烬」-钴蓝",
+    "Profession": 6
+  },
+  "12016": {
+    "Name": "「月相」-弦",
+    "Profession": 7
+  },
+  "13001": {
+    "Name": "街头巨星",
+    "Profession": 1
+  },
+  "13002": {
+    "Name": "时光切片",
+    "Profession": 4
+  },
+  "13003": {
+    "Name": "雨林饕客",
+    "Profession": 3
+  },
+  "13004": {
+    "Name": "星徽引擎",
+    "Profession": 1
+  },
+  "13005": {
+    "Name": "人为刀俎",
+    "Profession": 2
+  },
+  "13006": {
+    "Name": "贵重骨核",
+    "Profession": 2
+  },
+  "13007": {
+    "Name": "正版变身器",
+    "Profession": 5
+  },
+  "13008": {
+    "Name": "双生泣星",
+    "Profession": 3
+  },
+  "13009": {
+    "Name": "触电唇彩",
+    "Profession": 3
+  },
+  "13010": {
+    "Name": "兔能环",
+    "Profession": 5
+  },
+  "13011": {
+    "Name": "春日融融",
+    "Profession": 5
+  },
+  "13012": {
+    "Name": "幻变魔方",
+    "Profession": 6
+  },
+  "13013": {
+    "Name": "鎏金花信",
+    "Profession": 1
+  },
+  "13014": {
+    "Name": "电波漫步",
+    "Profession": 6
+  },
+  "13015": {
+    "Name": "强音热望",
+    "Profession": 1
+  },
+  "13016": {
+    "Name": "光影刻刀",
+    "Profession": 5
+  },
+  "13017": {
+    "Name": "喵运当头",
+    "Profession": 7
+  },
+  "13018": {
+    "Name": "咚哒回声",
+    "Profession": 3
+  },
+  "13019": {
+    "Name": "青漪灵鼎",
+    "Profession": 6
+  },
+  "13020": {
+    "Name": "炎炙沸釜",
+    "Profession": 2
+  },
+  "13021": {
+    "Name": "血髓秘匣",
+    "Profession": 7
+  },
+  "13022": {
+    "Name": "烛光诡计",
+    "Profession": 7
+  },
+  "13101": {
+    "Name": "德玛拉电池Ⅱ型",
+    "Profession": 2
+  },
+  "13103": {
+    "Name": "聚宝箱",
+    "Profession": 4
+  },
+  "13106": {
+    "Name": "家政员",
+    "Profession": 1
+  },
+  "13108": {
+    "Name": "仿制星徽引擎",
+    "Profession": 1
+  },
+  "13111": {
+    "Name": "旋钻机-赤轴",
+    "Profession": 1
+  },
+  "13112": {
+    "Name": "比格气缸",
+    "Profession": 5
+  },
+  "13113": {
+    "Name": "含羞恶面",
+    "Profession": 4
+  },
+  "13115": {
+    "Name": "好斗的阿炮",
+    "Profession": 4
+  },
+  "13127": {
+    "Name": "维序者-特化型",
+    "Profession": 5
+  },
+  "13128": {
+    "Name": "轰鸣座驾",
+    "Profession": 3
+  },
+  "13135": {
+    "Name": "裁纸刀",
+    "Profession": 2
+  },
+  "13142": {
+    "Name": "震元奇枢",
+    "Profession": 5
+  },
+  "13144": {
+    "Name": "燔火胧夜",
+    "Profession": 6
+  },
+  "14001": {
+    "Name": "加农转子",
+    "Profession": 1
+  },
+  "14002": {
+    "Name": "逍遥游球",
+    "Profession": 4
+  },
+  "14003": {
+    "Name": "左轮转子",
+    "Profession": 2
+  },
+  "14004": {
+    "Name": "Item_Weapon_S_Common_04_Name",
+    "Profession": 2
+  },
+  "14102": {
+    "Name": "钢铁肉垫",
+    "Profession": 1
+  },
+  "14104": {
+    "Name": "硫磺石",
+    "Profession": 1
+  },
+  "14105": {
+    "Name": "海妖摇篮",
+    "Profession": 6
+  },
+  "14107": {
+    "Name": "奔袭獠牙",
+    "Profession": 5
+  },
+  "14109": {
+    "Name": "霰落星殿",
+    "Profession": 3
+  },
+  "14110": {
+    "Name": "燃狱齿轮",
+    "Profession": 2
+  },
+  "14114": {
+    "Name": "拘缚者",
+    "Profession": 2
+  },
+  "14116": {
+    "Name": "焰心桂冠",
+    "Profession": 2
+  },
+  "14117": {
+    "Name": "灼心摇壶",
+    "Profession": 3
+  },
+  "14118": {
+    "Name": "嵌合编译器",
+    "Profession": 3
+  },
+  "14119": {
+    "Name": "深海访客",
+    "Profession": 1
+  },
+  "14120": {
+    "Name": "残心青囊",
+    "Profession": 1
+  },
+  "14121": {
+    "Name": "啜泣摇篮",
+    "Profession": 4
+  },
+  "14122": {
+    "Name": "时流贤者",
+    "Profession": 3
+  },
+  "14124": {
+    "Name": "防暴者Ⅵ型",
+    "Profession": 1
+  },
+  "14125": {
+    "Name": "玉壶青冰",
+    "Profession": 2
+  },
+  "14126": {
+    "Name": "淬锋钳刺",
+    "Profession": 3
+  },
+  "14129": {
+    "Name": "千面日陨",
+    "Profession": 1
+  },
+  "14130": {
+    "Name": "嚣枪喧焰",
+    "Profession": 1
+  },
+  "14131": {
+    "Name": "玲珑妆匣",
+    "Profession": 4
+  },
+  "14132": {
+    "Name": "心弦夜响",
+    "Profession": 1
+  },
+  "14133": {
+    "Name": "飞鸟星梦",
+    "Profession": 3
+  },
+  "14134": {
+    "Name": "半糖雪兔",
+    "Profession": 5
+  },
+  "14136": {
+    "Name": "索魂影眸",
+    "Profession": 2
+  },
+  "14137": {
+    "Name": "青溟笼舍",
+    "Profession": 6
+  },
+  "14138": {
+    "Name": "牺牲洁纯",
+    "Profession": 1
+  },
+  "14139": {
+    "Name": "福虓炉炉",
+    "Profession": 2
+  },
+  "14140": {
+    "Name": "十方锻星",
+    "Profession": 3
+  },
+  "14141": {
+    "Name": "狸法七变化",
+    "Profession": 4
+  },
+  "14143": {
+    "Name": "云霓孤光",
+    "Profession": 1
+  },
+  "14145": {
+    "Name": "铸梦炉歌",
+    "Profession": 4
+  },
+  "14146": {
+    "Name": "机巧心种",
+    "Profession": 1
+  },
+  "14147": {
+    "Name": "怒目金刚",
+    "Profession": 6
+  },
+  "14148": {
+    "Name": "昨夜来电",
+    "Profession": 2
+  },
+  "14149": {
+    "Name": "思络成歌",
+    "Profession": 4
+  },
+  "14150": {
+    "Name": "壳中之灵",
+    "Profession": 3
+  },
+  "14151": {
+    "Name": "霓虹妄想",
+    "Profession": 2
+  },
+  "14152": {
+    "Name": "鳞齿寻踪",
+    "Profession": 1
+  },
+  "14153": {
+    "Name": "辉骑面铠",
+    "Profession": 6
+  },
+  "14154": {
+    "Name": "朔月裁霜",
+    "Profession": 3
+  },
+  "14155": {
+    "Name": "日冕遗蜕",
+    "Profession": 1
+  },
+  "14156": {
+    "Name": "琳琅鎏心",
+    "Profession": 3
+  },
+  "14157": {
+    "Name": "首席跟班",
+    "Profession": 2
+  },
+  "14158": {
+    "Name": "空羽复归之诗",
+    "Profession": 3
+  },
+  "14159": {
+    "Name": "骁骑礼赞",
+    "Profession": 1
+  },
+  "14160": {
+    "Name": "蜃炎梦火",
+    "Profession": 7
+  },
+  "14161": {
+    "Name": "猩红渴望",
+    "Profession": 7
+  },
+  "14162": {
+    "Name": "绯月银棺",
+    "Profession": 2
+  },
+  "14163": {
+    "Name": "禁罪囚笼",
+    "Profession": 1
+  },
+  "14164": {
+    "Name": "涅槃初翎",
+    "Profession": 3
+  },
+  "14165": {
+    "Name": "(Test1)卡芙卡测试音擎",
+    "Profession": 3
+  },
+  "14166": {
+    "Name": "知更鸟专属音擎",
+    "Profession": 5
+  }
+}

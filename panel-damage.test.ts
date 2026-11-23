@@ -1,7 +1,11 @@
 import { expect, test } from "bun:test";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import type { DamageData } from "./damage-engine/types.ts";
-import { calculatePanelDamage } from "./panel-damage.ts";
+import { calculatePanelDamage, createPanelDamageReader, ZzzDamageUnavailable } from "./panel-damage.ts";
 
 const avatar: ZzzPanelAvatar = {
   id: 1431, name_mi18n: "叶瞬光", level: 30, rank: 0, rarity: "S", avatar_profession: 1,
@@ -13,6 +17,49 @@ const avatar: ZzzPanelAvatar = {
   ].map(([property_name, final]) => ({ property_name, base: "", final })),
 };
 const gear = { suits: {}, weapons: {} };
+
+test("干净安装读取固定原版倍率，显式目录仍须通过原资料校验", async () => {
+  const previous = Bun.env.LOTUS_ZZZ_DAMAGE_DATA_DIR;
+  const directory = await mkdtemp(join(tmpdir(), "lotus-zzz-damage-data-"));
+  const bundled = fileURLToPath(new URL("./damage-data/", import.meta.url));
+  const anby: ZzzPanelAvatar = {
+    ...avatar, id: 1011, name_mi18n: "安比", rarity: "A", avatar_profession: 2, element_type: 203, sub_element_type: 0,
+    weapon: { id: 12009, name: "「湍流」-斧型", rarity: "B", profession: 2, star: 3, level: 30 },
+    equip: [1, 2, 3, 4].map(equipment_type => ({
+      equipment_type, id: 31000 + equipment_type, name: `啄木鸟电音[${equipment_type}]`,
+      equip_suit: { suit_id: 31000, name: "啄木鸟电音" }, rarity: "S", level: 15,
+      main_properties: [{ property_id: 11103, property_name: "攻击力", base: "100" }],
+    })),
+  };
+  try {
+    delete Bun.env.LOTUS_ZZZ_DAMAGE_DATA_DIR;
+    const reader = createPanelDamageReader();
+    const result = await reader(anby, undefined, 2);
+    expect(result.selected.skill).toMatchObject({ name: "普攻：落雷", type: "AX", element: "Electric" });
+    expect(result.selected.result).toEqual({ critDMG: 375.58979999999997, expectDMG: 256.65302999999994 });
+    expect(result.selected.usefulBuffs).toContainEqual(expect.objectContaining({ name: "啄木鸟电音4", value: 27 }));
+    expect((await reader.summary(anby)).skills).toEqual(result.skills);
+
+    const source = await readFile(join(bundled, "character", "安比", "data.json"), "utf8");
+    const target = join(directory, "安比", "data.json");
+    await mkdir(join(directory, "安比"));
+    await writeFile(target, source);
+    Bun.env.LOTUS_ZZZ_DAMAGE_DATA_DIR = directory;
+    expect(await reader(anby, undefined, 2)).toEqual(result);
+    const changed = JSON.parse(source);
+    changed.skill.AX[0] = 1;
+    await writeFile(target, JSON.stringify(changed));
+    await expect(reader(anby, undefined, 2)).rejects.toBeInstanceOf(ZzzDamageUnavailable);
+
+    delete Bun.env.LOTUS_ZZZ_DAMAGE_DATA_DIR;
+    await expect(reader(anby, bundled, 2)).rejects.toBeInstanceOf(ZzzDamageUnavailable);
+    expect(await reader(anby, undefined, 2)).toEqual(result);
+  } finally {
+    if (previous === undefined) delete Bun.env.LOTUS_ZZZ_DAMAGE_DATA_DIR;
+    else Bun.env.LOTUS_ZZZ_DAMAGE_DATA_DIR = previous;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 function coefficients(names: readonly string[], name: DamageData["anomaly"][number]["name"], element_type: number): DamageData {
   return {
