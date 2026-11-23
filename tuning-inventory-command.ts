@@ -53,16 +53,17 @@ export function createZzzInventoryQuery(
       const { uid, nickname, level } = latest.role;
       const text = ["绝区零调频库存", `Profile ${profileId} · UID ${uid}`, ...rows.map(({ name, value }) => `${name}：${value}`)].join("\n");
       const configured = Bun.env.LOTUS_SKIA_MODE;
+      const inlineImageByteLimit = context.inlineImageByteLimit ?? 16 * 1024 * 1024;
       const output = await render({ qq, uid, nickname, level, rows }, {
         themeDirectory: Bun.env.LOTUS_ZZZ_INVENTORY_THEME_DIR?.trim() || localTheme,
-        legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, signal,
+        legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, signal, inlineImageByteLimit,
         mode: configured === "gpu" || configured === "cpu" ? configured : "auto",
       }).catch(() => undefined);
       signal.throwIfAborted();
       const current = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return;
       if (!current || current.revision !== latest.revision || !sameRole(current)) return changed;
-      if (output && output.png.byteLength <= (context.inlineImageByteLimit ?? 16 * 1024 * 1024)) {
+      if (output && output.png.byteLength <= inlineImageByteLimit) {
         return { type: "image" as const, file: output.png };
       }
       return text;

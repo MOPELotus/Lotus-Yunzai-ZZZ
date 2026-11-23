@@ -143,9 +143,10 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       const next = command.page < maxPage ? `${example} 页${command.page + 1}` : undefined;
       const image = await (strongest
         ? renderStrongest(strongest.avatar, strongest.uid, { showcase: true, legacyResources: resources, signal,
-          inlineImageByteLimit: context.adapter === "milky" ? context.inlineImageByteLimit : undefined })
+          inlineImageByteLimit: context.inlineImageByteLimit })
         : renderZzzPanelRank(title, selected,
-          { offset: first, weighted: command.weighted, overview, next, legacyResources: resources, signal }))
+          { offset: first, weighted: command.weighted, overview, next, legacyResources: resources, signal,
+            inlineImageByteLimit: context.inlineImageByteLimit }))
         .catch(() => undefined);
       if (signal.aborted) return;
       const [currentMembers, currentRequester, currentSettings, activeRows] = await Promise.all([

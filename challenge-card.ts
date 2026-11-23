@@ -108,13 +108,14 @@ export class ZzzInlineImageLimitError extends Error {
 }
 
 export async function renderZzzBattlePng(width: number, height: number, draw: (context: Context) => void,
-  scale: 2 | 4, inlineImageByteLimit?: number, { allowHalfScale = false } = {}) {
+  scale: 2 | 4, inlineImageByteLimit?: number,
+  { allowHalfScale = false, mode = "gpu" }: { allowHalfScale?: boolean; mode?: Parameters<typeof renderPng>[3] } = {}) {
   const standard = nativeImageRasterScale() === 4;
   function render(density: 2 | 4) {
     return renderPng(width * density, height * density, context => {
       context.scale(density, density);
       draw(context);
-    }, "gpu", { allowHalfScale: standard && density === 4 && allowHalfScale });
+    }, mode, { allowHalfScale: standard && density === 4 && allowHalfScale });
   }
 
   const image = await render(standard ? scale : 4);

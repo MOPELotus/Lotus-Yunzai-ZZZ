@@ -36,7 +36,8 @@ test("只查询当前 QQ 和档案，续签后仍以新版本复核，缺值与�
       return { uid, inventory: { monochrome: 0, polychrome: 3123, encryptedMasterTape: 4, boopon: 7 },
         revision: current.revision, fetchedAt: "", refreshedCookie: true };
     },
-  }, new AbortController().signal, async (model) => {
+  }, new AbortController().signal, async (model, options) => {
+    expect(options?.inlineImageByteLimit).toBe(2048);
     expect(model).toMatchObject({ qq: "42", uid, nickname: "样本", level: 60, rows: [
       { name: "菲林底片", value: "0" }, { name: "菲林", value: "3,123" },
       { name: "加密母带", value: "4" }, { name: "原装母带", value: "—" }, { name: "邦布券", value: "7" },
@@ -48,7 +49,7 @@ test("只查询当前 QQ 和档案，续签后仍以新版本复核，缺值与�
   expect(await query(2, { ...actor, message: [{ type: "at", qq: 43 }] })).toContain("只能查询自己");
   expect(await query(256, actor)).toContain("档案编号");
   expect(requestCount).toBe(0);
-  expect(await query(2, { ...actor, message: [{ type: "at", qq: 99 }] })).toContain("原装母带：—");
+  expect(await query(2, { ...actor, inlineImageByteLimit: 2048, message: [{ type: "at", qq: 99 }] })).toContain("原装母带：—");
   expect(requestCount).toBe(1);
 });
 

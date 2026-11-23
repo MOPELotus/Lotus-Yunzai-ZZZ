@@ -9,6 +9,7 @@ import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { ImageSizeLimitError } from "@lotus-yunzai/skia";
 import type { AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
 import { readSyncedPanelGalleryRoot, retainedPanelGalleryDirectory } from "../../lib/panel-gallery-paths.ts";
+import { ZzzInlineImageLimitError } from "./challenge-card.ts";
 import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
 import { createZzzShowcaseClient, ZzzShowcaseError } from "./enka-showcase.ts";
 import { createPanelDamageReader, ZzzDamageUnavailable } from "./panel-damage.ts";
@@ -259,7 +260,8 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       if (!region) return "绝区零档案的角色与区服信息不一致。";
       const identity = { qq, uid: role.uid, region };
       const display: GameRole = { ...role, region };
-      const theme = { qq, signal, legacyResources: resources, atlasPortrait };
+      const { inlineImageByteLimit } = context;
+      const theme = { qq, signal, legacyResources: resources, atlasPortrait, inlineImageByteLimit };
       const sameRole = () => verifyRole(qq, profileId, identity);
 
       if (command.kind === "proficiency") {
@@ -282,9 +284,12 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         const known = new Set(rows.map(row => row.id));
         rows.push(...publicRows.filter(row => !known.has(row.id)));
         if (!rows.length) return `UID:${role.uid}无本地面板数据，请先%更新面板。`;
-        const { png } = await renderZzzPanelList(rows, display, theme);
+        const image = await renderZzzPanelList(rows, display, theme).catch((error: unknown) => {
+          if (!(error instanceof ZzzInlineImageLimitError || error instanceof ImageSizeLimitError)) throw error;
+        });
         await sameRole();
-        return { type: "image" as const, file: png };
+        if (image) return { type: "image" as const, file: image.png };
+        return [`UID ${role.uid} · 绝区零面板列表`, ...rows.map(row => `${row.name_mi18n} · Lv.${row.level}`)].join("\n");
       }
       if (command.kind === "detail" || command.kind === "showcase-detail" || command.kind === "damage") {
         const privateRows = command.kind === "showcase-detail" ? [] : await archive.read(identity);
@@ -306,7 +311,6 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
           await readDamage.summary(row, resources).catch(() => undefined);
         const { png, original } = await renderZzzPanelDetail(row, identity.uid, {
           ...theme, ...portraitOptions, showcase: !privateIds.has(row.id), damage, damageSummary, profileId,
-          inlineImageByteLimit: context.adapter === "milky" ? context.inlineImageByteLimit : undefined,
         });
         await sameRole();
         const message = { type: "image" as const, file: png };
@@ -341,7 +345,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         const updatedIds = new Set(saved.map(row => row.id));
         const publicPlayer = { ...display, nickname: result.nickname || "绳匠", level: result.level, avatar: undefined };
         const image = await renderZzzPanelList(saved, publicPlayer, {
-          legacyResources: resources, signal, atlasPortrait, updatedIds, showcase: true,
+          legacyResources: resources, signal, atlasPortrait, updatedIds, showcase: true, inlineImageByteLimit,
         }).catch(() => undefined);
         await verify();
         if (!image) return `Enka 公开展柜已保存 ${saved.length} 个角色。`;

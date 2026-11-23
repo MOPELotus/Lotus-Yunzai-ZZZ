@@ -1,11 +1,10 @@
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createAtlasRuntimeCatalog } from "@lotus-yunzai/atlas/catalog";
-import { renderPng } from "@lotus-yunzai/skia";
 import { openProfileCardTheme } from "@lotus-yunzai/skia/profile";
 import { Canvas, loadImage, type CanvasRenderingContext2D as Context } from "skia-canvas";
 import { artwork, cover, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
-import { contain, fillRound } from "./challenge-card.ts";
+import { contain, fillRound, renderZzzBattlePng } from "./challenge-card.ts";
 import { cachedPanelWeaponImage, readPanelArtMap } from "./panel-artwork.ts";
 import { panelObject } from "./panel-detail.ts";
 import { loadPanelPortraits } from "./panel-list-card.ts";
@@ -83,8 +82,7 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
   const rowsY = options.overview ? 106 : 86;
   const height = Math.max(240, rowsY + strips.reduce((sum, strip) => sum + strip.height + 10, 0) + 50 +
     (options.next ? 21 : 0));
-  return renderPng(width * 4, height * 4, ctx => {
-    ctx.scale(4, 4);
+  return renderZzzBattlePng(width, height, ctx => {
     if (theme.background) ctx.drawImage(theme.background, 0, 0, width, height);
     else {
       ctx.fillStyle = "#243344";
@@ -141,5 +139,5 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
       y += 21;
     }
     text(ctx, zzzCardFooter, width / 2, y + 15, width - 30, 12, theme.text, "#fff", "center");
-  }, "gpu");
+  }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

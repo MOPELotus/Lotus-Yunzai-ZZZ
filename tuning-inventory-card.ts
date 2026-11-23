@@ -1,8 +1,8 @@
 import { realpath, stat } from "node:fs/promises";
 import { join, sep } from "node:path";
-import { renderPng } from "@lotus-yunzai/skia";
 import { FontLibrary, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
 import { artwork, cover, label, openZzzCardTheme, readZzzCardLocalArtwork, zzzCardFooter } from "./card-theme.ts";
+import { renderZzzBattlePng } from "./challenge-card.ts";
 import { fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
 export const inventoryFields = [
@@ -20,7 +20,6 @@ export interface InventoryCard {
 
 const width = 560;
 const height = 381;
-const scale = 4;
 const style = '"LotusZzzInventory", "Noto Sans CJK SC", sans-serif';
 
 async function originalFont(root: string | undefined) {
@@ -69,12 +68,15 @@ function chip(context: Context, label: string, y: number) {
   text(context, label, 160, y + 9, 12, "#252525", "left", width - 16);
 }
 
-export async function renderZzzInventoryCard(model: InventoryCard, { themeDirectory, legacyResources, signal, avatar, mode = "auto" }: {
+export async function renderZzzInventoryCard(model: InventoryCard, {
+  themeDirectory, legacyResources, signal, avatar, mode = "auto", inlineImageByteLimit,
+}: {
   themeDirectory?: string;
   legacyResources?: string;
   signal?: AbortSignal;
   avatar?: Buffer;
   mode?: "auto" | "gpu" | "cpu";
+  inlineImageByteLimit?: number;
 } = {}) {
   const local = (name: string) => artwork(readZzzCardLocalArtwork(themeDirectory, "zzz_md/imgs/" + name));
   const [background, originalLogo, player, icons] = await Promise.all([
@@ -84,8 +86,7 @@ export async function renderZzzInventoryCard(model: InventoryCard, { themeDirect
   const logo = originalLogo ?? await (await openZzzCardTheme({ legacyResources }))("common/images/logo.png");
   signal?.throwIfAborted();
 
-  return renderPng(width * scale, height * scale, (context) => {
-    context.scale(scale, scale);
+  return renderZzzBattlePng(width, height, context => {
     context.fillStyle = "#fff";
     context.fillRect(0, 0, width, height);
     originalFrame(context, background);
@@ -129,5 +130,5 @@ export async function renderZzzInventoryCard(model: InventoryCard, { themeDirect
     context.shadowBlur = 1;
     context.shadowOffsetY = 0.6;
     text(context, zzzCardFooter, width / 2, 369, 10, "#b4f6ee", "center");
-  }, mode);
+  }, 4, inlineImageByteLimit, { allowHalfScale: true, mode });
 }

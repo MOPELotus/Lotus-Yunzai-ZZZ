@@ -1,9 +1,8 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
-import { contain, fillRound } from "./challenge-card.ts";
+import { contain, fillRound, renderZzzBattlePng } from "./challenge-card.ts";
 import type { ZzzAtlasPortraitReader } from "./panel-original.ts";
 import { readPanelJson } from "./panel-storage.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
@@ -61,8 +60,7 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
   const ranks = { S: s, A: a, B: b };
   const listHeight = Math.max(72, Math.ceil(rows.length / 5) * rowHeight + 25.6);
   const height = Math.ceil(129.33 + listHeight + 91.6);
-  return renderPng(width * 4, height * 4, (context) => {
-    context.scale(4, 4);
+  return renderZzzBattlePng(width, height, context => {
     const gradient = context.createLinearGradient(0, 0, 0, height);
     gradient.addColorStop(0, "#150937");
     gradient.addColorStop(1, "#4a1049");
@@ -124,5 +122,5 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
       else label(context, row.rarity, x + 51, y + 109.2, 13, { align: "center", color: "#efd368" });
     });
     label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
-  }, "gpu");
+  }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }
