@@ -121,13 +121,11 @@ export async function readZzzPanelConfigDocument(resources = Bun.env.LOTUS_ZZZ_L
 }
 
 export function parseZzzPanelConfig(inherited: Json) {
-  const interval = Number(inherited?.interval ?? 60);
   const roleInterval = Number(inherited?.roleInterval ?? 3000);
-  if (!Number.isSafeInteger(interval) || interval < 0 || !Number.isSafeInteger(roleInterval) || roleInterval < 0 ||
-      roleInterval > 2_147_483_647 || interval > Math.floor(Number.MAX_SAFE_INTEGER / 1000)) {
+  if (!Number.isSafeInteger(roleInterval) || roleInterval < 0 || roleInterval > 2_147_483_647) {
     throw new Error("绝区零面板配置的刷新间隔无效。");
   }
-  return { interval, roleInterval };
+  return { roleInterval };
 }
 
 interface PanelContext {
@@ -167,7 +165,6 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     },
   };
   const running = new Set<string>();
-  const lastSuccess = new Map<string, number>();
 
   async function verifyRole(qq: string, profileId: number, expected: { uid: string; region: string }) {
     const current = await profiles.savedRole(qq, profileId, "zzz");
@@ -358,16 +355,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       if (running.has(key)) return "该角色的绝区零面板正在更新，请稍后再试。";
       running.add(key);
       try {
-        const { interval, roleInterval } = parseZzzPanelConfig(await readZzzPanelConfigDocument(resources));
-        const redis = globalThis.redis;
-        const modernKey = `lotus-yunzai:zzz-panel:last-refresh:${key}`;
-        const legacyKey = `ZZZ:PANEL:${role.uid}:LASTTIME`;
-        const redisTime = redis ? Math.max(Number(await redis.get(legacyKey)) || 0, Number(await redis.get(modernKey)) || 0) : 0;
-        const now = Date.now();
-        for (const [id, time] of lastSuccess) if (now - time >= interval * 1000) lastSuccess.delete(id);
-        if (now - Math.max(lastSuccess.get(key) ?? 0, redisTime) < interval * 1000) {
-          return `${interval}秒内只能更新一次，请稍后再试。`;
-        }
+        const { roleInterval } = parseZzzPanelConfig(await readZzzPanelConfigDocument(resources));
         const selected = command.names.length ? await targets(command.names, resources) : undefined;
         if (selected?.missing.length) return `角色${selected.missing.map(name => `【${name}】`).join("")}不存在，请确保角色名称/别称存在。`;
         await context.reply(command.names.length ? `正在更新${command.names.join("、")}面板，请稍候...` : "正在更新面板列表，请稍候...");
@@ -381,9 +369,6 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
           signal.throwIfAborted();
         };
         const rows = await archive.merge(identity, result.avatars, verify);
-        const updatedAt = Date.now();
-        lastSuccess.set(key, updatedAt);
-        if (interval && redis) await redis.set(modernKey, String(updatedAt), { EX: interval }).catch(() => undefined);
         const updatedIds = new Set(result.avatars.map(row => row.id));
         const image = await renderZzzPanelList(rows, display, { ...theme, updatedIds }).catch(() => undefined);
         await verify();
