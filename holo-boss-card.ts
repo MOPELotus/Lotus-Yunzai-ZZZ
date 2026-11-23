@@ -1,10 +1,9 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzHoloBossRoom, ZzzHoloBossSnapshot, ZzzShiyuPortrait } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, label, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter,
   type ZzzCardOptions } from "./card-theme.ts";
-import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBand, type ZzzChallengeArt } from "./challenge-card.ts";
+import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBand, renderZzzBattlePng, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 840;
@@ -158,8 +157,7 @@ export async function renderZzzHoloBoss(snapshot: ZzzHoloBossSnapshot, _role: Ga
   const heights = snapshot.bosses.map(roomHeight);
   const notes = firstRoom + heights.reduce((sum, height) => sum + height + roomGap, 0);
   const height = Math.ceil(notes + 177.6);
-  return renderPng(width * 4, height * 4, (context) => {
-    context.scale(4, 4);
+  return renderZzzBattlePng(width, height, (context) => {
     box(context, "#1a181c", 0, 0, width, height);
     const background = art.local.get("common/images/bg.jpg");
     if (background) cover(context, background, 0, 0, width, height);
@@ -195,5 +193,5 @@ export async function renderZzzHoloBoss(snapshot: ZzzHoloBossSnapshot, _role: Ga
       label(context, "%显示拟境排名 / %隐藏拟境排名", 288, notes + 49, 19.2, { color: "#ffd700" });
     }
     label(context, zzzCardFooter, width / 2, height - 44.5, 16.8, { align: "center", color: "#a09ca3" });
-  }, "gpu");
+  }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

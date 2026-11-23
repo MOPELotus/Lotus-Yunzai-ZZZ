@@ -1,10 +1,9 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzMonthlyRecord } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter,
   type ZzzCardOptions } from "./card-theme.ts";
-import { contain, fillRound } from "./challenge-card.ts";
+import { contain, fillRound, renderZzzBattlePng } from "./challenge-card.ts";
 import { zzzMonthlyDateLabel, zzzMonthlyIncome, zzzMonthlyOverview, zzzMonthlyTotals } from "./monthly-model.ts";
 
 export const zzzMonthlyPageSize = 5;
@@ -117,8 +116,7 @@ export async function renderZzzMonthly(view: View, role: GameRole, region: strin
   const listY = 668;
   const height = listY + detailsHeight + (view.collect ? 209 : 157) + (follow ? 34 : 0);
   options.signal?.throwIfAborted();
-  return renderPng(width * 4, height * 4, ctx => {
-    ctx.scale(4, 4);
+  return renderZzzBattlePng(width, height, ctx => {
     box(ctx, "#4c625b", 0, 0, width, height);
     const bg = images.get("bg.png");
     if (bg) cover(ctx, bg, 0, 0, width, height);
@@ -177,5 +175,5 @@ export async function renderZzzMonthly(view: View, role: GameRole, region: strin
     const bottom = images.get("bottom-deco.gif");
     if (bottom) cover(ctx, bottom, 0, height - 28, width, 28);
     label(ctx, zzzCardFooter, 420, height - 14, 16, { align: "center", color: "#fff" });
-  }, "gpu");
+  }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

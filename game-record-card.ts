@@ -1,8 +1,8 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzGameRecordItem, ZzzGameRecordSnapshot } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D, Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
+import { renderZzzBattlePng } from "./challenge-card.ts";
 import { createZzzRecordPortraits } from "./tuning-artwork.ts";
 
 type Context = CanvasRenderingContext2D;
@@ -17,6 +17,18 @@ const elementNames: Readonly<Record<string, string>> = {
   Physical: "物", Fire: "火", Ice: "冰", Electric: "电", Wind: "风", Ether: "以", Lumiflux: "流",
   HonedEdge: "刃", Frost: "霜", AuricInk: "墨",
 };
+
+function recordOverview({ stats }: ZzzGameRecordSnapshot) {
+  return [
+    ["活跃天数", stats.active_days], ["获得代理人", stats.avatar_num],
+    ["获得邦布", stats.buddy_num], ["式舆防卫战", stats.cur_period_zone_layer_count],
+  ] as const;
+}
+
+export function zzzGameRecordText(record: ZzzGameRecordSnapshot) {
+  return ["绝区零个人战绩", `UID ${record.uid}`, ...recordOverview(record).map(([name, value]) => `${name}：${value ?? "—"}`)]
+    .join("\n");
+}
 
 function title(context: Context, y: number, english: string, chinese: string) {
   context.save();
@@ -121,8 +133,7 @@ export async function renderZzzGameRecord(record: ZzzGameRecordSnapshot, role: G
   const startGrid = 578.8;
   const nextGrid = startGrid + gridHeight(record.avatars) + 96;
   const height = Math.ceil(nextGrid + gridHeight(record.buddies) + 80);
-  return renderPng(width * 4, height * 4, (context) => {
-    context.scale(4, 4);
+  return renderZzzBattlePng(width, height, (context) => {
     const gradient = context.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, "#20222d");
     gradient.addColorStop(1, "#0c0d12");
@@ -145,11 +156,7 @@ export async function renderZzzGameRecord(record: ZzzGameRecordSnapshot, role: G
       context.roundRect(48, 160, 744, 310, 30);
       context.fill();
     }
-    const overview = [
-      ["活跃天数", record.stats.active_days], ["获得代理人", record.stats.avatar_num],
-      ["获得邦布", record.stats.buddy_num], ["式舆防卫战", record.stats.cur_period_zone_layer_count],
-    ] as const;
-    overview.forEach(([name, value], index) => {
+    recordOverview(record).forEach(([name, value], index) => {
       const x = 189.3 + index * 150;
       label(context, String(value ?? "—"), x, 310, 43, { align: "center", maxWidth: 157 });
       label(context, name, x, 347, 23, { color: "#e2e2e2", align: "center" });
@@ -160,5 +167,5 @@ export async function renderZzzGameRecord(record: ZzzGameRecordSnapshot, role: G
     title(context, nextGrid - 48, "BANGBOO", "邦布信息");
     drawGrid(context, record.buddies, buddies, badges, nextGrid, "命");
     label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
-  }, "gpu");
+  }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

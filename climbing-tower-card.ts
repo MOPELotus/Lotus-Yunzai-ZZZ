@@ -1,10 +1,9 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzClimbingTowerSnapshot, ZzzShiyuPortrait, ZzzTowerSeason } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, label, loadZzzCardPlayer, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter,
   zzzRegionName, type ZzzCardOptions } from "./card-theme.ts";
-import { contain, drawPortrait, fillRound, loadChallengePortrait } from "./challenge-card.ts";
+import { contain, drawPortrait, fillRound, loadChallengePortrait, renderZzzBattlePng } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 500;
@@ -151,8 +150,7 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
   const layouts = snapshot.seasons.map(blockLayout);
   const noteY = top + layouts.reduce((sum, layout) => sum + layout.height + 24, 0);
   const height = Math.ceil(noteY + 179.6);
-  return renderPng(width * 4, height * 4, context => {
-    context.scale(4, 4);
+  return renderZzzBattlePng(width, height, context => {
     box(context, "#1d1a24", 0, 0, width, height);
     if (background) cover(context, background, 0, 0, width, height);
     drawTowerPlayer(context, role, zzzRegionName(snapshot.region, role.regionName), player);
@@ -200,5 +198,5 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
       label(context, "应群的拟真鏖战试炼排名", 67.2, noteY + 63, 19.2);
     }
     label(context, zzzCardFooter, width / 2, height - 44.5, 16.8, { align: "center", color: "#a09ca3" });
-  }, "gpu");
+  }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

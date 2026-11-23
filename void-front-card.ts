@@ -1,14 +1,12 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzShiyuPortrait, ZzzVoidFrontRound, ZzzVoidFrontSnapshot, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import { Canvas, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
 import { artwork, box, cover, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter,
   zzzRegionName, type ZzzCardOptions } from "./card-theme.ts";
-import { contain, fillRound, frame, loadChallengePortrait, rankBand, type ZzzChallengeArt } from "./challenge-card.ts";
+import { contain, fillRound, frame, loadChallengePortrait, rankBand, renderZzzBattlePng, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 840;
-const density = 4;
 const unit = 24;
 const contentWidth = width - 2 * unit;
 const summaryY = 249.17;
@@ -372,8 +370,7 @@ export async function renderZzzVoidFront(snapshot: ZzzVoidFrontSnapshot, role: G
   const showNotes = snapshot.scheduleType === 1;
   const footerY = layout.bottom + (showNotes ? 74 : 0) + unit;
   const height = Math.round(footerY + 55.6);
-  return renderPng(width * density, height * density, context => {
-    context.scale(density, density);
+  return renderZzzBattlePng(width, height, context => {
     box(context, "#191720", 0, 0, width, height);
     const background = art.local.get(themePath + "bg.png");
     if (background) cover(context, background, 0, 0, width, height);
@@ -387,5 +384,5 @@ export async function renderZzzVoidFront(snapshot: ZzzVoidFrontSnapshot, role: G
     }
     if (showNotes) drawRankNotes(context, art, layout.bottom, options.rankVisibility);
     label(context, zzzCardFooter, width / 2, footerY + 11, 16.8, { align: "center", color: "#fff" });
-  }, "gpu");
+  }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

@@ -16,6 +16,7 @@ interface Context {
   readonly message_type?: string;
   readonly isDelegated?: boolean;
   readonly privateCredentialSignal?: AbortSignal;
+  readonly inlineImageByteLimit?: number;
 }
 
 async function selectedMonthlyRole(profiles: Pick<ReturnType<typeof createProfileStore>, "requestContext" | "savedRole">,
@@ -150,7 +151,8 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
       if (failed instanceof GameRecordRequestError && warning) warning = `${failed.message} ${warning}`;
       const view = { all: collected, collect: options.collect, page, warning, command };
       const image = await renderZzzMonthly(view, role, region,
-        { qq, signal: activeSignal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR }).catch(() => undefined);
+        { qq, signal: activeSignal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
+          inlineImageByteLimit: context.inlineImageByteLimit }).catch(() => undefined);
       await archiveAccess();
       return image ? { type: "image" as const, file: image.png } : zzzMonthlyText(view);
     } catch (error) {

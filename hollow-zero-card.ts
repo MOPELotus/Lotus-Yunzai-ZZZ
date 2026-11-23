@@ -1,10 +1,9 @@
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzHollowChallenge, ZzzHollowProgress, ZzzHollowSnapshot, ZzzShiyuPortrait } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter,
   type ZzzCardOptions } from "./card-theme.ts";
-import { contain, drawPortrait, fillRound, loadChallengePortrait, type ZzzChallengeArt } from "./challenge-card.ts";
+import { contain, drawPortrait, fillRound, loadChallengePortrait, renderZzzBattlePng, type ZzzChallengeArt } from "./challenge-card.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 840;
@@ -86,8 +85,7 @@ export async function renderZzzHollowZero(snapshot: ZzzHollowSnapshot, role: Gam
   const groupHeights = groups.map((group, i) => i === 0 && snapshot.hollowMode === "withered" ? 143 :
     69 + group.rows.length * 55 + (group.title === "刀耕火焚" ? teamHeight : 0));
   const height = start + groupHeights.reduce((sum, h) => sum + h + 20, 0) + 49;
-  return renderPng(width * 4, height * 4, context => {
-    context.scale(4, 4);
+  return renderZzzBattlePng(width, height, context => {
     box(context, "#1d1a24", 0, 0, width, height);
     if (background) cover(context, background, 0, 0, width, height);
     drawZzzCardPlayer(context, role, snapshot.region, player);
@@ -134,7 +132,7 @@ export async function renderZzzHollowZero(snapshot: ZzzHollowSnapshot, role: Gam
       y += h + 20;
     }
     label(context, zzzCardFooter, width / 2, height - 33, 17, { align: "center", color: "#a09ca3" });
-  }, "gpu");
+  }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }
 
 function title(context: Context, value: string, x: number, y: number, size: number, align: CanvasTextAlign = "left", maxWidth?: number) {

@@ -4,7 +4,8 @@ import { createProfileStore, MAX_PROFILE_ID, ProfileError, type GameRole } from 
 import { createGachaUpdater } from "@lotus-yunzai/gacha/update";
 import {
   createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
-  splitZzzExploration, ZzzManualGachaLinkRequired, ZzzTuningRateLimitError, type ZzzExplorationSnapshot, type ZzzHollowMode, type ZzzZenkovMode,
+  splitZzzExploration, ZzzManualGachaLinkRequired, ZzzTuningRateLimitError, type ZzzExplorationSnapshot, type ZzzGameRecordSnapshot,
+  type ZzzHollowMode, type ZzzZenkovMode,
 } from "@lotus-yunzai/hoyo-client";
 import { readZzzFlatLegacyGacha, readZzzLegacyGachaSources, ZzzLegacyGachaError } from "./gacha-legacy.ts";
 import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
@@ -15,7 +16,7 @@ import { zzzRegionName } from "./card-theme.ts";
 import { ZzzInlineImageLimitError } from "./challenge-card.ts";
 import { renderZzzClimbingTower, zzzClimbingTowerText } from "./climbing-tower-card.ts";
 import { createZzzExplorationRenderer, zzzExplorationText } from "./exploration-card.ts";
-import { renderZzzGameRecord } from "./game-record-card.ts";
+import { renderZzzGameRecord, zzzGameRecordText } from "./game-record-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
 import { renderZzzHollowZero, zzzHollowText, zzzHollowTitles } from "./hollow-zero-card.ts";
 import { holoBossDuration, renderZzzHoloBoss } from "./holo-boss-card.ts";
@@ -182,6 +183,18 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     }
     const qq = String(user);
     const changed = "绝区零档案已变化，请重新查询战绩。";
+    async function present(record: ZzzGameRecordSnapshot, role: GameRole, renderSignal: AbortSignal) {
+      try {
+        const { png } = await renderZzzGameRecord(record, role, {
+          qq, signal: renderSignal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
+          inlineImageByteLimit: context.inlineImageByteLimit,
+        });
+        return { type: "image" as const, file: png };
+      } catch (error) {
+        if (!(error instanceof ZzzInlineImageLimitError || error instanceof ImageSizeLimitError)) throw error;
+        return `图片超过当前会话大小上限，已改为文字。\n${zzzGameRecordText(record)}`;
+      }
+    }
     try {
       const source = await profiles.requestSelectedContext(qq, profileId, "zzz").catch((error: unknown) => {
         if (!(error instanceof ProfileError) || error.code !== "role-missing") throw error;
@@ -202,21 +215,18 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
           if (active?.revision !== revision) throw new HoyoRequestError("profile-changed", changed);
         }
         const record = await client.fetchHoYoLabZzzGameRecord(international, { signal: activeSignal, verifyProfile });
-        const { png } = await renderZzzGameRecord(record, record.role, {
-          qq, signal: activeSignal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
-        });
+        const reply = await present(record, record.role, activeSignal);
         await verifyProfile();
-        return activeSignal.aborted ? [] : { type: "image" as const, file: png };
+        return activeSignal.aborted ? [] : reply;
       }
       const record = await client.fetchZzzGameRecord(source, { signal });
-      const { png } = await renderZzzGameRecord(record, source.role,
-        { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR });
+      const reply = await present(record, source.role, signal);
       const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return [];
       if (active?.revision !== record.revision || active.role.uid !== record.uid) {
         return changed;
       }
-      return { type: "image" as const, file: png };
+      return reply;
     } catch (error) {
       if (signal.aborted || context.privateCredentialSignal?.aborted) return [];
       if (error instanceof ProfileError) {
@@ -385,8 +395,10 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
           "bosses" in snapshot ? "HOLO_BOSS" : "stages" in snapshot ? "VOID_FRONT_BATTLE" : mode === "shiyu" ? "ABYSS" : "DEADLY", requestedAt, stillActive, generation);
       const towerVisibility = "seasons" in snapshot ? await Promise.all(towerRanks.map(type =>
         challengeRanks.remember(context, profileId, source.role, snapshot, type, requestedAt, stillActive))) : undefined;
-      const inlineImageByteLimit = context.adapter === "milky" ? context.inlineImageByteLimit : undefined;
-      const theme = { qq, signal, rankVisibility, towerVisibility, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR };
+      const { inlineImageByteLimit } = context;
+      const theme = {
+        qq, signal, rankVisibility, towerVisibility, inlineImageByteLimit, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
+      };
       const result = await ("hollowMode" in snapshot ? renderZzzHollowZero(snapshot, source.role, theme) :
         "seasons" in snapshot ? renderZzzClimbingTower(snapshot, source.role, theme) :
         "stages" in snapshot ? renderZzzVoidFront(snapshot, source.role, theme) :
