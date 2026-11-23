@@ -5,7 +5,7 @@ import { createGachaUpdater } from "@lotus-yunzai/gacha/update";
 import {
   createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
   splitZzzExploration, ZzzManualGachaLinkRequired, ZzzTuningRateLimitError, type ZzzExplorationSnapshot, type ZzzGameRecordSnapshot,
-  type ZzzHollowMode, type ZzzZenkovMode,
+  type ZzzHollowMode, type ZzzOwnedBuddyRoster, type ZzzZenkovMode,
 } from "@lotus-yunzai/hoyo-client";
 import { readZzzFlatLegacyGacha, readZzzLegacyGachaSources, ZzzLegacyGachaError } from "./gacha-legacy.ts";
 import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
@@ -17,6 +17,7 @@ import { ZzzInlineImageLimitError } from "./challenge-card.ts";
 import { renderZzzClimbingTower, zzzClimbingTowerText } from "./climbing-tower-card.ts";
 import { createZzzExplorationRenderer, zzzExplorationText } from "./exploration-card.ts";
 import { renderZzzGameRecord, zzzGameRecordText } from "./game-record-card.ts";
+import { renderZzzOwnedBuddyCard, zzzOwnedBuddyText } from "./owned-buddy-card.ts";
 import { renderZzzDeadly } from "./deadly-card.ts";
 import { renderZzzHollowZero, zzzHollowText, zzzHollowTitles } from "./hollow-zero-card.ts";
 import { holoBossDuration, renderZzzHoloBoss } from "./holo-boss-card.ts";
@@ -57,6 +58,7 @@ const linkCommand = /^#绝区零抽卡链接([1-9]\d{0,2})?$/u;
 const generateLinkCommand = /^#绝区零获取抽卡链接([1-9]\d{0,2})?$/u;
 const helpCommand = /^#绝区零抽卡帮助$/u;
 const gameRecordCommand = /^#绝区零(?:card|卡片|个人信息|角色)\s*([1-9]\d{0,2})?$/iu;
+const ownedBuddyCommand = /^(?:#*绝区零?|[%％](?:绝区零?)?)(?:邦布|人偶)\s*([1-9]\d{0,2})?$/u;
 const shiyuCommand = /^#绝区零(本期|当期|上期|往期)?(?:式舆防卫战|式舆防卫|式舆|深渊|防卫战|防卫)\s*([1-9]\d{0,2})?$/u;
 const deadlyCommand = /^#绝区零(本期|当期|上期|往期)?(?:危局强袭战|危局|强袭战|强袭)\s*([1-9]\d{0,2})?$/u;
 const holoBossCommand = /^#绝区零(本期|当期|上期|往期)?(?:拟境湮灭战|拟境|湮灭战|湮灭)\s*([1-9]\d{0,2})?$/u;
@@ -175,24 +177,37 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     },
   });
 
-  async function gameRecord(context: GachaContext, profileId: number) {
+  async function gameRecord(context: GachaContext, profileId: number, buddyOnly = false) {
     const { user_id: user } = context;
     if ((context.message_type !== "private" && context.message_type !== "group") ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
       return "请从登录档案对应的 QQ 会话查询绝区零战绩。";
     }
     const qq = String(user);
-    const changed = "绝区零档案已变化，请重新查询战绩。";
-    async function present(record: ZzzGameRecordSnapshot, role: GameRole, renderSignal: AbortSignal) {
+    const subject = buddyOnly ? "邦布" : "战绩";
+    const changed = `绝区零档案已变化，请重新查询${subject}。`;
+    let activeSignal = signal;
+    if (buddyOnly) {
+      const bot = context.self_id;
+      const connection = context.message_type === "group" ? context.groupActivitySignal : context.privateCredentialSignal;
+      if (!connection || context.isDelegated || !bot || !Number.isSafeInteger(bot) || bot < 1 || user === bot) {
+        return "请从自己的已连接 QQ 会话查询绝区零邦布。";
+      }
+      if (context.message?.some(segment => segment.type === "at" && String(segment.qq) !== String(bot))) {
+        return "只能查询自己选中的绝区零档案。";
+      }
+      activeSignal = AbortSignal.any([signal, connection]);
+    }
+    async function present(record: ZzzGameRecordSnapshot | ZzzOwnedBuddyRoster, role: GameRole, renderSignal: AbortSignal) {
       try {
-        const { png } = await renderZzzGameRecord(record, role, {
-          qq, signal: renderSignal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
-          inlineImageByteLimit: context.inlineImageByteLimit,
-        });
+        const options = { signal: renderSignal, inlineImageByteLimit: context.inlineImageByteLimit };
+        const { png } = "avatars" in record
+          ? await renderZzzGameRecord(record, role, { ...options, qq, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR })
+          : await renderZzzOwnedBuddyCard(record, options);
         return { type: "image" as const, file: png };
       } catch (error) {
         if (!(error instanceof ZzzInlineImageLimitError || error instanceof ImageSizeLimitError)) throw error;
-        return `图片超过当前会话大小上限，已改为文字。\n${zzzGameRecordText(record)}`;
+        return `图片超过当前会话大小上限，已改为文字。\n${"avatars" in record ? zzzGameRecordText(record) : zzzOwnedBuddyText(record)}`;
       }
     }
     try {
@@ -202,10 +217,11 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (!source || overseasRegion(source.role)) {
         const international = await profiles.internationalRoleContext(qq, profileId, "zzz");
         if (!source && !international) return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
+        if (buddyOnly) return "邦布持有查询支持国服绝区零档案。";
         if (context.message_type !== "private" || context.isDelegated || !context.privateCredentialSignal) {
           return "绝区零国际服战绩请从本人私聊查询。";
         }
-        const activeSignal = AbortSignal.any([signal, context.privateCredentialSignal]);
+        activeSignal = AbortSignal.any([activeSignal, context.privateCredentialSignal]);
         if (activeSignal.aborted) return [];
         if (!international) return `[zzz] 请先在 profile ${profileId} 绑定已核验的 HoYoLAB 账号。`;
         if (source && source.revision !== international.revision) return changed;
@@ -219,16 +235,18 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         await verifyProfile();
         return activeSignal.aborted ? [] : reply;
       }
-      const record = await client.fetchZzzGameRecord(source, { signal });
-      const reply = await present(record, source.role, signal);
+      if (activeSignal.aborted) return [];
+      const options = { signal: activeSignal };
+      const record = buddyOnly ? await client.fetchZzzOwnedBuddyRoster(source, options) : await client.fetchZzzGameRecord(source, options);
+      const reply = await present(record, source.role, activeSignal);
       const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
-      if (signal.aborted) return [];
+      if (activeSignal.aborted) return [];
       if (active?.revision !== record.revision || active.role.uid !== record.uid) {
         return changed;
       }
       return reply;
     } catch (error) {
-      if (signal.aborted || context.privateCredentialSignal?.aborted) return [];
+      if (activeSignal.aborted || context.privateCredentialSignal?.aborted) return [];
       if (error instanceof ProfileError) {
         if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
         if (error.code === "role-missing") return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
@@ -240,7 +258,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         if (error.code === "profile-changed") return changed;
         if (error.code === "invalid-input") return error.message;
       }
-      return "绝区零战绩暂时无法查询。";
+      return `绝区零${subject}暂时无法查询。`;
     }
   }
 
@@ -587,6 +605,11 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const historyQuery = zzzPoolHistoryCommand(context.normalizedMessage);
       if (historyQuery) return poolHistory(historyQuery, Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR);
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
+      const buddies = ownedBuddyCommand.exec(command);
+      if (buddies) {
+        const profileId = Number(buddies[1] ?? 1);
+        return profileId <= MAX_PROFILE_ID ? gameRecord(context, profileId, true) : "档案编号须在 1 到 255 之间。";
+      }
       const card = gameRecordCommand.exec(command);
       if (card) {
         const profileId = Number(card[1] ?? 1);
