@@ -1,6 +1,6 @@
 import { basename, join } from "node:path";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
+import { nativeImageRasterScale, renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { box, cover, drawTag, label, openZzzCardTheme, zzzCardFooter, zzzScoreColors, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
@@ -421,6 +421,7 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
   const gridBottom = firstDiscY + discHeights[0]! + 55 + discHeights[1]!;
   const inlineHeight = inlineDamage.length ? 83 + inlineDamage.reduce((sum, table) => sum + inlineTableHeight(table) + 24, 0) : 0;
   const height = Math.ceil(damage ? topHeight + panelDamageHeight(damage) : gridBottom + 80 + inlineHeight);
+  const standard = nativeImageRasterScale() === 4;
   const render = (scale: 2 | 4) => renderPng(width * scale, height * scale, context => {
     context.scale(scale, scale);
     context.imageSmoothingEnabled = true;
@@ -503,10 +504,10 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
       if (inlineDamage.length) drawInlineDamage(context, inlineDamage, gridBottom);
     }
     label(context, zzzCardFooter, width / 2, height - 22, 17, { color: muted, align: "center" });
-  }, "gpu");
+  }, "gpu", { allowHalfScale: standard && scale === 4 });
   let rendered = await render(4);
   if (options.inlineImageByteLimit !== undefined && rendered.png.byteLength > options.inlineImageByteLimit) {
-    rendered = await render(2);
+    if (standard && !rendered.reducedScaleReason) rendered = await render(2);
     if (rendered.png.byteLength > options.inlineImageByteLimit) throw new Error("绝区零面板超过当前会话的图片大小上限。");
   }
   return { ...rendered, original: art.original };

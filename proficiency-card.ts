@@ -1,5 +1,5 @@
 import type { GameRole } from "@lotus-yunzai/account";
-import { ImageSizeLimitError, renderPng } from "@lotus-yunzai/skia";
+import { ImageSizeLimitError, nativeImageRasterScale, renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, zzzScoreColors } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
@@ -195,13 +195,14 @@ export async function renderZzzProficiency(model: Proficiency, role: GameRole, o
     label(context, zzzCardFooter, 420, height - 48, 17, { align: "center", color: "#a09ca3" });
   }
 
+  const standard = nativeImageRasterScale() === 4;
   const image = await renderPng(width * 4, height * 4, context => {
     context.scale(4, 4);
     draw(context);
-  }, "gpu", { allowHalfScale: true });
+  }, "gpu", { allowHalfScale: standard });
   const limit = options.inlineImageByteLimit;
   if (limit === undefined || image.png.byteLength <= limit) return image;
-  if (!image.reducedScaleReason) {
+  if (standard && !image.reducedScaleReason) {
     options.signal?.throwIfAborted();
     const reduced = await renderPng(width * 2, height * 2, context => {
       context.scale(2, 2);

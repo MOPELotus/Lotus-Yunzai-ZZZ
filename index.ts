@@ -477,7 +477,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
 
       const nickname = role.nickname || "绳匠";
       const level = role.level === undefined ? undefined : Number(role.level);
-      const display = { level: Number.isFinite(level) ? level : undefined, regionName: zzzRegionName(region, role.regionName) };
+      const display = { level: Number.isFinite(level) ? level : undefined, regionName: zzzRegionName(region, role.regionName),
+        inlineImageByteLimit: context.inlineImageByteLimit };
       let png: Uint8Array;
       let flatRevision: string | undefined;
       if (useOfficial) {
@@ -526,7 +527,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (error instanceof HoyoRequestError && error.code === "invalid-input") return error.message;
       if (error instanceof HoyoRequestError && error.code === "profile-changed") return "绝区零档案角色已变化，请重新查询。";
       if (error instanceof ZzzTuningRateLimitError) return "访问过于频繁，请稍后再试。";
-      if (error instanceof ZzzLegacyGachaError) return error.message;
+      if (error instanceof ZzzLegacyGachaError || error instanceof ImageSizeLimitError) return error.message;
       return "绝区零抽卡记录暂时无法查看。";
     }
   }

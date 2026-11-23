@@ -2,7 +2,7 @@ import { constants } from "node:fs";
 import { open, realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderPng } from "@lotus-yunzai/skia";
+import { ImageSizeLimitError, nativeImageRasterScale, renderPng } from "@lotus-yunzai/skia";
 import { FontLibrary, loadImage, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
 import { zzzCardFooter } from "./card-theme.ts";
 import type { ZzzTuningDetailModel, ZzzTuningDetailPool } from "./tuning-detail.ts";
@@ -10,6 +10,7 @@ import type { ZzzTuningDetailModel, ZzzTuningDetailPool } from "./tuning-detail.
 interface TuningDetailCardOptions {
   readonly mode?: "auto" | "gpu" | "cpu";
   readonly scale?: number;
+  readonly inlineImageByteLimit?: number;
   readonly themeDirectory?: string;
   readonly loadArtwork?: (key: string) => Promise<Buffer | Uint8Array | undefined>;
   readonly level?: number;
@@ -295,7 +296,7 @@ export async function renderZzzTuningDetail(
   options: TuningDetailCardOptions = {},
 ) {
   const {
-    mode = "auto", scale = 4,
+    mode = "auto", scale = 4, inlineImageByteLimit,
     themeDirectory = Bun.env.LOTUS_ZZZ_GACHA_THEME_DIR?.trim() || defaultTheme,
     loadArtwork,
   } = options;
@@ -308,9 +309,12 @@ export async function renderZzzTuningDetail(
   const theme = await themeAt(root);
   const images = await loadArt(model, loadArtwork);
 
-  const zoom = Math.min(scale, 24_000 / height);
-  return renderPng(Math.round(width * zoom), Math.round(height * zoom), (ctx) => {
-    ctx.scale(zoom, zoom);
+  const standard = nativeImageRasterScale() === 4;
+  const zoom = standard ? (height * scale > 24_000 ? Math.min(2, scale) : scale) : 4;
+  const inlineLimit = new ImageSizeLimitError("绝区零调频统计超过当前会话的图片大小上限。");
+  if (standard && height * zoom > 24_000) throw inlineLimit;
+  const render = (density: number) => renderPng(Math.round(width * density), Math.round(height * density), (ctx) => {
+    ctx.scale(density, density);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
     fitImage(ctx, theme.background, 0, 0, width, height, true);
@@ -327,5 +331,12 @@ export async function renderZzzTuningDetail(
       top = next + layouts[index]!;
     }
     text(ctx, zzzCardFooter, width / 2, top + 11, 16.8, white, "center");
-  }, mode);
+  }, mode, { allowHalfScale: standard && density === 4 });
+  const image = await render(zoom);
+  if (inlineImageByteLimit === undefined || image.png.byteLength <= inlineImageByteLimit) return image;
+  if (standard && zoom === 4 && !image.reducedScaleReason) {
+    const reduced = await render(2);
+    if (reduced.png.byteLength <= inlineImageByteLimit) return reduced;
+  }
+  throw inlineLimit;
 }

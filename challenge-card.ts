@@ -1,5 +1,5 @@
 import type { ZzzShiyuPortrait } from "@lotus-yunzai/hoyo-client";
-import { renderPng } from "@lotus-yunzai/skia";
+import { nativeImageRasterScale, renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { cover, label, type openZzzCardTheme } from "./card-theme.ts";
 
@@ -109,16 +109,17 @@ export class ZzzInlineImageLimitError extends Error {
 
 export async function renderZzzBattlePng(width: number, height: number, draw: (context: Context) => void,
   scale: 2 | 4, inlineImageByteLimit?: number, { allowHalfScale = false } = {}) {
+  const standard = nativeImageRasterScale() === 4;
   function render(density: 2 | 4) {
     return renderPng(width * density, height * density, context => {
       context.scale(density, density);
       draw(context);
-    }, "gpu", { allowHalfScale: density === 4 && allowHalfScale });
+    }, "gpu", { allowHalfScale: standard && density === 4 && allowHalfScale });
   }
 
-  const image = await render(scale);
+  const image = await render(standard ? scale : 4);
   if (inlineImageByteLimit === undefined || image.png.byteLength <= inlineImageByteLimit) return image;
-  if (scale === 4 && image.reducedScaleReason === undefined) {
+  if (standard && scale === 4 && image.reducedScaleReason === undefined) {
     const reduced = await render(2);
     if (reduced.png.byteLength <= inlineImageByteLimit) return reduced;
   }
