@@ -24,6 +24,8 @@ export interface ChallengeReminderDefaults {
 const oldUsers = "ZZZ:REMIND:USER_CONFIGS";
 const users = "lotus-yunzai:zzz-challenge-reminders:users";
 const settings = "lotus-yunzai:zzz-challenge-reminders:settings";
+export const challengeReminderConfigFile = "config/zzz-challenge-reminder.yaml";
+const currentConfig = fileURLToPath(new URL(`../../${challengeReminderConfigFile}`, import.meta.url));
 const oldSettings = fileURLToPath(new URL("../ZZZ-Plugin/config/remind.yaml", import.meta.url));
 const defaults: ChallengeReminderDefaults = { enable: true, abyssCheckLevel: 5, deadlyStars: 6, remindTime: "每日20时" };
 const globalFields = ["enable", "abyssCheckLevel", "deadlyStars", "remindTime"] as const;
@@ -102,6 +104,20 @@ function time(value: unknown) {
   if (typeof value === "string" && value.length <= 32) return challengeReminderTime(value).time;
 }
 
+export function projectChallengeReminderConfig(input: unknown, legacy = false): Partial<ChallengeReminderDefaults> {
+  const fields = object(input);
+  const { enable } = fields;
+  const abyssCheckLevel = count(fields.abyssCheckLevel, 6);
+  const deadlyStars = count(fields.deadlyStars, 9);
+  const remindTime = time(legacy ? fields.globalRemindTime : fields.remindTime);
+  return {
+    ...(typeof enable === "boolean" && { enable }),
+    ...(abyssCheckLevel !== undefined && { abyssCheckLevel }),
+    ...(deadlyStars !== undefined && { deadlyStars }),
+    ...(remindTime !== undefined && { remindTime }),
+  };
+}
+
 function parseUser(raw: string | null | undefined, useBinding: boolean): ChallengeReminderUser | undefined {
   if (!raw || raw.length > 4096) return;
   try {
@@ -115,16 +131,17 @@ function parseUser(raw: string | null | undefined, useBinding: boolean): Challen
   }
 }
 
-async function readOldSettings(path: string) {
+async function readSettings(path: string, legacy = false) {
   try {
     const data = await readFile(path, "utf8");
-    return data.length <= 16_384 ? object(Bun.YAML.parse(data)) : {};
+    return data.length <= 16_384 ? projectChallengeReminderConfig(Bun.YAML.parse(data), legacy) : {};
   } catch {
     return {};
   }
 }
 
-export function createZzzChallengeReminderStore(redis: Redis, configPath = Bun.env.LOTUS_ZZZ_LEGACY_REMIND_CONFIG || oldSettings) {
+export function createZzzChallengeReminderStore(redis: Redis, configPath = Bun.env.LOTUS_ZZZ_LEGACY_REMIND_CONFIG || oldSettings,
+  currentConfigPath = currentConfig) {
   async function readUser(qq: string) {
     const modern = await redis.hGet(users, qq);
     if (modern != null) return { modern, value: parseUser(modern, true) };
@@ -132,15 +149,15 @@ export function createZzzChallengeReminderStore(redis: Redis, configPath = Bun.e
   }
 
   async function readGlobalSettings() {
-    const [current, legacy] = await Promise.all([redis.hGetAll(settings), readOldSettings(configPath)]);
+    const [current, legacy, configured] = await Promise.all([
+      redis.hGetAll(settings), readSettings(configPath, true), readSettings(currentConfigPath),
+    ]);
+    const yaml = { ...defaults, ...legacy, ...configured };
     const value: ChallengeReminderDefaults = {
-      enable: current.enable === "1" ? true : current.enable === "0" ? false :
-        typeof legacy.enable === "boolean" ? legacy.enable : defaults.enable,
-      abyssCheckLevel: count(current.abyssCheckLevel === undefined ? undefined : Number(current.abyssCheckLevel), 6) ??
-        count(legacy.abyssCheckLevel, 6) ?? defaults.abyssCheckLevel,
-      deadlyStars: count(current.deadlyStars === undefined ? undefined : Number(current.deadlyStars), 9) ??
-        count(legacy.deadlyStars, 9) ?? defaults.deadlyStars,
-      remindTime: time(current.remindTime) ?? time(legacy.globalRemindTime) ?? defaults.remindTime,
+      enable: current.enable === "1" ? true : current.enable === "0" ? false : yaml.enable,
+      abyssCheckLevel: count(current.abyssCheckLevel === undefined ? undefined : Number(current.abyssCheckLevel), 6) ?? yaml.abyssCheckLevel,
+      deadlyStars: count(current.deadlyStars === undefined ? undefined : Number(current.deadlyStars), 9) ?? yaml.deadlyStars,
+      remindTime: time(current.remindTime) ?? yaml.remindTime,
     };
     return { current, value };
   }
