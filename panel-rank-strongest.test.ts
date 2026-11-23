@@ -6,7 +6,7 @@ import { createProfileStore } from "@lotus-yunzai/account";
 import { createZzzShowcaseClient } from "./enka-showcase.ts";
 import { createModule } from "./index.ts";
 import { createZzzPanelRanks } from "./panel-rank.ts";
-import { zzzPanelRankCommand } from "./panel-rank-model.ts";
+import { buildZzzPanelRankRow, zzzPanelRankCommand } from "./panel-rank-model.ts";
 
 test("绝区零最强角色的两种前缀进入群榜分派，私聊拒绝", async () => {
   const module = createModule({ signal: new AbortController().signal, lockFile: async () => ({ close() {} }) });
@@ -44,7 +44,10 @@ test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首�
       writeFile(join(mapDirectory, "PartnerId2Data.json"), JSON.stringify({ 1011: {
         name: "安比", full_name: "安比·德玛拉", Rarity: "A", WeaponType: 2, ElementType: 203,
       } })),
-      writeFile(join(mapDirectory, "WeaponId2Data.json"), JSON.stringify({ 14101: {} })),
+      writeFile(join(mapDirectory, "WeaponId2Data.json"), JSON.stringify({
+        14101: { Name: "相同职业测试音擎", Rarity: "A", Profession: 2 },
+        14102: { Name: "不同职业测试音擎", Rarity: "A", Profession: 1 },
+      })),
       writeFile(join(mapDirectory, "SuitData.json"), JSON.stringify({ 31000: { name: "啄木鸟电音" } })),
       ...([[42, first], [43, second], [44, outsider]] as const).map(([qq, uid]) =>
         writeFile(join(profileDirectory, `${qq}.yaml`), Bun.YAML.stringify({
@@ -64,6 +67,7 @@ test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首�
       expect(new Headers(init.headers).has("cookie")).toBe(false);
       const row = {
         Id: 1011, Level: 60, TalentLevel: 2,
+        Weapon: { Id: uid === first ? 14101 : 14102, Level: 60, UpgradeLevel: 1, BreakLevel: 5 },
         EquippedList: [{ Slot: 1, Equipment: { Id: 31041, Level: 15,
           MainPropertyList: [{ PropertyId: 11103, PropertyValue: 550 }],
           RandomPropertyList: [{ PropertyId: 20103, PropertyValue: 240, PropertyLevel: uid === currentWinner ? 5 : 1 }],
@@ -79,6 +83,8 @@ test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首�
         async renderStrongest(avatar, uid, options) {
           rendered.push(uid);
           expect(avatar.name_mi18n).toBe("安比");
+          const score = buildZzzPanelRankRow(avatar);
+          expect(score.weighted - score.drive).toBeCloseTo(uid === first ? 16 : 10, 10);
           expect(options).toMatchObject({ showcase: true, inlineImageByteLimit: 1000 });
           expect(options?.qq).toBeUndefined();
           if (withdrawDuringRender) owners.delete("42:1");

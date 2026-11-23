@@ -55,7 +55,8 @@ function weapon(input: unknown, catalog: Json) {
   }
   const main = from("BaseProperty", attackRate !== undefined && starRate !== undefined ? attackRate + starRate : undefined);
   const extra = from("RandProperty", subRate);
-  return { id, level, name: data.Name, star, rarity: data.Rarity, main_properties: main ? [main] : [], properties: extra ? [extra] : [] };
+  return { id, level, name: data.Name, star, rarity: data.Rarity, profession: panelInteger(data.Profession, 1, 99),
+    main_properties: main ? [main] : [], properties: extra ? [extra] : [] };
 }
 
 function disc(input: unknown, catalog: Json) {
