@@ -31,7 +31,7 @@ const showcaseName = /展柜|展板/u;
 const proficiencyCommand = /^(展柜)?练度(?:统计)?\s*([1-9]\d{0,2})?$/u;
 const updateCommand = /^(?:更新全部面板|全部面板更新|(?:刷新|更新)(.*?)面板|面板(?:刷新|更新))\s*([1-9]\d{0,2})?$/u;
 const detailCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)面板\s*([1-9]\d{0,2})?$/u;
-const damageCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)伤害 *(\d{1,6})?(?: *档案 *([1-9]\d{0,2}))?$/u;
+const damageCommand = /^([^\p{Cc}\p{Cf}]{1,80}?)伤害(?: *(技能 *)?(\d{1,6}))?(?: *档案 *([1-9]\d{0,2}))?$/u;
 
 export function zzzPrefixedCommand(raw: string) {
   if (formerPanelBrand.test(raw.normalize("NFKC"))) return;
@@ -46,10 +46,13 @@ export function zzzPanelCommand(raw: string, inGroup = false) {
   if (command === "原图") return { kind: "original" as const };
   const damage = damageCommand.exec(command);
   if (damage) {
-    const profileId = gameCommandProfileId("zzz", damage[3]);
-    const name = damage[1]!.trim();
+    const [, role, explicitSkill, numeric, explicitProfile] = damage;
+    const legacyProfile = !explicitSkill && !explicitProfile && numeric !== undefined &&
+      /^[1-9]\d{0,2}$/u.test(numeric) && Number(numeric) <= MAX_PROFILE_ID ? numeric : undefined;
+    const profileId = gameCommandProfileId("zzz", explicitProfile ?? legacyProfile);
+    const name = role!.trim();
     if (name && profileId <= MAX_PROFILE_ID) {
-      return { kind: "damage" as const, profileId, name, skill: damage[2] === undefined ? undefined : Number(damage[2]) };
+      return { kind: "damage" as const, profileId, name, skill: numeric === undefined || legacyProfile ? undefined : Number(numeric) };
     }
     return;
   }

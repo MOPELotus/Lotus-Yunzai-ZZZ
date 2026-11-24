@@ -20,7 +20,7 @@ test("绝区零面板、挑战状态和群榜本人档案采用绝区零默认�
     [zzzPanelCommand, "%更新艾莲面板", "%更新艾莲面板1"],
     [zzzPanelCommand, "%展板更新面板", "%展板更新面板1"],
     [zzzPanelCommand, "%展柜练度统计", "%展柜练度统计1"],
-    [zzzPanelCommand, "%艾莲伤害2", "%艾莲伤害2 档案1"],
+    [zzzPanelCommand, "%艾莲伤害技能2", "%艾莲伤害2 档案1"],
     [zzzChallengeReminderCommand, "%查询挑战状态", "%查询挑战状态1"],
     [rankCommand, "%显示危局排名", "%显示危局排名1"],
     [zzzPanelRankCommand, "%开启角色面板排名", "%开启角色面板排名1"],
@@ -35,6 +35,7 @@ test("绝区零面板、挑战状态和群榜本人档案采用绝区零默认�
     });
   }
   withGameCommandProfiles(scope, () => {
+    expect(zzzPanelCommand("%艾莲伤害2")).toMatchObject({ profileId: 2, skill: undefined });
     expect(zzzPanelRankCommand("%显示国际服角色面板排名")).toMatchObject({ profileId: 1, international: true });
     expect(zzzPanelRankCommand("%显示国际服角色面板排名2")).toMatchObject({ profileId: 2, international: true });
     expect(rankCommand("%危局排名")).toEqual({ kind: "board", mode: "DEADLY" });

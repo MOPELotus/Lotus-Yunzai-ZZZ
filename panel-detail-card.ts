@@ -342,7 +342,7 @@ function drawEngine(context: Context, model: Detail, art: Awaited<ReturnType<typ
 function inlineDamageTables(summary: PanelDamageSummary, name: string, level: number, profile: number) {
   const amount = (value: number) => !Number.isFinite(value) ? "—" : value < 2 ? `${Math.round(value * 100)}%` :
     Number.isInteger(value) ? String(value) : value.toFixed(2);
-  const skillCommand = `%${name}伤害1${profile === 1 ? "" : ` 档案${profile}`}`;
+  const skillCommand = `%${name}伤害技能1${profile === 1 ? "" : ` 档案${profile}`}`;
   return [
     ...(summary.buffs.length ? [{
       rows: [["%", "增益名称", "增益类型", "增益数值"], ...summary.buffs.map(buff =>
