@@ -1,7 +1,8 @@
 import { fileURLToPath } from "node:url";
 import { MAX_PROFILE_ID, ProfileError, type createProfileStore } from "@lotus-yunzai/account";
-import { HoyoRequestError, ZzzTuningRateLimitError, resolveZzzTuningRegion, type createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
+import { HoyoRequestError, ZzzTuningRateLimitError, type createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
 import type { MessageFallbackContext } from "../../lib/commands.ts";
+import { sameZzzTuningProfile, zzzTuningProfile } from "./tuning-profile.ts";
 import { inventoryFields, renderZzzInventoryCard } from "./tuning-inventory-card.ts";
 
 const usage = "发送 #母带、#绝区零存货 或 %母带2 查询自己的实时调频库存。";
@@ -36,13 +37,11 @@ export function createZzzInventoryQuery(
     try {
       if (signal.aborted) return;
       const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
-      resolveZzzTuningRegion(source);
-      const sameRole = ({ role }: typeof source) => role.uid === source.role.uid &&
-        role.region === source.role.region && role.gameBiz === source.role.gameBiz;
+      const identity = zzzTuningProfile(source);
       const result = await client.fetchZzzTuningInventory(source, { signal });
       signal.throwIfAborted();
       const latest = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
-      if (!latest || !sameRole(latest) || latest.role.uid !== result.uid || latest.revision !== result.revision) return changed;
+      if (!latest || result.uid !== identity.uid || !sameZzzTuningProfile(latest, identity, result.revision)) return changed;
       if (!inventoryFields.some(([field]) => result.inventory[field] !== undefined)) {
         return "米游社未返回该角色的实时调频库存。";
       }
@@ -62,7 +61,7 @@ export function createZzzInventoryQuery(
       signal.throwIfAborted();
       const current = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
       if (signal.aborted) return;
-      if (!current || current.revision !== latest.revision || !sameRole(current)) return changed;
+      if (!sameZzzTuningProfile(current, identity, latest.revision)) return changed;
       if (output && output.png.byteLength <= inlineImageByteLimit) {
         return { type: "image" as const, file: output.png };
       }

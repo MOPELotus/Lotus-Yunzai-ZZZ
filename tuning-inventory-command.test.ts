@@ -6,8 +6,8 @@ const uid = "123456789";
 const actor = { message_type: "group", user_id: 42, self_id: 99, groupActivitySignal: new AbortController().signal };
 const source = {
   qq: "42", profileId: 2, game: "zzz", revision: "before",
-  role: { uid, region: "prod_gf_cn", gameBiz: "nap_cn", chosen: true, nickname: "样本", level: 60 },
-  account: {}, device: {},
+  role: { uid, region: "", gameBiz: "", chosen: true, nickname: "样本", level: 60 },
+  account: { cookie: "cookie_token=fixture;ltuid_v2=42" }, device: {},
 } as ProfileRequestContext;
 
 test("旧母带与存货命令有档案编号，其他游戏和文本不会进入", () => {
@@ -32,7 +32,8 @@ test("只查询当前 QQ 和档案，续签后仍以新版本复核，缺值与�
     async fetchZzzTuningInventory(selected) {
       expect(selected).toBe(source);
       requestCount++;
-      current = { ...source, revision: "after-refresh" };
+      current = { ...source, revision: "after-refresh",
+        role: { ...source.role, region: "prod_gf_cn", gameBiz: "nap_cn" } };
       return { uid, inventory: { monochrome: 0, polychrome: 3123, encryptedMasterTape: 4, boopon: 7 },
         revision: current.revision, fetchedAt: "", refreshedCookie: true };
     },

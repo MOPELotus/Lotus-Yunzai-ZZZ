@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
-import type { InboundSegment } from "../../lib/messages.ts";
-import { createProfileStore, gameCommandProfileId, MAX_PROFILE_ID, ProfileError, type GameRole } from "@lotus-yunzai/account";
+import type { InboundSegment, ReplyOptions } from "../../lib/messages.ts";
+import { createProfileStore, gameCommandProfileId, MAX_PROFILE_ID, ProfileError, profileCookieAccountId, type GameRole, type ProfileRequestContext } from "@lotus-yunzai/account";
 import { createGachaUpdater } from "@lotus-yunzai/gacha/update";
 import {
   createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
@@ -45,6 +45,7 @@ import { createZzzSkillReader } from "./skills-command.ts";
 import { zzzSkillCommand } from "./skills-data.ts";
 import { createZzzLegacyGachaArtwork, createZzzTuningArtwork } from "./tuning-artwork.ts";
 import { buildZzzTuningDetail, buildZzzTuningInventoryReply } from "./tuning-detail.ts";
+import { sameZzzTuningProfile, zzzTuningProfile } from "./tuning-profile.ts";
 import { renderZzzTuningDetail } from "./tuning-detail-card.ts";
 import { createZzzInventoryQuery, zzzInventoryCommand } from "./tuning-inventory-command.ts";
 import { renderZzzTuningFailure, renderZzzTuningResult } from "./tuning-result-card.ts";
@@ -111,7 +112,7 @@ interface GachaContext extends ZzzRoleGalleryContext {
   readonly message_type?: string;
   readonly groupActivitySignal?: AbortSignal;
   readonly message?: readonly InboundSegment[];
-  reply(message: string | { readonly type: "image"; readonly file: Uint8Array }): unknown;
+  reply(message: string | { readonly type: "image"; readonly file: Uint8Array }, quote?: boolean, options?: ReplyOptions): unknown;
 }
 
 export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderRuntime }: {
@@ -478,6 +479,41 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     }
   }
 
+  async function viewOfficialTuning(source: ProfileRequestContext, profileId: number, context: GachaContext) {
+    const { qq, role } = source;
+    const identity = zzzTuningProfile(source);
+    const { uid, region } = identity;
+    const connection = context.message_type === "group" ? context.groupActivitySignal : context.privateCredentialSignal;
+    const active = connection ? AbortSignal.any([signal, connection]) : signal;
+    const selected = () => profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
+    const cached = await sync.read(qq, { uid, region });
+    const stats = cached ?? await client.fetchZzzTuning(source, { signal: active });
+    const revision = "revision" in stats && typeof stats.revision === "string" ? stats.revision : source.revision;
+    const { avatar, resolveIcon, loadArtwork } = createZzzTuningArtwork(stats, qq, active);
+    const model = buildZzzTuningDetail({ stats, player: { nickname: role.nickname || "绳匠", avatar }, resolveIcon });
+    const level = role.level === undefined ? undefined : Number(role.level);
+    const { png } = await renderZzzTuningDetail(model, {
+      level: Number.isFinite(level) ? level : undefined,
+      regionName: zzzRegionName(region, role.regionName), inlineImageByteLimit: context.inlineImageByteLimit, loadArtwork,
+    });
+    const current = await selected();
+    if (active.aborted) return [];
+    if (!current || !sameZzzTuningProfile(current, identity, revision)) return "绝区零档案角色已变化，请重新查询。";
+
+    let delivered = false;
+    const accepted = await context.reply({ type: "image", file: png }, false, { onDelivered: () => { delivered = true; } });
+    if (accepted === false || !delivered || active.aborted) return [];
+    const confirmed = await selected();
+    if (active.aborted || !confirmed || !sameZzzTuningProfile(confirmed, identity, revision)) return [];
+    const live = await client.fetchZzzTuningInventory(confirmed, { signal: active }).catch(() => undefined);
+    if (!live || live.uid !== uid) return [];
+    const inventory = buildZzzTuningInventoryReply({ uid, profileId, live });
+    if (!inventory) return [];
+    const latest = await selected();
+    if (active.aborted || !sameZzzTuningProfile(latest, identity, live.revision)) return [];
+    return context.message_type === "group" ? [{ type: "at" as const, qq }, inventory] : inventory;
+  }
+
   async function view(qq: string, profileId: number, context: GachaContext, linkedOnly: boolean) {
     try {
       const role = await profiles.savedRole(qq, profileId, "zzz");
@@ -485,7 +521,13 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const regionOf = (current: GameRole) => linkedOnly ? resolveZzzGachaLinkRole(current).region
         : overseasRegion(current) ?? resolveZzzTuningRegion({ game: "zzz", role: current });
       const region = regionOf(role);
-      const useOfficial = !linkedOnly && (region === "prod_gf_cn" || region === "prod_qd_cn");
+      if (!linkedOnly && (region === "prod_gf_cn" || region === "prod_qd_cn")) {
+        const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
+        if (source.role.uid !== uid || regionOf(source.role) !== region) {
+          return "绝区零档案角色已变化，请重新查询。";
+        }
+        return await viewOfficialTuning(source, profileId, context);
+      }
 
       async function roleMatches() {
         try {
@@ -499,10 +541,9 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       async function flatArchiveRevision() {
         // A selected UID can come from an unverified field. The account's role catalog is required for flat files.
         const source = await profiles.requestContext(qq, profileId, "zzz", uid).catch(() => undefined);
-        if (!source) return;
-        const { stuid, ltuid } = source.account;
-        if ((!stuid && !ltuid) || (stuid && ltuid && stuid !== ltuid)) return;
-        if (source.role.region !== region || source.role.gameBiz !== resolveZzzGachaLinkRole(role).gameBiz) return;
+        if (!source || !profileCookieAccountId(source.account)) return;
+        const archiveRole = resolveZzzGachaLinkRole(source.role);
+        if (archiveRole.region !== region || archiveRole.gameBiz !== resolveZzzGachaLinkRole(role).gameBiz) return;
         return source.revision;
       }
 
@@ -510,45 +551,29 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const level = role.level === undefined ? undefined : Number(role.level);
       const display = { level: Number.isFinite(level) ? level : undefined, regionName: zzzRegionName(region, role.regionName),
         inlineImageByteLimit: context.inlineImageByteLimit };
-      let png: Uint8Array;
+      const [scoped, linked] = await Promise.all([
+        readLegacy(qq, uid), linkHistory.read(qq, { uid, region }),
+      ]);
+      let legacy = scoped;
       let flatRevision: string | undefined;
-      if (useOfficial) {
-        const cached = await sync.read(qq, { uid, region });
-        const stats = cached ?? await client.fetchZzzTuning(await profiles.requestContext(qq, profileId, "zzz", uid), { signal });
-        const { avatar, resolveIcon, loadArtwork } = createZzzTuningArtwork(stats, qq, signal);
-        const model = buildZzzTuningDetail({ stats, player: { nickname, avatar }, resolveIcon });
-        ({ png } = await renderZzzTuningDetail(model, { ...display, loadArtwork }));
-      } else {
-        const [scoped, linked] = await Promise.all([
-          readLegacy(qq, uid), linkHistory.read(qq, { uid, region }),
-        ]);
-        let legacy = scoped;
-        if (!scoped && !legacyOverride) {
-          const revision = await flatArchiveRevision();
-          if (revision) {
-            legacy = await readZzzFlatLegacyGacha(flatLegacyDirectories, uid);
-            if (legacy) flatRevision = revision;
-          }
+      if (!scoped && !legacyOverride) {
+        const revision = await flatArchiveRevision();
+        if (revision) {
+          legacy = await readZzzFlatLegacyGacha(flatLegacyDirectories, uid);
+          if (legacy) flatRevision = revision;
         }
-        const stats = mergeZzzLegacyWithLinked(legacy, linked);
-        if (!stats) return linkedOnly ? "该角色还没有绝区零逐抽记录。" : "该角色还没有绝区零旧调频记录。";
-        const { avatar, resolveIcon, loadArtwork } = createZzzLegacyGachaArtwork(qq, signal);
-        const model = buildZzzLegacyDetail({ stats, player: { nickname, avatar }, resolveIcon });
-        ({ png } = await renderZzzTuningDetail(model, { ...display, loadArtwork }));
       }
+      const stats = mergeZzzLegacyWithLinked(legacy, linked);
+      if (!stats) return linkedOnly ? "该角色还没有绝区零逐抽记录。" : "该角色还没有绝区零旧调频记录。";
+      const { avatar, resolveIcon, loadArtwork } = createZzzLegacyGachaArtwork(qq, signal);
+      const model = buildZzzLegacyDetail({ stats, player: { nickname, avatar }, resolveIcon });
+      const { png } = await renderZzzTuningDetail(model, { ...display, loadArtwork });
       if (signal.aborted) return [];
       if (!await roleMatches() || (flatRevision && await flatArchiveRevision() !== flatRevision)) {
         return "绝区零档案角色已变化，请重新查询。";
       }
-      if (signal.aborted) return [];
-      if (await context.reply({ type: "image", file: png }) === false) return [];
-      if (!useOfficial) return [];
-
-      const live = await profiles.requestContext(qq, profileId, "zzz", uid)
-        .then((current) => client.fetchZzzTuningInventory(current, { signal })).catch(() => undefined);
-      const inventory = buildZzzTuningInventoryReply({ uid, profileId, live });
-      if (signal.aborted || !inventory || !await roleMatches()) return [];
-      return context.message_type === "group" ? [{ type: "at" as const, qq }, inventory] : inventory;
+      if (!signal.aborted) await context.reply({ type: "image", file: png });
+      return [];
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
