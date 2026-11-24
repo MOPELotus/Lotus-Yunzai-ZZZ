@@ -142,11 +142,12 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
   const currentPool = createZzzCurrentPool(signal);
   const sync = createZzzTuningSync(profiles, client, historyDirectory, lockFile,
     retiredData.map(directory => fileURLToPath(new URL("zzzTuningStats/", directory))));
-  const syncOfficial = createGachaUpdater((qq, profileId) => sync.sync(qq, profileId, { signal }));
-  async function gachaUpdate(qq: string, profileId: number, notify?: () => unknown) {
+  const syncOfficial = createGachaUpdater((qq, profileId, workflow?: AbortSignal) =>
+    sync.sync(qq, profileId, { signal: workflow ? AbortSignal.any([signal, workflow]) : signal }));
+  async function gachaUpdate(qq: string, profileId: number, notify?: () => unknown, _isDelegated?: boolean, workflow?: AbortSignal) {
     const role = await profiles.savedRole(qq, profileId, "zzz");
     if (overseasRegion(role)) throw new ZzzManualGachaLinkRequired();
-    return syncOfficial(qq, profileId, notify);
+    return syncOfficial(qq, profileId, notify, workflow);
   }
   const legacyOverride = Bun.env.LOTUS_ZZZ_LEGACY_HISTORY_DIR;
   const legacySources = legacyOverride ? [] : retiredData.map(directory => fileURLToPath(new URL("zzzGachaJson/", directory)));
