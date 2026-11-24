@@ -43,7 +43,7 @@ export function createZzzSkillReader(signal: AbortSignal) {
         row.status === "downloaded" && row.placeholder !== true)?.localPath;
       async function galleryImage(path: string | undefined) {
         const bytes = await readAtlasGalleryImage(root, "zzz", path, 8 * 1024 * 1024).catch(() => undefined);
-        return bytes && loadImage(bytes).catch(() => undefined);
+        return bytes && loadImage(Buffer.from(bytes)).catch(() => undefined);
       }
       const local = await openZzzCardTheme({ legacyResources: resources });
       const [background, avatar, icons] = await Promise.all([

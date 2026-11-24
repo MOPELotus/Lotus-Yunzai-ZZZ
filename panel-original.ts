@@ -96,7 +96,7 @@ export async function loadZzzPanelOriginal(directory: string | undefined, paths:
     if (!originalPath(path)) continue;
     const bytes = await readZzzCardLocalArtwork(directory, path).catch(() => undefined);
     if (!bytes) continue;
-    const image = await loadImage(bytes).catch(() => undefined);
+    const image = await loadImage(Buffer.from(bytes)).catch(() => undefined);
     if (image) return { image, original: { path, sha256: hash(bytes) } };
   }
 }
@@ -132,7 +132,7 @@ export async function loadZzzRandomGalleryPortrait(root: string | undefined, nam
     const index = Math.floor(Math.random() * paths.length);
     const path = paths.splice(index, 1)[0]!;
     const bytes = await readGalleryImage(root, path);
-    const image = bytes && await loadImage(bytes).catch(() => undefined);
+    const image = bytes && await loadImage(Buffer.from(bytes)).catch(() => undefined);
     if (bytes && image) {
       const original: PanelOriginal = { path, sha256: hash(bytes), ...(installed ? {} : { gallery: true, ...(snapshot && { snapshot }) }) };
       return { image, original };
@@ -155,7 +155,7 @@ export function createZzzAtlasPortraitReader(atlas: ReturnType<typeof createAtla
     for (const path of new Set(preferIcon ? [icon, artwork] : [artwork, icon])) {
       if (!atlasPortraitPath(path)) continue;
       const bytes = await readAtlasGalleryImage(atlas.assetRoot(entry), "zzz", path, 8 * 1024 * 1024).catch(() => undefined);
-      const image = bytes && await loadImage(bytes).catch(() => undefined);
+      const image = bytes && await loadImage(Buffer.from(bytes)).catch(() => undefined);
       if (bytes && image) return { path, bytes, image };
     }
   };

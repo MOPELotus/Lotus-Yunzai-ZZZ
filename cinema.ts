@@ -150,7 +150,7 @@ export function createZzzCinema(signal: AbortSignal) {
       const local = await openZzzCardTheme({ legacyResources: resources });
       async function gallery(path: string | undefined) {
         const bytes = await readAtlasGalleryImage(root, "zzz", path, 8 * 1024 * 1024).catch(() => undefined);
-        if (bytes) return loadImage(bytes).catch(() => undefined);
+        if (bytes) return loadImage(Buffer.from(bytes)).catch(() => undefined);
       }
       const portrait = `gallery/zzz/Mindscape_${entry.id}_3.webp`;
       const [background, avatar, illustration, impressions] = await Promise.all([
