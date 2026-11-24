@@ -1,3 +1,4 @@
+import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
 import { constants } from "node:fs";
 import { open, realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
@@ -30,7 +31,7 @@ const maxImageBytes = 8 * 1024 * 1024;
 const font = '"LotusZzzHongmeng", sans-serif';
 const white = "#fff";
 const muted = "#e4e4e4";
-const defaultTheme = fileURLToPath(new URL("../../data/zzz/gacha-theme", import.meta.url));
+const defaultTheme = builtinResourceDirectory("games/zzz");
 
 async function themePath(root: string, path: string) {
   const actual = await realpath(join(root, path)).catch(() => undefined);

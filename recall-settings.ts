@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import type { RecallableCommandReply } from "../../lib/commands.ts";
 import { defaultZzzRecallSeconds, maxZzzRecallSeconds, readZzzRecallSeconds } from "../../lib/zzz-recall-config.ts";
 import { rankGroup, rankMembership, type ChallengeRankContext } from "./challenge-rank.ts";
@@ -7,7 +8,7 @@ import { ownsZzzManagement } from "./role-alias-command.ts";
 const installation = new URL("../../", import.meta.url);
 
 export function createZzzRecallSettings(signal: AbortSignal, root = installation,
-  legacyResources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR?.trim()) {
+  legacyResources = zzzResourceDirectory()?.trim()) {
   const file = zzzPanelConfigFile(root);
 
   async function transient<T>(reply: T | Promise<T>): Promise<T | RecallableCommandReply> {

@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -119,7 +120,7 @@ export function zzzPanelConfigFile(root = installation) {
   return explicit ? resolve(explicit) : fileURLToPath(new URL("config/zzz-panel.yaml", root));
 }
 
-export async function readZzzPanelConfigDocument(resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, root = installation) {
+export async function readZzzPanelConfigDocument(resources = zzzResourceDirectory(), root = installation) {
   const local = await optionalYaml(zzzPanelConfigFile(root));
   if (Bun.env.LOTUS_ZZZ_PANEL_CONFIG || !resources) return local ?? {};
   const legacy = dirname(resources);
@@ -254,7 +255,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       return "请从登录档案对应的 QQ 会话使用绝区零面板。";
     }
     const qq = String(user);
-    const resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+    const resources = zzzResourceDirectory();
     if (command.kind === "original") return originalPicture(context, qq, resources, command.sharedCommand === true);
     const { profileId } = command;
     try {

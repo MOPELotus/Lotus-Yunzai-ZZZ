@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { fileURLToPath } from "node:url";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
 import { readAtlasGalleryImage } from "@lotus-yunzai/atlas/gallery";
@@ -15,7 +16,7 @@ const atlasRoot = fileURLToPath(new URL("../../data/atlas/", import.meta.url));
 export function createZzzSkillReader(signal: AbortSignal) {
   const catalog = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
   return async ({ name, levels }: NonNullable<ReturnType<typeof zzzSkillCommand>>, {
-    resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit,
+    resources = zzzResourceDirectory(), inlineImageByteLimit,
   }: { readonly resources?: string; readonly inlineImageByteLimit?: number } = {}) => {
     try {
       const [snapshot, aliases] = await Promise.all([catalog.read(), readZzzRoleAliases(resources).catch(() => undefined)]);

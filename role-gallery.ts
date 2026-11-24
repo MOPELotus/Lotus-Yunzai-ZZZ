@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, unlink, writeFile } from "node:fs/promises";
@@ -97,7 +98,7 @@ function listingKey(context: ZzzRoleGalleryContext, role: string, page: number) 
 export function createZzzRoleGallery(signal: AbortSignal) {
   const catalogue = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
   const root = zzzCharacterGalleryRoot();
-  const legacy = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR?.trim();
+  const legacy = zzzResourceDirectory()?.trim();
   return async (context: ZzzRoleGalleryContext, command: NonNullable<ReturnType<typeof zzzRoleGalleryCommand>>) => {
     if (signal.aborted || context.isDelegated) return;
     const owns = () => !!context.characterGallerySignal && !context.characterGallerySignal.aborted && ownsZzzManagement(context, signal);

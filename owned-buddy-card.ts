@@ -1,3 +1,5 @@
+import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
+import { genshinTemplateFont } from "../../lib/game-template-fonts.ts";
 import { realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,9 +9,9 @@ import { renderZzzBattlePng } from "./challenge-card.ts";
 import { artwork, readZzzCardLocalArtwork } from "./card-theme.ts";
 import { createZzzRecordPortraits } from "./tuning-artwork.ts";
 
-const defaultResources = fileURLToPath(new URL("../../data/daily-note/resources/", import.meta.url));
+const defaultResources = builtinResourceDirectory("templates/daily-note");
 const numberFont = '"LotusZzzBuddyNumbers", "Noto Sans CJK SC", sans-serif';
-const bodyFont = '"PingFang SC", "Noto Sans CJK SC", sans-serif';
+const bodyFont = genshinTemplateFont();
 
 export function zzzOwnedBuddyText(roster: ZzzOwnedBuddyRoster) {
   return [

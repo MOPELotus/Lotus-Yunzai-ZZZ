@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import type { createProfileStore, GameRole } from "@lotus-yunzai/account";
 import { previewRedeemIdentity } from "@lotus-yunzai/hoyo-client/redeem-submit";
 import {
@@ -177,7 +178,7 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
           return `没有${name}排名，请先 %显示${include}排名，并在本群用 %${include} 查询本期战绩。`;
         }
         const result = await renderChallengeRank(mode, rows, {
-          signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit: context.inlineImageByteLimit,
+          signal, legacyResources: zzzResourceDirectory(), inlineImageByteLimit: context.inlineImageByteLimit,
         }).catch(() => undefined);
         if (signal.aborted) return;
         const after = await rankMembership(context, actor);

@@ -222,7 +222,7 @@ function drawPanelProperties(context: Context, model: Detail, images: Images, sc
     label(context, stat.name, x + 57, middle, 18.7, { color, maxWidth: 132 });
     if (hasDelta(stat)) {
       const added = stat.added!;
-      context.font = '15.84px "Noto Sans CJK SC", sans-serif';
+      context.font = '15.84px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
       context.textAlign = "right";
       context.textBaseline = "middle";
       context.fillStyle = "#b6b6b6";

@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { fileURLToPath } from "node:url";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
 import { readAtlasGalleryImage } from "@lotus-yunzai/atlas/gallery";
@@ -133,7 +134,7 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
 
 export function createZzzCinema(signal: AbortSignal) {
   const catalog = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
-  return async (query: string, { resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit }: {
+  return async (query: string, { resources = zzzResourceDirectory(), inlineImageByteLimit }: {
     readonly resources?: string;
     readonly inlineImageByteLimit?: number;
   } = {}) => {

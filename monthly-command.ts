@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { ProfileError, type createProfileStore, type GameRole } from "@lotus-yunzai/account";
 import { GameRecordRequestError, HoyoRequestError, resolveZzzGachaLinkRole, type createProfileHoyoClient,
   type ZzzMonthlyRecord } from "@lotus-yunzai/hoyo-client";
@@ -152,7 +153,7 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
       if (failed instanceof GameRecordRequestError && warning) warning = `${failed.message} ${warning}`;
       const view = { all: collected, collect: options.collect, page, warning, command };
       const image = await renderZzzMonthly(view, role, region,
-        { qq, signal: activeSignal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
+        { qq, signal: activeSignal, legacyResources: zzzResourceDirectory(),
           inlineImageByteLimit: context.inlineImageByteLimit }).catch(() => undefined);
       await archiveAccess();
       return image ? { type: "image" as const, file: image.png } : zzzMonthlyText(view);

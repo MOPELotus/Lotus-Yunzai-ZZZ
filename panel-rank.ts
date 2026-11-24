@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { createGroupRankRefresh, MAX_PROFILE_ID, type createProfileStore } from "@lotus-yunzai/account";
 import { rankGroup, rankMembership, type ChallengeRankContext } from "./challenge-rank.ts";
 import { readRankConfig } from "./challenge-rank-store.ts";
@@ -37,7 +38,7 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
     const { group, actor } = scope;
     const key = rankKey(group);
     const participant = `${actor}:${command.profileId}`;
-    const resources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+    const resources = zzzResourceDirectory();
     const roleFor = createPanelRankIdentityReader(profiles, { openHoYoLabZzzCheckin }, signal);
     try {
       const settings = await readRankConfig(group);

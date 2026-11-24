@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { constants } from "node:fs";
 import { open, readFile, realpath } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
@@ -125,7 +126,7 @@ export function zzzRankConfigFile(root = installation) {
 }
 
 export async function readZzzRankConfigDocument(root = installation) {
-  const resourceDirectory = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+  const resourceDirectory = zzzResourceDirectory();
   const explicit = Bun.env.LOTUS_ZZZ_RANK_CONFIG;
   const files = [zzzRankConfigFile(root), ...(!explicit && resourceDirectory ? [join(dirname(resourceDirectory), "config", "rank.yaml")] : [])];
   for (const path of files) {

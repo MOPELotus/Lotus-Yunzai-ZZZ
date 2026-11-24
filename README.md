@@ -4,7 +4,7 @@
 
 发送 `%卡片`、`%个人信息`、`%角色` 或 `%card` 查看当前登录档案的国服战绩。也接受 `#zzz` 和 `#绝区零` 前缀。命令末尾加档案编号可查询其他档案，例如 `%卡片2`。卡片包含活跃天数、代理人与邦布数量、式舆防卫战进度以及代理人与邦布的等级和影画或星级。
 
-如已部署旧版绝区零插件，可将 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 指向其 `resources` 目录。战绩卡从该目录读取旧主题、字体及已经下载的代理人和邦布头像。原主题或头像缺失时，卡片用内置排版和官方或图鉴已有头像继续出图。此目录只需提供读取权限。
+默认读取主仓 `resources/builtin/games/zzz/` 内置原素材；如需覆盖，可将 `LOTUS_ZZZ_LEGACY_RESOURCES_DIR` 指向其 `resources` 目录。战绩卡从该目录读取旧主题、字体及已经下载的代理人和邦布头像。原主题或头像缺失时，卡片用内置排版和官方或图鉴已有头像继续出图。此目录只需提供读取权限。
 
 ## 式舆防卫战
 
@@ -70,7 +70,7 @@
 
 ## 来源
 
-个人战绩、式舆防卫战和危局强袭战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss,deadly}.js`、`resources/{card,abyss,deadly}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。旧游戏美术、原插件字体和缓存头像由部署方在本机提供。
+个人战绩、式舆防卫战和危局强袭战兼容 [ZZZure/ZZZ-Plugin 2.5.4](https://github.com/ZZZure/ZZZ-Plugin/tree/20575991eb9cd51461d6a10b186c66b2fc8e2309) 的 `dist/apps/{card,abyss,deadly}.js`、`resources/{card,abyss,deadly}/index.html`、同目录样式及 `resources/common/layout/`。上游代码采用 AGPL-3.0。生产旧版 Gitee 镜像同样指向此提交。固定原插件美术与字体随主仓提供；动态头像优先使用官方接口和图鉴。
 
 挑战群榜沿用同版本的 `dist/apps/rank.js`、`dist/lib/rank.js` 和 `resources/rank/{abyss,deadly,deadlyHard}/`。
 
@@ -90,4 +90,4 @@
 
 发送 `#母带`、`#绝区零存货`、`#绝区零存量` 或 `#绝区零囤货` 可直接查询本人国服实时调频库存，无需先同步抽卡记录。支持 `%母带2` 等档案编号。图卡按原顺序列出菲林底片、菲林、加密母带、原装母带和邦布券。资料变化或原会话断开时取消本次结果。
 
-版式参照 [thisee/xhh 固定旧母带模板](https://github.com/thisee/xhh/tree/f898ce6d08ee7a09bede98ef6e9f493d770560d0/resources/zzz_md)。部署者可设置 `LOTUS_ZZZ_INVENTORY_THEME_DIR` 指向已有的旧素材根，其内含 `zzz_md/imgs/` 和可选的 `font/yuan.ttf`，默认读取主仓 `data/zzzInventoryTheme/`。缺少旧素材时仍绘制可辨识的库存卡，模块源码不附带上游图片或字体。
+版式参照 [thisee/xhh 固定旧母带模板](https://github.com/thisee/xhh/tree/f898ce6d08ee7a09bede98ef6e9f493d770560d0/resources/zzz_md)。部署者可设置 `LOTUS_ZZZ_INVENTORY_THEME_DIR` 指向已有的旧素材根，其内含 `zzz_md/imgs/` 和可选的 `font/yuan.ttf`，默认读取主仓 `resources/builtin/games/zzz-inventory/` 内置固定模板、图片和字体。

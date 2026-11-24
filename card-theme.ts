@@ -1,3 +1,4 @@
+import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
 import { constants } from "node:fs";
 import { open, realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
@@ -122,7 +123,7 @@ export function label(context: Context, text: string, x: number, y: number, size
 
 
 export async function openZzzCardTheme(options: ZzzCardOptions) {
-  const root = options.legacyResources ? await realpath(options.legacyResources).catch(() => undefined) : undefined;
+  const root = await realpath(options.legacyResources || zzzResourceDirectory()).catch(() => undefined);
   const originalFont = await localPath(root, "common/fonts/inpinhongmengti.ttf");
   if (originalFont) {
     try { FontLibrary.use("LotusZzzRecordHongmeng", [originalFont]); } catch { /* Use a system font if the old font cannot be loaded. */ }
@@ -174,3 +175,5 @@ export function drawZzzCardPlayer(context: Context, role: GameRole, displayRegio
   else box(context, "#1b1b25", 192, 90, 225, 42);
   label(context, `UID ${role.uid}`, 304.5, 111, 22, { color: "#ffffff99", align: "center" });
 }
+
+export function zzzResourceDirectory() { return Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR?.trim() || builtinResourceDirectory("games/zzz"); }

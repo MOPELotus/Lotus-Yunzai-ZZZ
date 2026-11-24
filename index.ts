@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { fileURLToPath } from "node:url";
 import type { InboundSegment, ReplyOptions } from "../../lib/messages.ts";
 import { createProfileStore, gameCommandProfileId, MAX_PROFILE_ID, ProfileError, profileCookieAccountId, type GameRole, type ProfileRequestContext } from "@lotus-yunzai/account";
@@ -205,7 +206,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       try {
         const options = { signal: renderSignal, inlineImageByteLimit: context.inlineImageByteLimit };
         const { png } = "avatars" in record
-          ? await renderZzzGameRecord(record, role, { ...options, qq, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR })
+          ? await renderZzzGameRecord(record, role, { ...options, qq, legacyResources: zzzResourceDirectory() })
           : await renderZzzOwnedBuddyCard(record, options);
         return { type: "image" as const, file: png };
       } catch (error) {
@@ -282,7 +283,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         return `迷宫诡域战绩共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
       }
       const pages = await renderZzzZenkov(record, source.role, command,
-        { qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit: context.inlineImageByteLimit })
+        { qq, signal, legacyResources: zzzResourceDirectory(), inlineImageByteLimit: context.inlineImageByteLimit })
         .catch((error: unknown) => error instanceof ZzzInlineImageLimitError ? [`${error.message}\n${zzzZenkovText(record, command)}`] : undefined);
       if (signal.aborted) return [];
       const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
@@ -326,7 +327,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const command = `%区域收集${zzzCommandProfileSuffix(profileId)}`;
       if (record.page > record.pageCount) return `区域收集共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
       const renderer = createZzzExplorationRenderer(record, source.role, command, {
-        qq, signal, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, inlineImageByteLimit: context.inlineImageByteLimit,
+        qq, signal, legacyResources: zzzResourceDirectory(), inlineImageByteLimit: context.inlineImageByteLimit,
       });
       const render = (view: ZzzExplorationSnapshot) => renderer.then(draw => draw(view))
         .catch((error: unknown) => error instanceof ZzzInlineImageLimitError || error instanceof ImageSizeLimitError ? error : undefined);
@@ -418,7 +419,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         challengeRanks.remember(context, profileId, source.role, snapshot, type, requestedAt, stillActive))) : undefined;
       const { inlineImageByteLimit } = context;
       const theme = {
-        qq, signal, rankVisibility, towerVisibility, inlineImageByteLimit, legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR,
+        qq, signal, rankVisibility, towerVisibility, inlineImageByteLimit, legacyResources: zzzResourceDirectory(),
       };
       const result = await ("hollowMode" in snapshot ? renderZzzHollowZero(snapshot, source.role, theme) :
         "seasons" in snapshot ? renderZzzClimbingTower(snapshot, source.role, theme) :
@@ -630,7 +631,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (panelHint) return panelHint;
       if (zzzCurrentPoolCommand.test(context.normalizedMessage)) return currentPool();
       const historyQuery = zzzPoolHistoryCommand(context.normalizedMessage);
-      if (historyQuery) return poolHistory(historyQuery, Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR);
+      if (historyQuery) return poolHistory(historyQuery, zzzResourceDirectory());
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
       const buddies = ownedBuddyCommand.exec(command);
       if (buddies) {

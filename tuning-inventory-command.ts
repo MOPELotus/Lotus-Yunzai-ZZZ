@@ -1,3 +1,5 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
+import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
 import { fileURLToPath } from "node:url";
 import { MAX_PROFILE_ID, ProfileError, type createProfileStore } from "@lotus-yunzai/account";
 import { HoyoRequestError, ZzzTuningRateLimitError, type createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
@@ -7,7 +9,7 @@ import { inventoryFields, renderZzzInventoryCard } from "./tuning-inventory-card
 
 const usage = "发送 #母带、#绝区零存货 或 %母带2 查询自己的实时调频库存。";
 export const zzzInventoryCommand = /^#*(?:(?:绝区零|zzz)?母带|(?:绝区零|zzz)(?:存货|存量|囤货))\s*([1-9]\d{0,2})?$/iu;
-const localTheme = fileURLToPath(new URL("../../data/zzzInventoryTheme/", import.meta.url));
+const localTheme = builtinResourceDirectory("games/zzz-inventory");
 
 type Context = Pick<MessageFallbackContext, "user_id" | "self_id" | "message" | "isDelegated" |
   "inlineImageByteLimit" | "privateCredentialSignal" | "groupActivitySignal"> & { readonly message_type?: string };
@@ -55,7 +57,7 @@ export function createZzzInventoryQuery(
       const inlineImageByteLimit = context.inlineImageByteLimit ?? 16 * 1024 * 1024;
       const output = await render({ qq, uid, nickname, level, rows }, {
         themeDirectory: Bun.env.LOTUS_ZZZ_INVENTORY_THEME_DIR?.trim() || localTheme,
-        legacyResources: Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, signal, inlineImageByteLimit,
+        legacyResources: zzzResourceDirectory(), signal, inlineImageByteLimit,
         mode: configured === "gpu" || configured === "cpu" ? configured : "auto",
       }).catch(() => undefined);
       signal.throwIfAborted();

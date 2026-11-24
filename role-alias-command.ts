@@ -1,3 +1,4 @@
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { fileURLToPath } from "node:url";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
 import { readZzzAliasRegistry, updateZzzRoleAlias, zzzAliasKey, zzzRoleAlias, zzzRoleName } from "@lotus-yunzai/atlas/zzz-aliases";
@@ -36,7 +37,7 @@ export function createZzzRoleAliasCommands(signal: AbortSignal) {
     try {
       if (command.kind !== "list" && scope && !await rankMembership(context, scope.actor)) return "暂无法核对当前群成员。";
       const [snapshot, registry] = await Promise.all([
-        catalogue.read(), readZzzAliasRegistry(Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR, redis),
+        catalogue.read(), readZzzAliasRegistry(zzzResourceDirectory(), redis),
       ]);
       function roleFor(name: string) {
         const canonical = zzzRoleAlias(registry.groups, name) ?? name;

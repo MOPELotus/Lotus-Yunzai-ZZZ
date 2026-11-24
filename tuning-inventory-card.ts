@@ -1,3 +1,4 @@
+import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
 import { realpath, stat } from "node:fs/promises";
 import { join, sep } from "node:path";
 import { FontLibrary, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
@@ -69,7 +70,7 @@ function chip(context: Context, label: string, y: number) {
 }
 
 export async function renderZzzInventoryCard(model: InventoryCard, {
-  themeDirectory, legacyResources, signal, avatar, mode = "auto", inlineImageByteLimit,
+  themeDirectory = Bun.env.LOTUS_ZZZ_INVENTORY_THEME_DIR?.trim() || builtinResourceDirectory("games/zzz-inventory"), legacyResources, signal, avatar, mode = "auto", inlineImageByteLimit,
 }: {
   themeDirectory?: string;
   legacyResources?: string;
