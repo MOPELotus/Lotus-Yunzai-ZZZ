@@ -127,13 +127,16 @@ function createArtwork<T extends ArtRecord>({
   kindOfRecord: (record: T) => Kind | undefined;
 }) {
   const catalog = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
-  const sources = new Map<string, { record: T; kind: Kind }>();
+  const sources = new Map<string, { record: T; kind: Kind; official?: URL }>();
 
   function resolveIcon(record: T) {
     const kind = kindOfRecord(record);
     if (!kind) return;
     const key = `${kind}/${record.itemId}`;
-    if (!sources.has(key)) sources.set(key, { record, kind });
+    const official = record.icon ? officialIcon(record.icon) : undefined;
+    const source = sources.get(key);
+    if (!source) sources.set(key, { record, kind, official });
+    else if (!source.official && official) source.official = official;
     return key;
   }
 
@@ -150,8 +153,7 @@ function createArtwork<T extends ArtRecord>({
     if (key === avatarKey) return fetchZzzQqAvatar(qq, signal, transport);
     const source = sources.get(key);
     if (!source) return;
-    const { record, kind } = source;
-    const official = record.icon && officialIcon(record.icon);
+    const { record, kind, official } = source;
     if (official) {
       const image = await fetchArtwork(official, transport, signal);
       if (image) return image;
