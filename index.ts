@@ -154,9 +154,9 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
   const readLegacy = (qq: string, uid: string) =>
     readZzzLegacyGachaSources(legacyOverride || legacyHistoryDirectory, legacySources, qq, uid);
   const linkHistory = createZzzLinkHistory(linkHistoryDirectory, lockFile);
-  const getLink = createGachaUpdater(async (qq, profileId) => {
+  const getLink = createGachaUpdater(async (qq, profileId, active?: AbortSignal) => {
     const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
-    const result = await client.fetchZzzGachaAuthKey(source, { signal });
+    const result = await client.fetchZzzGachaAuthKey(source, { signal: active });
     const latest = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
     if (latest?.revision !== result.revision || latest.role.uid !== result.uid) {
       throw new ProfileError("changed", "绝区零档案角色已变化。");
@@ -700,11 +700,15 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
             !context.user_id || !Number.isSafeInteger(context.user_id) || context.user_id < 1) {
           return "请私聊获取绝区零抽卡链接。";
         }
+        const session = context.privateCredentialSignal;
+        if (context.isDelegated || !session) return "请在当前机器人的好友私聊中获取绝区零抽卡链接。";
+        const active = AbortSignal.any([signal, session]);
+        if (active.aborted) return;
         try {
-          const url = await getLink(String(context.user_id), profileId);
-          if (!signal.aborted) return url ?? "该档案正在获取绝区零抽卡链接，请稍后再试。";
+          const url = await getLink(String(context.user_id), profileId, undefined, active);
+          if (!active.aborted) return url ?? "该档案正在获取绝区零抽卡链接，请稍后再试。";
         } catch (error) {
-          if (signal.aborted) return;
+          if (active.aborted) return;
           if (error instanceof ProfileError) {
             if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
             if (error.code === "role-missing") return `[zzz] profile ${profileId} 未选中已认证的绝区零 UID。`;
