@@ -10,13 +10,14 @@ import { createZzzMonthlyArchive } from "./monthly-archive.ts";
 import { renderZzzMonthly, zzzMonthlyPageSize, zzzMonthlyText } from "./monthly-card.ts";
 import { zzzMonthlyDate } from "./monthly-model.ts";
 import { zzzCommandProfileSuffix } from "./profile-command.ts";
+import { ownOperationSession, type OwnOperationContext } from "../../lib/own-operation-session.ts";
 
 export const zzzMonthlyCommand = /^#绝区零(?:monthly|菲林|邦布券|收入|月报)(?:(统计)|(?:(\d{4})年)?(?:(\d{1,2}|上)月)?)\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,5}))?$/iu;
 
 type MonthlyRead = Pick<Awaited<ReturnType<ReturnType<typeof createProfileHoyoClient>["fetchZzzMonthly"]>>,
   "months" | "selectedMonth" | "hasEnvelope">;
 
-interface Context {
+interface Context extends OwnOperationContext {
   readonly user_id?: number;
   readonly message_type?: string;
   readonly isDelegated?: boolean;
@@ -69,10 +70,12 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
       const international = overseas ? await profiles.internationalRoleContext(qq, profileId, "zzz") : undefined;
       if (!source && !international) return $t("monthly-command.text_65d5ab8c31", { "profileId": profileId });
       if (overseas) {
-        if (context.message_type !== "private" || !context.privateCredentialSignal) {
+        const groupSession = context.message_type === "group" ? ownOperationSession(context) : undefined;
+        const connection = groupSession?.signal ?? (context.message_type === "private" ? context.privateCredentialSignal : undefined);
+        if (!connection) {
           return $t("monthly-command.text_ed03fece62");
         }
-        activeSignal = AbortSignal.any([signal, context.privateCredentialSignal]);
+        activeSignal = AbortSignal.any([signal, connection]);
         if (activeSignal.aborted) return [];
       }
       if (international) {

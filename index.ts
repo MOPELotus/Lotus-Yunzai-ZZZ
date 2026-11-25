@@ -16,6 +16,7 @@ import { buildZzzLegacyDetail } from "./gacha-legacy-detail.ts";
 import { createZzzLinkHistory, mergeZzzLegacyWithLinked } from "./gacha-link-history.ts";
 import { createZzzGachaLinkSession } from "./gacha-link-session.ts";
 import { ImageSizeLimitError } from "@lotus-yunzai/skia";
+import { ownOperationSession, type OwnOperationContext } from "../../lib/own-operation-session.ts";
 import { zzzRegionName } from "./card-theme.ts";
 import { ZzzInlineImageLimitError } from "./challenge-card.ts";
 import { renderZzzClimbingTower, zzzClimbingTowerText } from "./climbing-tower-card.ts";
@@ -107,7 +108,7 @@ function overseasRegion({ uid, region, gameBiz }: GameRole) {
   }
 }
 
-interface GachaContext extends ZzzRoleGalleryContext {
+interface GachaContext extends ZzzRoleGalleryContext, OwnOperationContext {
   readonly adapter?: string;
   readonly normalizedMessage: string;
   readonly inlineImageByteLimit?: number;
@@ -226,10 +227,12 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         const international = await profiles.internationalRoleContext(qq, profileId, "zzz");
         if (!source && !international) return $t("index.text_f4a9dc8367", { "profileId": profileId });
         if (buddyOnly) return $t("index.text_267a24063f");
-        if (context.message_type !== "private" || context.isDelegated || !context.privateCredentialSignal) {
+        const groupSession = context.message_type === "group" ? ownOperationSession(context) : undefined;
+        const connection = groupSession?.signal ?? (context.message_type === "private" ? context.privateCredentialSignal : undefined);
+        if (context.isDelegated || !connection) {
           return $t("index.text_04cb51c45a");
         }
-        activeSignal = AbortSignal.any([activeSignal, context.privateCredentialSignal]);
+        activeSignal = AbortSignal.any([activeSignal, connection]);
         if (activeSignal.aborted) return [];
         if (!international) return $t("index.text_47f3e3964b", { "profileId": profileId });
         if (source && source.revision !== international.revision) return changed;
