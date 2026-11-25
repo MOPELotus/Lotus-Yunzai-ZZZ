@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { fileURLToPath } from "node:url";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
@@ -21,7 +24,7 @@ export function createZzzSkillReader(signal: AbortSignal) {
     try {
       const [snapshot, aliases] = await Promise.all([catalog.read(), readZzzRoleAliases(resources).catch(() => undefined)]);
       const matches = findTraditionalEntries(snapshot, zzzRoleAlias(aliases, name) ?? name, "zzz", "character");
-      if (matches.length !== 1) return `未找到${name}的技能资料。`;
+      if (matches.length !== 1) return $t("skills-command.text_98c70549e8", { "name": name });
       const { entry } = matches[0]!;
       if (!/^[1-9]\d{0,5}$/u.test(entry.id)) return;
       // The compact Atlas view omits the original B–E attack-data columns.
@@ -30,12 +33,12 @@ export function createZzzSkillReader(signal: AbortSignal) {
       const item = panelObject(await readPanelJson(root, entry.path));
       const meta = panelObject(item.meta);
       if (meta.gameId !== "zzz" || meta.pageId !== "character" || meta.recordId !== entry.id || meta.version !== entry.version) {
-        return `${entry.name}的原始技能记录无法核验。`;
+        return $t("skills-command.text_f11a55782f", { "name": entry.name });
       }
       const detail = panelObject(panelObject(item.content).detail);
-      if (String(detail.id) !== entry.id) return `${entry.name}的原始技能记录无法核验。`;
+      if (String(detail.id) !== entry.id) return $t("skills-command.text_f11a55782f", { "name": entry.name });
       const sections = buildZzzSkills(detail, levels);
-      if (!sections) return `${entry.name}的指定等级技能资料不完整。`;
+      if (!sections) return $t("skills-command.text_36fcfe9b7c", { "name": entry.name });
       if (signal.aborted) return [];
       const partner = panelObject(detail.partner_info);
       const impressions = [partner.impression_f, partner.impression_m].map(zzzSkillText).filter(Boolean);
@@ -63,11 +66,11 @@ export function createZzzSkillReader(signal: AbortSignal) {
       }, inlineImageByteLimit);
       if (signal.aborted) return [];
       const images = pages.map(({ png }) => ({ type: "image" as const, file: png }));
-      return images.length === 1 ? images[0] : { type: "forward" as const, nodes: [`${entry.name}技能 · ${images.length} 页`, ...images] };
+      return images.length === 1 ? images[0] : { type: "forward" as const, nodes: [$t("skills-command.text_cfd049d3f5", { "name": entry.name, "length": images.length }), ...images] };
     } catch (error) {
       if (signal.aborted) return [];
-      if (error instanceof ZzzInlineImageLimitError) return "绝区零技能图超过当前会话的图片大小上限。";
-      return "绝区零技能暂时无法查看。";
+      if (error instanceof ZzzInlineImageLimitError) return $t("skills-command.text_2cbb80ffd2");
+      return $t("skills-command.text_07359a0477");
     }
   };
 }

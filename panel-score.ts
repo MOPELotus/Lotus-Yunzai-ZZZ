@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { buildZzzPanelDetail, panelInteger, type PanelStat } from "./panel-detail.ts";
 import { characterRules, mainStatsBySlot, statShortNames, substatBase, type CharacterRule, type NamedWeights } from "./panel-score-data.ts";
@@ -34,14 +37,14 @@ const rules: Readonly<Record<string, { weights: NamedWeights; match: (build: Bui
 };
 
 const defaults: Readonly<Partial<Record<number, CharacterRule>>> = {
-  1: ["主C·双爆"], 2: ["冲击·双爆", "冲击·攻击", "冲击·异常"], 3: ["主C·异常", "辅助·异常"],
-  4: ["辅助·双爆", "辅助·异常"], 5: ["辅助·双爆", "辅助·异常"], 6: ["命破·双爆"], 7: ["锋御·双爆"],
+  1: [$t("panel-score.text_7e4aa8b10f")], 2: [$t("panel-score.text_2e090b0699"), $t("panel-score.text_ecfa230028"), $t("panel-score.text_a98d7dcd08")], 3: [$t("panel-score.text_8e0631f66a"), $t("panel-score.text_0c3adf1f61")],
+  4: [$t("panel-score.text_6e31c7a2cb"), $t("panel-score.text_0c3adf1f61")], 5: [$t("panel-score.text_6e31c7a2cb"), $t("panel-score.text_0c3adf1f61")], 6: [$t("panel-score.text_ba89f259f4")], 7: [$t("panel-score.text_b0714708ab")],
 };
 const elementDamageId: Readonly<Partial<Record<number, number>>> = {
   200: 31503, 201: 31603, 202: 31703, 203: 31803, 204: 32303, 205: 31903,
 };
 const legacyPercentSubstats = new Set([11102, 12102, 13102, 20103, 21103]);
-const baseGroups = [[11103, 11102, "生命值"], [12103, 12102, "攻击力"], [13103, 13102, "防御力"]] as const;
+const baseGroups = [[11103, 11102, $t("panel-score.text_1a256e6376")], [12103, 12102, $t("panel-score.text_b84ee11f4f")], [13103, 13102, $t("panel-score.text_1cb579e6ba")]] as const;
 
 function propertyValue(value: string | undefined) {
   if (!value) return 0;
@@ -56,20 +59,20 @@ export function buildZzzPanelWeights(avatar: ZzzPanelAvatar, properties: Detail[
   const candidates = "weights" in config ? config.rules ?? [] : config;
   const find = (name: string) => properties.find(prop => prop.name === name);
   const val = (name: string) => propertyValue(find(name)?.value);
-  const build = { attack: val("攻击力"), crit: val("暴击率") * 2 + val("暴击伤害"),
-    mastery: val("异常掌控"), proficiency: val("异常精通") };
+  const build = { attack: val($t("panel-score.text_b84ee11f4f")), crit: val($t("panel-score.text_d4b0baf955")) * 2 + val($t("panel-score.text_15bccc3951")),
+    mastery: val($t("panel-score.text_d29c3efc8f")), proficiency: val($t("panel-score.text_e7b27fa0b1")) };
   const matched = candidates.find(name => rules[name]?.match(build)) ?? candidates.find(name => rules[name]);
-  let rule = matched ? matched + (overrides && Object.keys(overrides).length ? "·改" : "") : "默认";
+  let rule = matched ? matched + (overrides && Object.keys(overrides).length ? $t("panel-score.text_894b2cac02") : "") : $t("panel-score.text_844b8cc8df");
   let selected = { ...(matched ? rules[matched]!.weights : {}), ...overrides };
   // Built-in character hooks from the upstream score.js files for Ben, Alice and Vivian.
   if (avatar.id === 1121 && build.crit >= 2) {
-    rule = "你没戴安全帽！";
+    rule = $t("panel-score.text_bfd3754be1");
     selected = { ...selected, ...critBuild, 11102: 0, 13102: 0.5, 12202: 0, 30502: 0, 31203: 0, 31402: 0 };
   } else if (avatar.id === 1401 && build.crit >= 2 && build.proficiency < 300) {
-    rule = "直伤流";
+    rule = $t("panel-score.text_f7b50a8cd2");
     selected = { ...selected, ...critBuild, 11102: 0, 13102: 0, 12202: 0, 30502: 0, 31203: 0.5, 31402: 0 };
   } else if (avatar.id === 1331 && avatar.rank >= 4) {
-    rule = "高影画";
+    rule = $t("panel-score.text_6e3a412be4");
     selected[21103] = 0.25;
   }
   const { element, ...weights } = selected;

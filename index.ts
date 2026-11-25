@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { fileURLToPath } from "node:url";
 import type { InboundSegment, ReplyOptions } from "../../lib/messages.ts";
@@ -73,15 +76,15 @@ const zenkovCommand = /^#绝区零(?:迷宫诡域|迷宫|诡域|搜打撤|塔科
 const explorationCommand = /^#绝区零(?:区域收集|收集|探索度|探索)\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,5}))?$/u;
 const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|拟真鏖战试炼|鏖战|爬塔|枯萎|苗圃|迷失|零号|空洞|迷宫|诡域|搜打撤|塔[科可克]夫|鸭科夫|绝科夫|区域收集|收集|探索|monthly|菲林|邦布券|收入|月报|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
 const help = [
-  "绝区零抽卡记录",
-  "%更新抽卡记录 同步国服米游社的六个频段。",
-  "%抽卡记录 查看调频记录，当前登录可用时另发实时库存。",
-  "%母带 / #绝区零存货 直接查看本人实时调频库存。",
-  "%抽卡链接 私聊录入有效的绝区零官方抽卡链接。",
-  "%获取抽卡链接 私聊获取当前国服档案的官方抽卡链接。",
-  "%逐抽记录 查看录入的记录和已有旧档案。",
-  "国际服绑定档案可查看已有的旧调频记录。",
-  "命令末尾可加档案编号，例如 %抽卡记录2。",
+  $t("index.text_8efe873b92"),
+  $t("index.text_bc6853ff0f"),
+  $t("index.text_cccc574501"),
+  $t("index.text_115410d9ce"),
+  $t("index.text_800df7007a"),
+  $t("index.text_76b18000b5"),
+  $t("index.text_fbb1f97e09"),
+  $t("index.text_9512bae9c6"),
+  $t("index.text_874cda5a44"),
 ].join("\n");
 const historyDirectory = fileURLToPath(new URL("../../data/zzzTuningStats/", import.meta.url));
 const legacyHistoryDirectory = fileURLToPath(new URL("../../data/zzzGachaJson/", import.meta.url));
@@ -161,7 +164,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     const result = await client.fetchZzzGachaAuthKey(source, { signal: active });
     const latest = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
     if (latest?.revision !== result.revision || latest.role.uid !== result.uid) {
-      throw new ProfileError("changed", "绝区零档案角色已变化。");
+      throw new ProfileError("changed", $t("index.text_9cf98a9cde"));
     }
     return result.url.href;
   });
@@ -176,9 +179,9 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const { stats, added } = await linkHistory.merge(identity, snapshot, verifyProfile);
       const records = mergeZzzLegacyWithLinked(legacy, stats)!.pools;
       const lines = stats.pools.map(({ name, type }) =>
-        `${name} · 本次录入 ${added[type]} 条，合并旧档共 ${records.find((pool) => pool.type === type)?.records.length ?? 0} 条`);
-      const command = `%逐抽记录${zzzCommandProfileSuffix(profileId)}`;
-      return { type: "forward", nodes: ["绝区零抽卡链接录入完成。", ...lines, `发送 ${command} 查看。`] };
+        $t("index.text_1ad19c8a98", { "name": name, "value2": added[type], "value3": records.find((pool) => pool.type === type)?.records.length ?? 0 }));
+      const command = $t("index.text_87a81e8170", { "value1": zzzCommandProfileSuffix(profileId) });
+      return { type: "forward", nodes: [$t("index.text_8ff173785b"), ...lines, $t("index.text_32cdf01bcc", { "command": command })] };
     },
   });
 
@@ -186,20 +189,20 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     const { user_id: user } = context;
     if ((context.message_type !== "private" && context.message_type !== "group") ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
-      return "请从登录档案对应的 QQ 会话查询绝区零战绩。";
+      return $t("index.text_066ab2246e");
     }
     const qq = String(user);
-    const subject = buddyOnly ? "邦布" : "战绩";
-    const changed = `绝区零档案已变化，请重新查询${subject}。`;
+    const subject = buddyOnly ? $t("index.text_aa46a7c35b") : $t("index.text_f7ae19fb98");
+    const changed = $t("index.text_318d0fed8b", { "subject": subject });
     let activeSignal = signal;
     if (buddyOnly) {
       const bot = context.self_id;
       const connection = context.message_type === "group" ? context.groupActivitySignal : context.privateCredentialSignal;
       if (!connection || context.isDelegated || !bot || !Number.isSafeInteger(bot) || bot < 1 || user === bot) {
-        return "请从自己的已连接 QQ 会话查询绝区零邦布。";
+        return $t("index.text_2d7ab0ec89");
       }
       if (context.message?.some(segment => segment.type === "at" && String(segment.qq) !== String(bot))) {
-        return "只能查询自己选中的绝区零档案。";
+        return $t("index.text_eed183658b");
       }
       activeSignal = AbortSignal.any([signal, connection]);
     }
@@ -212,7 +215,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         return { type: "image" as const, file: png };
       } catch (error) {
         if (!(error instanceof ZzzInlineImageLimitError || error instanceof ImageSizeLimitError)) throw error;
-        return `图片超过当前会话大小上限，已改为文字。\n${"avatars" in record ? zzzGameRecordText(record) : zzzOwnedBuddyText(record)}`;
+        return $t("index.text_c26b33d678", { "value1": "avatars" in record ? zzzGameRecordText(record) : zzzOwnedBuddyText(record) });
       }
     }
     try {
@@ -221,14 +224,14 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       });
       if (!source || overseasRegion(source.role)) {
         const international = await profiles.internationalRoleContext(qq, profileId, "zzz");
-        if (!source && !international) return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
-        if (buddyOnly) return "邦布持有查询支持国服绝区零档案。";
+        if (!source && !international) return $t("index.text_f4a9dc8367", { "profileId": profileId });
+        if (buddyOnly) return $t("index.text_267a24063f");
         if (context.message_type !== "private" || context.isDelegated || !context.privateCredentialSignal) {
-          return "绝区零国际服战绩请从本人私聊查询。";
+          return $t("index.text_04cb51c45a");
         }
         activeSignal = AbortSignal.any([activeSignal, context.privateCredentialSignal]);
         if (activeSignal.aborted) return [];
-        if (!international) return `请先在 档案 ${profileId} 绑定已核验的 HoYoLAB 账号。`;
+        if (!international) return $t("index.text_47f3e3964b", { "profileId": profileId });
         if (source && source.revision !== international.revision) return changed;
         const { revision } = international;
         async function verifyProfile() {
@@ -253,8 +256,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     } catch (error) {
       if (activeSignal.aborted || context.privateCredentialSignal?.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
-        if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return $t("index.text_76720712c8", { "profileId": profileId });
+        if (error.code === "role-missing") return $t("index.text_f4a9dc8367", { "profileId": profileId });
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -263,7 +266,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         if (error.code === "profile-changed") return changed;
         if (error.code === "invalid-input") return error.message;
       }
-      return `绝区零${subject}暂时无法查询。`;
+      return $t("index.text_acbd9b9ebe", { "subject": subject });
     }
   }
 
@@ -271,17 +274,17 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     const user = context.user_id;
     if ((context.message_type !== "private" && context.message_type !== "group") || context.isDelegated ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
-      return "请从登录档案对应的 QQ 会话查询迷宫诡域。";
+      return $t("index.text_df04936c91");
     }
     const qq = String(user);
-    const changed = "绝区零档案已变化，请重新查询迷宫诡域。";
+    const changed = $t("index.text_9d19833de3");
     try {
       const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const record = await client.fetchZzzZenkov(source, { kind, page, signal });
-      if (record.status === "empty") return kind === "detail" ? "暂无迷宫诡域详细战绩数据" : "暂无迷宫诡域数据";
-      const command = `%迷宫战绩${zzzCommandProfileSuffix(profileId)}`;
+      if (record.status === "empty") return kind === "detail" ? $t("index.text_85d6c7a419") : $t("index.text_9df23feb26");
+      const command = $t("index.text_10d85181ae", { "value1": zzzCommandProfileSuffix(profileId) });
       if (record.kind === "detail" && record.firstPage > record.pageCount) {
-        return `迷宫诡域战绩共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
+        return $t("index.text_1abb50bdb0", { "pageCount": record.pageCount, "command": command, "value3": record.pageCount });
       }
       const pages = await renderZzzZenkov(record, source.role, command,
         { qq, signal, legacyResources: zzzResourceDirectory(), inlineImageByteLimit: context.inlineImageByteLimit })
@@ -294,13 +297,13 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const nodes = pages.map(page => typeof page === "string" ? page : ({ type: "image" as const, file: page.png }));
       if (nodes.length === 1) return nodes[0];
       const followUp = zzzZenkovFollowUp(record, command, nodes.length);
-      const title = `迷宫诡域战绩 · ${nodes.length} 页${followUp ? `\n${followUp}` : ""}`;
+      const title = $t("index.text_69c07d5803", { "length": nodes.length, "value2": followUp ? `\n${followUp}` : "" });
       return { type: "forward" as const, nodes: [title, ...nodes] };
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
-        if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return $t("index.text_76720712c8", { "profileId": profileId });
+        if (error.code === "role-missing") return $t("index.text_f4a9dc8367", { "profileId": profileId });
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -309,7 +312,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         if (error.code === "profile-changed") return changed;
         if (error.code === "invalid-input") return error.message;
       }
-      return "迷宫诡域暂时无法查询。";
+      return $t("index.text_adffe5f7e7");
     }
   }
 
@@ -317,16 +320,16 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     const user = context.user_id;
     if ((context.message_type !== "private" && context.message_type !== "group") || context.isDelegated ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
-      return "请从登录档案对应的 QQ 会话查询绝区零区域收集。";
+      return $t("index.text_ed7861cc60");
     }
     const qq = String(user);
-    const changed = "绝区零档案已变化，请重新查询区域收集。";
+    const changed = $t("index.text_ae44912b69");
     try {
       const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const record = await client.fetchZzzExploration(source, { page, whole: page === undefined, signal });
-      if (record.status === "empty") return "暂无探索详情数据";
-      const command = `%区域收集${zzzCommandProfileSuffix(profileId)}`;
-      if (record.page > record.pageCount) return `区域收集共 ${record.pageCount} 页。发送 ${command} 页 ${record.pageCount} 查看末页。`;
+      if (record.status === "empty") return $t("index.text_bd41c791c2");
+      const command = $t("index.text_e1cc153c64", { "value1": zzzCommandProfileSuffix(profileId) });
+      if (record.page > record.pageCount) return $t("index.text_c6e8269745", { "pageCount": record.pageCount, "command": command, "value3": record.pageCount });
       const renderer = createZzzExplorationRenderer(record, source.role, command, {
         qq, signal, legacyResources: zzzResourceDirectory(), inlineImageByteLimit: context.inlineImageByteLimit,
       });
@@ -337,7 +340,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const body = (view: ZzzExplorationSnapshot, image: Awaited<ReturnType<typeof render>>) => {
         if (image && !(image instanceof Error)) return { type: "image" as const, file: image.png };
         const text = zzzExplorationText(view, command);
-        return image instanceof Error ? `图片超过当前会话大小上限，已改为文字。\n${text}` : text;
+        return image instanceof Error ? $t("index.text_86b48550a7", { "text": text }) : text;
       };
       let reply;
       if (page === undefined && result instanceof Error) {
@@ -360,7 +363,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
           nodes.push(body(view, image));
         }
         await include(record, result, 7);
-        if (nodes.length > 1) reply = { type: "forward" as const, nodes: [`区域收集 · 共 ${nodes.length} 页`, ...nodes] };
+        if (nodes.length > 1) reply = { type: "forward" as const, nodes: [$t("index.text_2d43673910", { "length": nodes.length }), ...nodes] };
       }
       if (signal.aborted) return [];
       const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
@@ -370,8 +373,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
-        if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return $t("index.text_76720712c8", { "profileId": profileId });
+        if (error.code === "role-missing") return $t("index.text_f4a9dc8367", { "profileId": profileId });
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -380,23 +383,23 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         if (error.code === "profile-changed") return changed;
         if (error.code === "invalid-input") return error.message;
       }
-      return "绝区零区域收集暂时无法查询。";
+      return $t("index.text_eaf852bf97");
     }
   }
 
   async function battleRecord(context: GachaContext, profileId: number, scheduleType: 1 | 2,
     mode: "shiyu" | "deadly" | "holoBoss" | "voidFront" | "climbingTower" | ZzzHollowMode) {
-    const name = { shiyu: "式舆防卫战", deadly: "危局强袭战", holoBoss: "拟境湮灭战", voidFront: "临界推演",
-      climbingTower: "拟真鏖战试炼", ...zzzHollowTitles }[mode];
+    const name = { shiyu: $t("index.text_f718dc4321"), deadly: $t("index.text_4b7b8e83d9"), holoBoss: $t("index.text_29e80a0630"), voidFront: $t("index.text_86bf7c9458"),
+      climbingTower: $t("index.text_16a75e0027"), ...zzzHollowTitles }[mode];
     const personalHollow = mode === "withered" || mode === "lost";
     const { user_id: user } = context;
     if ((context.message_type !== "private" && context.message_type !== "group") ||
         ((mode === "holoBoss" || mode === "voidFront" || mode === "climbingTower" || personalHollow) && context.isDelegated) ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
-      return `请从登录档案对应的 QQ 会话查询${name}。`;
+      return $t("index.text_20072b851c", { "name": name });
     }
     const qq = String(user);
-    const period = scheduleType === 2 ? "上期" : "本期";
+    const period = scheduleType === 2 ? $t("index.text_2823616a99") : $t("index.text_474da3018a");
     try {
       const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
       const request = { scheduleType, signal };
@@ -407,8 +410,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
           mode === "holoBoss" ? client.fetchZzzHoloBoss(source, request) :
             mode === "voidFront" ? client.fetchZzzVoidFront(source, request) :
               personalHollow ? client.fetchZzzHollowZero(source, { hollowMode: mode, signal }) : client.fetchZzzClimbingTower(source, { signal }));
-      if (snapshot.status === "older-format") return `${period}${name}使用旧版深渊战绩格式。`;
-      if (snapshot.status === "empty") return mode === "climbingTower" ? "暂无爬塔数据" : personalHollow ? `暂无${name}数据` : `${period}暂无${name}战绩。`;
+      if (snapshot.status === "older-format") return $t("index.text_91fdc991b5", { "period": period, "name": name });
+      if (snapshot.status === "empty") return mode === "climbingTower" ? $t("index.text_f3a733209a") : personalHollow ? $t("index.text_450b8c5716", { "name": name }) : $t("index.text_028f2c565d", { "period": period, "name": name });
       async function stillActive() {
         const active = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
         return active?.revision === snapshot.revision && active.role.uid === snapshot.uid;
@@ -432,53 +435,53 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const active = await stillActive();
       if (signal.aborted) return [];
       if (!active) {
-        return `绝区零档案已变化，请重新查询${name}。`;
+        return $t("index.text_71a331d410", { "name": name });
       }
       if (result) return { type: "image" as const, file: result.png };
       if ("hollowMode" in snapshot) return zzzHollowText(snapshot);
       if ("seasons" in snapshot) return zzzClimbingTowerText(snapshot);
       if ("stages" in snapshot) {
         const stages = snapshot.finalStage ? [snapshot.finalStage, ...snapshot.stages] : snapshot.stages;
-        return [`${name} · ${period}`, `总分 ${snapshot.totalScore ?? "—"}`,
-          ...stages.map(stage => `${stage.name ?? "关卡"} · ${stage.score ?? "—"}${stage.rating ? ` · ${stage.rating}` : ""}`),
+        return [`${name} · ${period}`, $t("index.text_422aa73408", { "value1": snapshot.totalScore ?? "—" }),
+          ...stages.map(stage => `${stage.name ?? $t("index.text_ff534801b8")} · ${stage.score ?? "—"}${stage.rating ? ` · ${stage.rating}` : ""}`),
         ].join("\n");
       }
       if ("bosses" in snapshot) {
         return [
           `${name} · ${period}`,
-          `总用时 ${holoBossDuration(snapshot.totalDuration)} · 总星数 ${snapshot.totalStars ?? "—"} · 无伤 ${snapshot.undamaged}`,
+          $t("index.text_4fbd96a211", { "value1": holoBossDuration(snapshot.totalDuration), "value2": snapshot.totalStars ?? "—", "undamaged": snapshot.undamaged }),
           ...snapshot.bosses.map(boss =>
-            `${boss.name ?? "首领"} · ${holoBossDuration(boss.duration)} · ${boss.stars ?? "—"} 星${boss.undamaged ? " · 无伤" : ""}`),
+            $t("index.text_59faa7ffd6", { "value1": boss.name ?? $t("index.text_58cae7ec87"), "value2": holoBossDuration(boss.duration), "value3": boss.stars ?? "—", "value4": boss.undamaged ? $t("index.text_7c68e212d7") : "" })),
         ].join("\n");
       }
       if ("trial" in snapshot) {
         return [
-          `危局强袭战 · ${period}`,
-          snapshot.totalScore === undefined ? undefined : `试炼总分 ${snapshot.totalScore}`,
-          snapshot.totalStars === undefined ? undefined : `试炼总星级 ${snapshot.totalStars}`,
-          ...snapshot.hard.map(room => `绝境 · ${room.name ?? "首领"} · ${room.score ?? "—"}`),
-          ...snapshot.trial.map(room => `试炼 · ${room.name ?? "首领"} · ${room.score ?? "—"}`),
+          $t("index.text_841c31ef32", { "period": period }),
+          snapshot.totalScore === undefined ? undefined : $t("index.text_94f5c06650", { "totalScore": snapshot.totalScore }),
+          snapshot.totalStars === undefined ? undefined : $t("index.text_c6eac1ddc3", { "totalStars": snapshot.totalStars }),
+          ...snapshot.hard.map(room => $t("index.text_22ca39a135", { "value1": room.name ?? $t("index.text_58cae7ec87"), "value2": room.score ?? "—" })),
+          ...snapshot.trial.map(room => $t("index.text_4e10d31e79", { "value1": room.name ?? $t("index.text_58cae7ec87"), "value2": room.score ?? "—" })),
         ].filter(Boolean).join("\n");
       }
       const score = snapshot.overall?.score;
       const rating = snapshot.overall?.rating;
-      return [`式舆防卫战 · ${period}`, score !== undefined ? `总分 ${score}${rating ? ` · ${rating}` : ""}` : undefined,
-        ...snapshot.layers.map(layer => `第 ${layer.number} 防线 · ${layer.teams.length} 队${layer.rating ? ` · ${layer.rating}` : ""}`)]
+      return [$t("index.text_d90ec91ae9", { "period": period }), score !== undefined ? $t("index.text_f8227398b3", { "score": score, "value2": rating ? ` · ${rating}` : "" }) : undefined,
+        ...snapshot.layers.map(layer => $t("index.text_0c53b24fef", { "number": layer.number, "length": layer.teams.length, "value3": layer.rating ? ` · ${layer.rating}` : "" }))]
         .filter(Boolean).join("\n");
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
-        if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return $t("index.text_76720712c8", { "profileId": profileId });
+        if (error.code === "role-missing") return $t("index.text_f4a9dc8367", { "profileId": profileId });
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
       }
       if (error instanceof HoyoRequestError) {
-        if (error.code === "profile-changed") return `绝区零档案已变化，请重新查询${name}。`;
+        if (error.code === "profile-changed") return $t("index.text_71a331d410", { "name": name });
         if (error.code === "invalid-input") return error.message;
       }
-      return `${name}暂时无法查询。`;
+      return $t("index.text_a72f794b97", { "name": name });
     }
   }
 
@@ -493,7 +496,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     const stats = cached ?? await client.fetchZzzTuning(source, { signal: active });
     const revision = "revision" in stats && typeof stats.revision === "string" ? stats.revision : source.revision;
     const { avatar, resolveIcon, loadArtwork } = createZzzTuningArtwork(stats, qq, active);
-    const model = buildZzzTuningDetail({ stats, player: { nickname: role.nickname || "绳匠", avatar }, resolveIcon });
+    const model = buildZzzTuningDetail({ stats, player: { nickname: role.nickname || $t("index.text_4efe2edb6d"), avatar }, resolveIcon });
     const level = role.level === undefined ? undefined : Number(role.level);
     const { png } = await renderZzzTuningDetail(model, {
       level: Number.isFinite(level) ? level : undefined,
@@ -501,7 +504,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     });
     const current = await selected();
     if (active.aborted) return [];
-    if (!current || !sameZzzTuningProfile(current, identity, revision)) return "绝区零档案角色已变化，请重新查询。";
+    if (!current || !sameZzzTuningProfile(current, identity, revision)) return $t("index.text_ffa6a35fe8");
 
     let delivered = false;
     const accepted = await context.reply({ type: "image", file: png }, false, { onDelivered: () => { delivered = true; } });
@@ -527,7 +530,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (!linkedOnly && (region === "prod_gf_cn" || region === "prod_qd_cn")) {
         const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
         if (source.role.uid !== uid || regionOf(source.role) !== region) {
-          return "绝区零档案角色已变化，请重新查询。";
+          return $t("index.text_ffa6a35fe8");
         }
         return await viewOfficialTuning(source, profileId, context);
       }
@@ -550,7 +553,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         return source.revision;
       }
 
-      const nickname = role.nickname || "绳匠";
+      const nickname = role.nickname || $t("index.text_4efe2edb6d");
       const level = role.level === undefined ? undefined : Number(role.level);
       const display = { level: Number.isFinite(level) ? level : undefined, regionName: zzzRegionName(region, role.regionName),
         inlineImageByteLimit: context.inlineImageByteLimit };
@@ -567,27 +570,27 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         }
       }
       const stats = mergeZzzLegacyWithLinked(legacy, linked);
-      if (!stats) return linkedOnly ? "该角色还没有绝区零逐抽记录。" : "该角色还没有绝区零旧调频记录。";
+      if (!stats) return linkedOnly ? $t("index.text_c5fb434ef4") : $t("index.text_77cd087915");
       const { avatar, resolveIcon, loadArtwork } = createZzzLegacyGachaArtwork(qq, signal);
       const model = buildZzzLegacyDetail({ stats, player: { nickname, avatar }, resolveIcon });
       const { png } = await renderZzzTuningDetail(model, { ...display, loadArtwork });
       if (signal.aborted) return [];
       if (!await roleMatches() || (flatRevision && await flatArchiveRevision() !== flatRevision)) {
-        return "绝区零档案角色已变化，请重新查询。";
+        return $t("index.text_ffa6a35fe8");
       }
       if (!signal.aborted) await context.reply({ type: "image", file: png });
       return [];
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
-        if (error.code === "role-missing") return `档案 ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return $t("index.text_76720712c8", { "profileId": profileId });
+        if (error.code === "role-missing") return $t("index.text_4ea60872c8", { "profileId": profileId });
       }
       if (error instanceof HoyoRequestError && error.code === "invalid-input") return error.message;
-      if (error instanceof HoyoRequestError && error.code === "profile-changed") return "绝区零档案角色已变化，请重新查询。";
-      if (error instanceof ZzzTuningRateLimitError) return "访问过于频繁，请稍后再试。";
+      if (error instanceof HoyoRequestError && error.code === "profile-changed") return $t("index.text_ffa6a35fe8");
+      if (error instanceof ZzzTuningRateLimitError) return $t("index.text_a3f0d28183");
       if (error instanceof ZzzLegacyGachaError || error instanceof ImageSizeLimitError) return error.message;
-      return "绝区零抽卡记录暂时无法查看。";
+      return $t("index.text_5f697c7948");
     }
   }
 
@@ -599,7 +602,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     fallbackFeatures(context: Pick<GachaContext, "normalizedMessage">) {
       const command = context.normalizedMessage.replace(legacyPrefix, "#绝区零");
       if ([helpCommand, generateLinkCommand, linkCommand, updateCommand, linkedViewCommand, viewCommand, zzzInventoryCommand].some(rule => rule.test(command)) ||
-          command.trim() === "取消" || isZzzGachaLinkMessage(command)) return ["[gacha] 抽卡记录"];
+          command.trim() === "取消" || isZzzGachaLinkMessage(command)) return [$t("index.text_5f636b7036")];
       return [];
     },
     async fallback(_message: string, context: GachaContext) {
@@ -637,7 +640,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const buddies = ownedBuddyCommand.exec(command);
       if (buddies) {
         const profileId = gameCommandProfileId("zzz", buddies[1]);
-        return profileId <= MAX_PROFILE_ID ? gameRecord(context, profileId, true) : "档案编号须在 1 到 255 之间。";
+        return profileId <= MAX_PROFILE_ID ? gameRecord(context, profileId, true) : $t("index.text_3dd62228d2");
       }
       const card = gameRecordCommand.exec(command);
       if (card) {
@@ -665,10 +668,10 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         const profileId = gameCommandProfileId("zzz", expedition[2]);
         if (profileId > MAX_PROFILE_ID) return;
         const page = expedition[3] === undefined ? undefined : Number(expedition[3]);
-        if (!expedition[1] && page !== undefined) return `发送 %迷宫战绩${zzzCommandProfileSuffix(profileId)} 页 ${page} 查看指定战绩页。`;
+        if (!expedition[1] && page !== undefined) return $t("index.text_62a355e2fd", { "value1": zzzCommandProfileSuffix(profileId), "page": page });
         return zenkov(context, profileId, expedition[1] ? "detail" : "summary", page);
       }
-      if (hollowHelp.test(command)) return "当前可供查询的零号空洞数据有：\n- %枯萎苗圃\n- %迷失之地";
+      if (hollowHelp.test(command)) return $t("index.text_8c44ab8e13");
       const hollow = hollowCommand.exec(command);
       if (hollow) {
         const profileId = gameCommandProfileId("zzz", hollow[2]);
@@ -700,28 +703,28 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         if (profileId > MAX_PROFILE_ID) return;
         if (context.message_type !== "private" || !context.self_id || !Number.isSafeInteger(context.self_id) || context.self_id < 1 ||
             !context.user_id || !Number.isSafeInteger(context.user_id) || context.user_id < 1) {
-          return "请私聊获取绝区零抽卡链接。";
+          return $t("index.text_8260a16f37");
         }
         const session = context.privateCredentialSignal;
-        if (context.isDelegated || !session) return "请在当前机器人的好友私聊中获取绝区零抽卡链接。";
+        if (context.isDelegated || !session) return $t("index.text_06bcc1352b");
         const active = AbortSignal.any([signal, session]);
         if (active.aborted) return;
         try {
           const url = await getLink(String(context.user_id), profileId, undefined, active);
-          if (!active.aborted) return url ?? "该档案正在获取绝区零抽卡链接。";
+          if (!active.aborted) return url ?? $t("index.text_0b45b96b8f");
         } catch (error) {
           if (active.aborted) return;
           if (error instanceof ProfileError) {
-            if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
-            if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
-            if (error.code === "changed") return "绝区零档案角色已变化，请重新获取。";
+            if (error.code === "missing" || error.code === "login-required") return $t("index.text_76720712c8", { "profileId": profileId });
+            if (error.code === "role-missing") return $t("index.text_f4a9dc8367", { "profileId": profileId });
+            if (error.code === "changed") return $t("index.text_776f6c2221");
           }
           if (error instanceof HoyoRequestError) {
-            if (error.code === "profile-changed") return "绝区零档案角色已变化，请重新获取。";
-            if (error.status === 429 || error.retcode === -110) return "绝区零抽卡链接获取频繁，请稍后再试。";
+            if (error.code === "profile-changed") return $t("index.text_776f6c2221");
+            if (error.status === 429 || error.retcode === -110) return $t("index.text_7ef2a6dcd2");
             if (error.code === "invalid-input" || error.code === "api" || error.code === "refresh") return error.message;
           }
-          return "绝区零抽卡链接获取失败，请稍后重试。";
+          return $t("index.text_3c53446b0f");
         }
         return;
       }
@@ -741,27 +744,27 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (profileId > MAX_PROFILE_ID) return;
       const { user_id } = context;
       if (typeof user_id !== "number" || !Number.isSafeInteger(user_id) || user_id < 1) {
-        return "请从登录档案对应的 QQ 会话使用绝区零抽卡记录。";
+        return $t("index.text_af07d075a4");
       }
       const qq = String(user_id);
       if (!update) return view(qq, profileId, context, linkedOnly !== null);
       try {
         const result = await gachaUpdate(qq, profileId, () =>
-          context.reply(`正在更新绝区零抽卡记录（档案 ${profileId}）。`));
-        if (!result) return "该档案的绝区零抽卡记录正在更新。";
+          context.reply($t("index.text_48afbcd626", { "profileId": profileId })));
+        if (!result) return $t("index.text_da0a78540b");
         try {
           const { png } = await renderZzzTuningResult(qq, result);
           return { type: "image" as const, file: png };
         } catch {
-          return "绝区零抽卡记录更新完成。";
+          return $t("index.text_ae4d566def");
         }
       } catch (error) {
         if (signal.aborted) return;
         if (error instanceof ZzzManualGachaLinkRequired) return recall.transient(linkSession(context, profileId));
-        if (error instanceof ZzzTuningHistoryChangedError) return "该角色的绝区零抽卡记录已由另一条请求更新。";
+        if (error instanceof ZzzTuningHistoryChangedError) return $t("index.text_fb6f6ac9a5");
         if (error instanceof ProfileError) {
-          if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
-          if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
+          if (error.code === "missing" || error.code === "login-required") return $t("index.text_76720712c8", { "profileId": profileId });
+          if (error.code === "role-missing") return $t("index.text_f4a9dc8367", { "profileId": profileId });
         }
         const reason = error instanceof ZzzTuningRateLimitError ? "rate-limited"
           : (error instanceof ProfileError && error.code === "changed") ||

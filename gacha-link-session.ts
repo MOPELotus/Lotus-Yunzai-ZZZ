@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { ProfileError, type GameRole } from "@lotus-yunzai/account";
 import {
   HoyoRequestError, isZzzGachaLinkMessage, parseZzzGachaLink, resolveZzzGachaLinkRole, ZzzGachaLinkError,
@@ -31,20 +34,20 @@ function validId(id: number | undefined): id is number {
 
 function describeFailure(error: unknown, profileId: number): string {
   if (error instanceof ProfileError) {
-    if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
-    if (error.code === "role-missing") return `档案 ${profileId} 没有同步绝区零 UID。`;
-    if (error.code === "changed") return "绝区零档案角色已变化，请重新录入。";
+    if (error.code === "missing" || error.code === "login-required") return $t("gacha-link-session.text_76720712c8", { "profileId": profileId });
+    if (error.code === "role-missing") return $t("gacha-link-session.text_4ea60872c8", { "profileId": profileId });
+    if (error.code === "changed") return $t("gacha-link-session.text_a6f714ae2a");
   }
   if (error instanceof ZzzGachaLinkError) {
     switch (error.reason) {
-      case "expired": return "绝区零抽卡链接已过期，请重新获取后录入。";
-      case "rate-limited": return "绝区零抽卡记录访问频繁，请稍后再试。";
-      case "risk": return "绝区零抽卡服务要求验证，请在官方客户端处理后再试。";
-      case "empty-unverified": return "官方链接暂无可核验的逐抽记录，旧档案已保留。";
+      case "expired": return $t("gacha-link-session.text_84933c56ba");
+      case "rate-limited": return $t("gacha-link-session.text_734d34b4a0");
+      case "risk": return $t("gacha-link-session.text_25409baeb5");
+      case "empty-unverified": return $t("gacha-link-session.text_c06b58c722");
     }
   }
   if (error instanceof HoyoRequestError && error.code === "invalid-input") return error.message;
-  return "绝区零抽卡链接录入失败，旧档案已保留。";
+  return $t("gacha-link-session.text_e14ef27403");
 }
 
 export function createZzzGachaLinkSession({ signal, savedRole, importLink }: {
@@ -67,7 +70,7 @@ export function createZzzGachaLinkSession({ signal, savedRole, importLink }: {
     if (message_type !== "private" || !validId(user_id) || !validId(self_id)) {
       if (profileId !== undefined) {
         const alias = `%抽卡链接${zzzCommandProfileSuffix(profileId)}`;
-        return `请私聊发送 ${alias}，再按提示录入。`;
+        return $t("gacha-link-session.text_04a02a3f55", { "alias": alias });
       }
       return;
     }
@@ -83,7 +86,7 @@ export function createZzzGachaLinkSession({ signal, savedRole, importLink }: {
           setTimeout(() => {
             if (pending.get(scope) === request) pending.delete(scope);
           }, timeout).unref();
-          return "请发送完整的绝区零官方抽卡链接。发送「取消」即可结束，输入在两分钟内有效。";
+          return $t("gacha-link-session.text_c28a0d76bd");
         }
       } catch (error) {
         if (!signal.aborted && pending.get(scope) === request) {
@@ -98,14 +101,14 @@ export function createZzzGachaLinkSession({ signal, savedRole, importLink }: {
     const cancel = text === "取消";
     if (!cancel && !isZzzGachaLinkMessage(text)) return;
     const request = pending.get(scope);
-    if (!request) return cancel ? undefined : "请先私聊发送 %抽卡链接。";
+    if (!request) return cancel ? undefined : $t("gacha-link-session.text_f2b2daacb1");
     pending.delete(scope);
-    if (request.expires <= performance.now()) return cancel ? undefined : "录入已超时，请重新发送 %抽卡链接。";
-    if (cancel) return "已取消绝区零抽卡链接录入。";
+    if (request.expires <= performance.now()) return cancel ? undefined : $t("gacha-link-session.text_09b1c8b938");
+    if (cancel) return $t("gacha-link-session.text_69625c0aab");
 
     const { qq: requestQq, profileId: requestProfileId } = request;
     const key = `${requestQq}/${requestProfileId}`;
-    if (active.has(key)) return "该档案的抽卡链接正在处理。";
+    if (active.has(key)) return $t("gacha-link-session.text_18e77de7a6");
     active.add(key);
     try {
       const role = await request.role;
@@ -113,13 +116,13 @@ export function createZzzGachaLinkSession({ signal, savedRole, importLink }: {
         signal.throwIfAborted();
         const latest = await roleFor(requestQq, requestProfileId).catch(() => undefined);
         if (latest?.uid !== role.uid || latest.region !== role.region || latest.gameBiz !== role.gameBiz) {
-          throw new ProfileError("changed", "绝区零档案角色已变化。");
+          throw new ProfileError("changed", $t("gacha-link-session.text_9cf98a9cde"));
         }
         signal.throwIfAborted();
       }
       await verifyProfile();
       const link = parseZzzGachaLink(text, role);
-      await context.reply("正在更新绝区零逐抽记录。");
+      await context.reply($t("gacha-link-session.text_490548e6bc"));
       const result = await importLink(requestQq, requestProfileId, link, verifyProfile);
       if (!signal.aborted) return result;
     } catch (error) {

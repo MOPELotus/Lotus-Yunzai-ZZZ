@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import { zzzZenkovPageSize as pageSize, type ZzzShiyuPortrait, type ZzzZenkovItem, type ZzzZenkovRank,
   type ZzzZenkovRun, type ZzzZenkovSnapshot } from "@lotus-yunzai/hoyo-client";
@@ -15,7 +18,7 @@ type Row = readonly [string, string];
 
 export function zzzZenkovFollowUp(snapshot: ZzzZenkovSnapshot, command: string, renderedPages: number) {
   if (snapshot.kind === "detail" && snapshot.firstPage + renderedPages <= snapshot.pageCount) {
-    return `下一页 ${command} 页 ${snapshot.firstPage + renderedPages}`;
+    return $t("zenkov-card.text_05a2a8504c", { "command": command, "value2": snapshot.firstPage + renderedPages });
   }
 }
 
@@ -45,8 +48,8 @@ function progress(data?: { current?: number; total?: number }) {
 function remaining(seconds: number | undefined, weekly: boolean) {
   if (seconds === undefined) return "—";
   const days = Math.floor(seconds / 86400);
-  if (!weekly) return `${days}天`;
-  return `${String(days).padStart(2, "0")}天${String(Math.floor(seconds / 3600) % 24).padStart(2, "0")}时`;
+  if (!weekly) return $t("zenkov-card.text_63c4ff4f1e", { "days": days });
+  return $t("zenkov-card.text_952f1ba039", { "value1": String(days).padStart(2, "0"), "value2": String(Math.floor(seconds / 3600) % 24).padStart(2, "0") });
 }
 function duration(seconds?: number) {
   if (seconds === undefined) return "—";
@@ -54,31 +57,32 @@ function duration(seconds?: number) {
   return (hour ? [hour, minute, second] : [minute, second]).map(v => String(v).padStart(2, "0")).join(":");
 }
 function outcome(value?: boolean) {
-  return value === undefined ? "撤离结果未知" : value ? "撤离成功" : "撤离失败";
+  return value === undefined ? $t("zenkov-card.text_fd0694b6d0") : value ? $t("zenkov-card.text_7fe3cd3e40") : $t("zenkov-card.text_e1c16b94a0");
 }
 function weekly(snapshot: Summary): readonly Row[] {
-  return [["进度", progress(snapshot.duty)], ["累计带出", amount(snapshot.carryValue)],
-    ["Z级贵重物品获取次数", String(snapshot.zGrade ?? "—")],
-    ["百万撤离次数", String(snapshot.millionEvacuations ?? "—")]];
+  return [[$t("zenkov-card.text_f81ff55de1"), progress(snapshot.duty)], [$t("zenkov-card.text_c8d92ba124"), amount(snapshot.carryValue)],
+    [$t("zenkov-card.text_c01e38da06"), String(snapshot.zGrade ?? "—")],
+    [$t("zenkov-card.text_ad283677f7"), String(snapshot.millionEvacuations ?? "—")]];
 }
 
 export function zzzZenkovText(snapshot: ZzzZenkovSnapshot, command: string) {
-  const maps = ["地图-高危模式", ...snapshot.maps.slice(0, 8).map(row => `${row.name ?? "地图"} · ${row.unlocked === false ?
-    "未解锁" : `${pct(row.evacuation)} · ${amount(row.price)} · ${rankText(row.rank)}`}`),
-    `本赛季最高排名 ${rankText(snapshot.rank)}`];
-  if (snapshot.maps.length + snapshot.hiddenMaps > 8) maps.push(`另有 ${snapshot.maps.length + snapshot.hiddenMaps - 8} 张地图`);
+  const maps = [$t("zenkov-card.text_964dc6eedf"), ...snapshot.maps.slice(0, 8).map(row => `${row.name ?? $t("zenkov-card.text_41ab2e0ecb")} · ${row.unlocked === false ?
+    $t("zenkov-card.text_308d62ba23") : `${pct(row.evacuation)} · ${amount(row.price)} · ${rankText(row.rank)}`}`),
+    $t("zenkov-card.text_c11255961c", { "value1": rankText(snapshot.rank) })];
+  if (snapshot.maps.length + snapshot.hiddenMaps > 8) maps.push($t("zenkov-card.text_2f718c2d22", { "value1": snapshot.maps.length + snapshot.hiddenMaps - 8 }));
   if (snapshot.kind === "detail") {
-    const runs = snapshot.records.slice(0, pageSize).map(row => `${row.map ?? "地图"} · ${row.started ?? "—"} · ${row.difficulty ?? "—"}\n` +
-      `${outcome(row.success)} · ${duration(row.seconds)} · 累计带出 ${amount(row.value)}`);
+    const runs = snapshot.records.slice(0, pageSize).map(row => `${row.map ?? $t("zenkov-card.text_41ab2e0ecb")} · ${row.started ?? "—"} · ${row.difficulty ?? "—"}
+` +
+      $t("zenkov-card.text_2affa47f29", { "value1": outcome(row.success), "value2": duration(row.seconds), "value3": amount(row.value) }));
     const followUp = zzzZenkovFollowUp(snapshot, command, 1);
-    return ["迷宫诡域战绩", ...maps, `探索记录 ${snapshot.firstPage} / ${snapshot.pageCount}`, ...runs,
+    return [$t("zenkov-card.text_39e129ae70"), ...maps, $t("zenkov-card.text_7682e042ee", { "firstPage": snapshot.firstPage, "pageCount": snapshot.pageCount }), ...runs,
       ...(followUp ? [followUp] : [])].join("\n");
   }
   const { season, seasonUnlocked } = snapshot;
-  return ["迷宫诡域", `第 ${season?.id ?? "—"} 赛季 · 等级 ${season?.level ?? "—"} · 剩余 ${remaining(season?.remaining, false)}`,
-    seasonUnlocked === false ? "赛季委托未解锁" : `阶段 ${season?.stage ?? "—"} · 委托 ${progress(season?.quest)} · 获取上限 ${progress(season?.coin)}`,
-    `周常委托 · 剩余 ${remaining(snapshot.weeklyRemaining, true)}`, ...weekly(snapshot).map(row => row.join(" ")), ...maps,
-    ...(snapshot.medals ? [`勋章墙 ${progress(snapshot.medals)}`] : []), ...(snapshot.goods ? [`收藏展示 ${progress(snapshot.goods)}`] : [])].join("\n");
+  return [$t("zenkov-card.text_0a991a8e6c"), $t("zenkov-card.text_bb174407bd", { "value1": season?.id ?? "—", "value2": season?.level ?? "—", "value3": remaining(season?.remaining, false) }),
+    seasonUnlocked === false ? $t("zenkov-card.text_3714bab865") : $t("zenkov-card.text_90ca1f28a7", { "value1": season?.stage ?? "—", "value2": progress(season?.quest), "value3": progress(season?.coin) }),
+    $t("zenkov-card.text_df436f2c38", { "value1": remaining(snapshot.weeklyRemaining, true) }), ...weekly(snapshot).map(row => row.join(" ")), ...maps,
+    ...(snapshot.medals ? [$t("zenkov-card.text_f63cc5db09", { "value1": progress(snapshot.medals) })] : []), ...(snapshot.goods ? [$t("zenkov-card.text_6013118dbf", { "value1": progress(snapshot.goods) })] : [])].join("\n");
 }
 
 function drawIcon(ctx: Context, icon: Image | undefined, x: number, y: number, size: number) {
@@ -104,17 +108,17 @@ function mapsHeight(snapshot: ZzzZenkovSnapshot) {
 }
 
 function maps(ctx: Context, art: Assets, snapshot: ZzzZenkovSnapshot, y: number) {
-  section(ctx, y, mapsHeight(snapshot), "地图-高危模式");
-  for (const [i, column] of ["地图", "撤离率", "最高带出", "最高排名"].entries()) {
+  section(ctx, y, mapsHeight(snapshot), $t("zenkov-card.text_964dc6eedf"));
+  for (const [i, column] of [$t("zenkov-card.text_41ab2e0ecb"), $t("zenkov-card.text_670575b685"), $t("zenkov-card.text_8d9f2691de"), $t("zenkov-card.text_b9467cfb61")].entries()) {
     const x = [62, 337, 531, 705][i]!;
     label(ctx, column, x, y + 79, 19, { align: i === 0 ? "left" : "center", color: gray });
   }
   box(ctx, "#333", 58, y + 97, 725, 2);
-  if (!snapshot.maps.length) label(ctx, "暂无地图记录", 420, y + 126, 21, { align: "center", color: gray });
+  if (!snapshot.maps.length) label(ctx, $t("zenkov-card.text_69d17d5308"), 420, y + 126, 21, { align: "center", color: gray });
   for (const [i, row] of snapshot.maps.entries()) {
     const top = y + 123 + i * 46;
     label(ctx, row.name ?? "—", 62, top, 22, { color: row.unlocked === false ? "#666" : "#e6e6e6", maxWidth: 242 });
-    if (row.unlocked === false) label(ctx, "未解锁", 531, top, 21, { color: "#888", align: "center" });
+    if (row.unlocked === false) label(ctx, $t("zenkov-card.text_308d62ba23"), 531, top, 21, { color: "#888", align: "center" });
     else {
       label(ctx, pct(row.evacuation), 337, top, 21, { align: "center", color: "#4cd964" });
       label(ctx, amount(row.price), 531, top, 21, { align: "center", color: gold, maxWidth: 165 });
@@ -122,9 +126,9 @@ function maps(ctx: Context, art: Assets, snapshot: ZzzZenkovSnapshot, y: number)
     }
     box(ctx, "#303030", 58, top + 22, 725, 1);
   }
-  if (snapshot.hiddenMaps) label(ctx, `另有 ${snapshot.hiddenMaps} 张地图`, 62, y + 123 + snapshot.maps.length * 46, 19, { color: gray });
+  if (snapshot.hiddenMaps) label(ctx, $t("zenkov-card.text_a500b5268a", { "hiddenMaps": snapshot.hiddenMaps }), 62, y + 123 + snapshot.maps.length * 46, 19, { color: gray });
   const bottom = y + mapsHeight(snapshot) - 25;
-  label(ctx, "本赛季最高排名", 62, bottom, 20, { color: gray });
+  label(ctx, $t("zenkov-card.text_29784f10dd"), 62, bottom, 20, { color: gray });
   drawRank(ctx, art, snapshot.rank, 705, bottom);
 }
 
@@ -153,15 +157,15 @@ function drawRun(ctx: Context, art: Assets, run: ZzzZenkovRun, y: number) {
   label(ctx, run.difficulty ?? "—", 700, y + 27, 18, { align: "center", maxWidth: 126 });
   box(ctx, "#333", 60, y + 53, 720, 1);
   label(ctx, outcome(run.success), 64, y + 80, 21, { color: run.success ? "#e9d288" : "#aaa", weight: 700 });
-  label(ctx, `探索时长 ${duration(run.seconds)}`, 64, y + 110, 18, { color: gray });
+  label(ctx, $t("zenkov-card.text_f56dc77490", { "value1": duration(run.seconds) }), 64, y + 110, 18, { color: gray });
   drawIcon(ctx, art.local.get(funds), 502, y + 67, 24);
   label(ctx, amount(run.value), 762, y + 80, 24, { align: "right", color: gold, maxWidth: 229 });
   for (const [i, entry] of run.avatars.entries()) drawPortrait(ctx, art, entry, 65 + i * 82, y + 133, 68);
   fillRound(ctx, "#0006", 320, y + 106, 448, recordHeight(run) - 118, 7, "#383838");
-  label(ctx, "调查收获", 332, y + 127, 19, { color: gray });
+  label(ctx, $t("zenkov-card.text_a4ccc0a299"), 332, y + 127, 19, { color: gray });
   if (!run.loot.length) label(ctx, "—", 333, y + 167, 20, { color: gray });
   for (const [i, item] of run.loot.entries()) lootTile(ctx, art, item, 330 + i % 9 * 47, y + 147 + Math.floor(i / 9) * 50, 43);
-  if (run.hiddenLoot) label(ctx, `另有 ${run.hiddenLoot} 项`, 332, y + recordHeight(run) - 24, 15, { color: gray });
+  if (run.hiddenLoot) label(ctx, $t("zenkov-card.text_4dc648b440", { "hiddenLoot": run.hiddenLoot }), 332, y + recordHeight(run) - 24, 15, { color: gray });
 }
 
 export async function renderZzzZenkov(snapshot: ZzzZenkovSnapshot, role: GameRole, command: string, options: ZzzCardOptions = {}) {
@@ -203,14 +207,14 @@ export async function renderZzzZenkov(snapshot: ZzzZenkovSnapshot, role: GameRol
       const background = art.local.get("common/images/bg.jpg");
       if (background) cover(ctx, background, 0, 0, width, height);
       drawZzzCardPlayer(ctx, role, snapshot.region, player);
-      label(ctx, "迷宫诡域战绩", 420, 184, 42, { align: "center", weight: 700 });
+      label(ctx, $t("zenkov-card.text_39e129ae70"), 420, 184, 42, { align: "center", weight: 700 });
       maps(ctx, art, snapshot, 224);
       let y = 244 + mapsHeight(snapshot);
-      section(ctx, y, recordsHeight, `探索记录 · 共 ${snapshot.totalRecords} 场`);
+      section(ctx, y, recordsHeight, $t("zenkov-card.text_ed413f2c05", { "totalRecords": snapshot.totalRecords }));
       if (snapshot.pageCount > 1) label(ctx, `${snapshot.firstPage + index} / ${snapshot.pageCount}`, 770, y + 38, 20,
         { align: "right", color: gray });
       y += 70;
-      if (!runs.length) label(ctx, "暂无探索记录", 420, y, 22, { align: "center", color: gray });
+      if (!runs.length) label(ctx, $t("zenkov-card.text_83c0de6903"), 420, y, 22, { align: "center", color: gray });
       const renderedArt = { ...art, portraits };
       for (const run of runs) {
         drawRun(ctx, renderedArt, run, y);
@@ -255,14 +259,14 @@ function overviewSeason(ctx: Context, art: Assets, snapshot: Summary, y: number)
   fillRound(ctx, "#282929", 104.5 - badgeWidth / 2, y + 40, badgeWidth, 33, 16.5);
   label(ctx, badge, 104.5, y + 56.5, 20.4, { align: "center", weight: 700 });
   label(ctx, String(season?.level ?? "—"), 104.5, y + 111, 62.4, { align: "center", color: gold, weight: 700, maxWidth: 145 });
-  label(ctx, "赛季等级", 104.5, y + 159, 20.4, { align: "center", color: gray });
+  label(ctx, $t("zenkov-card.text_9815726067"), 104.5, y + 159, 20.4, { align: "center", color: gray });
   box(ctx, "#3d3d3d", 200, y + 33, 1, 146);
   if (snapshot.seasonUnlocked === false) {
     fillRound(ctx, "#3a1e1ecc", 225, y + 33, 332, 99, 12, "#ff3b304d");
-    label(ctx, "未解锁", 391, y + 82, 22.8, { color: "#ff3b30", align: "center" });
+    label(ctx, $t("zenkov-card.text_308d62ba23"), 391, y + 82, 22.8, { color: "#ff3b30", align: "center" });
   } else {
-    label(ctx, "赛季委托", 225, y + 46, 20.4, { color: gray });
-    const stage = `阶段${season?.stage ?? "—"}`;
+    label(ctx, $t("zenkov-card.text_873b1e10a9"), 225, y + 46, 20.4, { color: gray });
+    const stage = $t("zenkov-card.text_3ccf734617", { "value1": season?.stage ?? "—" });
     const stageWidth = measureZzzCardLabel(ctx, stage, 19.2) + 19.2;
     fillRound(ctx, "#282929", 225, y + 69, stageWidth, 30, 7);
     label(ctx, stage, 234.6, y + 84, 19.2);
@@ -273,17 +277,17 @@ function overviewSeason(ctx: Context, art: Assets, snapshot: Summary, y: number)
     label(ctx, `/${season?.quest?.total ?? "—"}`, questX + questWidth, y + 84, 25.2,
       { color: "#888", weight: 700 });
     drawIcon(ctx, art.local.get(coins), 225, y + 114, 20.4);
-    label(ctx, "获取上限", 251.5, y + 125, 20.4, { color: gray });
+    label(ctx, $t("zenkov-card.text_543f2d3c25"), 251.5, y + 125, 20.4, { color: gray });
     label(ctx, `${season?.coin?.current ?? "—"}/${season?.coin?.total ?? "—"}`, 345, y + 125, 24, { color: gold, weight: 700, maxWidth: 212 });
   }
-  label(ctx, `第${season?.id ?? "—"}赛季委托`, 225, y + 166, 20.4, { color: gray });
+  label(ctx, $t("zenkov-card.text_4298212e3f", { "value1": season?.id ?? "—" }), 225, y + 166, 20.4, { color: gray });
   label(ctx, remaining(season?.remaining, false), summaryRight, y + 166, 22.8, { align: "right", color: "#e6e6e6", weight: 700 });
 }
 
 function overviewWeekly(ctx: Context, art: Assets, snapshot: Summary, y: number) {
   overviewFrame(ctx, y, 315);
-  overviewHeading(ctx, "周常委托", summaryInset, y + 54, 31.2);
-  label(ctx, `本周剩余时间：${remaining(snapshot.weeklyRemaining, true)}`, summaryRight, y + 54, 21.6, { align: "right", color: gray });
+  overviewHeading(ctx, $t("zenkov-card.text_adb2e9fbe0"), summaryInset, y + 54, 31.2);
+  label(ctx, $t("zenkov-card.text_deff9fcd12", { "value1": remaining(snapshot.weeklyRemaining, true) }), summaryRight, y + 54, 21.6, { align: "right", color: gray });
   for (const [i, [key, value]] of weekly(snapshot).entries()) {
     const top = y + ([117, 183, 225, 266][i] ?? 0);
     label(ctx, key, summaryInset, top, i === 0 ? 24 : 22.8, { color: i === 0 ? gray : "#979797" });
@@ -320,8 +324,8 @@ function overviewMaps(snapshot: Summary) {
 
 function overviewMapTable(ctx: Context, art: Assets, snapshot: Summary, y: number, metrics: ReturnType<typeof overviewMaps>) {
   overviewFrame(ctx, y, metrics.height);
-  overviewHeading(ctx, "地图-高危模式", summaryInset, y + 54, 31.2);
-  for (const [i, key] of ["地图", "撤离率", "最高带出", "最高排名"].entries()) {
+  overviewHeading(ctx, $t("zenkov-card.text_964dc6eedf"), summaryInset, y + 54, 31.2);
+  for (const [i, key] of [$t("zenkov-card.text_41ab2e0ecb"), $t("zenkov-card.text_670575b685"), $t("zenkov-card.text_8d9f2691de"), $t("zenkov-card.text_b9467cfb61")].entries()) {
     label(ctx, key, [summaryInset, 259, 369.1, 492.2][i]!, y + 113, 21.6, { align: i ? "center" : "left", color: "#888" });
   }
   box(ctx, "#333", summaryInset, y + 139, summaryRight - summaryInset, 1);
@@ -330,7 +334,7 @@ function overviewMapTable(ctx: Context, art: Assets, snapshot: Summary, y: numbe
     const height = metrics.rows[i]!;
     const mid = top + height / 2;
     label(ctx, row.name ?? "—", summaryInset, mid, 24, { color: row.unlocked === false ? "#666" : "#e6e6e6", maxWidth: row.unlocked === false ? 174 : 135 });
-    if (row.unlocked === false) label(ctx, "未解锁", summaryRight, mid, 21.6, { color: "#666", align: "right" });
+    if (row.unlocked === false) label(ctx, $t("zenkov-card.text_308d62ba23"), summaryRight, mid, 21.6, { color: "#666", align: "right" });
     else {
       label(ctx, pct(row.evacuation), 225.8, mid, 24, { align: "center", color: "#4cd964" });
       label(ctx, amount(row.price), 348.2, mid, 24, { align: "center", color: gold, maxWidth: 130, ellipsis: false });
@@ -349,12 +353,12 @@ function overviewMapTable(ctx: Context, art: Assets, snapshot: Summary, y: numbe
       ctx.restore();
     }
   }
-  if (!snapshot.maps.length) label(ctx, "暂无地图记录", 295, top + 28, 24, { align: "center", color: gray });
-  else if (snapshot.hiddenMaps) label(ctx, `另有 ${snapshot.hiddenMaps} 张地图`, summaryInset, top + 28, 21.6, { color: gray });
+  if (!snapshot.maps.length) label(ctx, $t("zenkov-card.text_69d17d5308"), 295, top + 28, 24, { align: "center", color: gray });
+  else if (snapshot.hiddenMaps) label(ctx, $t("zenkov-card.text_a500b5268a", { "hiddenMaps": snapshot.hiddenMaps }), summaryInset, top + 28, 21.6, { color: gray });
   const rankTop = y + 151 + metrics.listHeight + 24;
   box(ctx, "#333", summaryInset, rankTop, summaryRight - summaryInset, 1);
   const rankMid = rankTop + 13 + (metrics.footerHeight - 13) / 2;
-  label(ctx, "本赛季最高排名：", summaryInset, rankMid, 22.8, { color: gray });
+  label(ctx, $t("zenkov-card.text_5cc9dc86ae"), summaryInset, rankMid, 22.8, { color: gray });
   overviewRank(ctx, art, snapshot.rank, rankMid);
 }
 
@@ -368,7 +372,7 @@ function collectionLayout(view: Collection, medal: boolean) {
 
 function overviewCollection(ctx: Context, art: Assets, view: Collection, y: number, medal: boolean) {
   const { size, gap, height } = collectionLayout(view, medal);
-  label(ctx, medal ? "勋章墙" : "收藏展示", summaryInset, y + 16, 24, { color: "#ccc" });
+  label(ctx, medal ? $t("zenkov-card.text_133fdb2ff0") : $t("zenkov-card.text_9805f5c158"), summaryInset, y + 16, 24, { color: "#ccc" });
   label(ctx, progress(view), summaryRight, y + 16, 21.6, { align: "right", color: gold });
   const cols = medal ? 5 : 6, step = size + gap;
   for (const [i, item] of view.items.entries()) {
@@ -392,7 +396,7 @@ function overviewCollection(ctx: Context, art: Assets, view: Collection, y: numb
     }
     ctx.restore();
   }
-  if (view.hiddenItems) label(ctx, `另有 ${view.hiddenItems} 项`, summaryInset, y + height - 15, 18, { color: gray });
+  if (view.hiddenItems) label(ctx, $t("zenkov-card.text_ca88e64e61", { "hiddenItems": view.hiddenItems }), summaryInset, y + height - 15, 18, { color: gray });
 }
 
 async function renderZenkovSummary(snapshot: Summary, role: GameRole, art: Assets,
@@ -413,13 +417,13 @@ async function renderZenkovSummary(snapshot: Summary, role: GameRole, art: Asset
     ctx.translate(-48, 24);
     drawZzzCardPlayer(ctx, role, snapshot.region, player, summaryRight + 48);
     ctx.restore();
-    overviewHeading(ctx, "迷宫诡域", summaryWidth / 2, 217, 48, "center");
+    overviewHeading(ctx, $t("zenkov-card.text_0a991a8e6c"), summaryWidth / 2, 217, 48, "center");
     overviewSeason(ctx, art, snapshot, 273.8);
     overviewWeekly(ctx, art, snapshot, 510.2);
     overviewMapTable(ctx, art, snapshot, mapsTop, mapMetrics);
     if (views.length) {
       overviewFrame(ctx, collectionTop, collectionHeight);
-      overviewHeading(ctx, "珍品图鉴", summaryInset, collectionTop + 54, 31.2);
+      overviewHeading(ctx, $t("zenkov-card.text_008e539a00"), summaryInset, collectionTop + 54, 31.2);
       let top = collectionTop + 99;
       for (const { view, medal } of views) {
         overviewCollection(ctx, art, view, top, medal);

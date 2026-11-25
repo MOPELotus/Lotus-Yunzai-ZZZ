@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { fileURLToPath } from "node:url";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
@@ -107,7 +110,7 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
       label(context, fullName, nameX + shortNameWidth + 14, 54, 24, { maxWidth: width - nameX - shortNameWidth - 38 });
     }
     drawZzzWikiLines(context, impressions, nameX, 82, impressionLineHeight, impressionFont);
-    label(context, "意象影画", inset, header + 41, 32);
+    label(context, $t("cinema.text_f8ed93a1f1"), inset, header + 41, 32);
     label(context, "CINEMA", inset, header + 71, 24, { color: "#6666ff" });
     let y = header + 104;
     for (const [row, two] of rows.entries()) {
@@ -127,7 +130,7 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
       context.drawImage(artwork, x, y, artWidth, artHeight);
       context.restore();
     }
-    label(context, "数据来源于 Nanoka", width / 2, height - 71, 20, { color: "#a09ca3", align: "center" });
+    label(context, $t("cinema.text_833d247560"), width / 2, height - 71, 20, { color: "#a09ca3", align: "center" });
     label(context, zzzCardFooter, width / 2, height - 28, 18, { color: "#fff", align: "center" });
   }, 4, inlineImageByteLimit, { allowHalfScale: true });
 }
@@ -141,12 +144,12 @@ export function createZzzCinema(signal: AbortSignal) {
     try {
       const [snapshot, aliases] = await Promise.all([catalog.read(), readZzzRoleAliases(resources).catch(() => undefined)]);
       const matches = findTraditionalEntries(snapshot, zzzRoleAlias(aliases, query) ?? query, "zzz", "character");
-      if (matches.length !== 1) return `未找到${query}的意象影画资料。`;
+      if (matches.length !== 1) return $t("cinema.text_1a921c3bf2", { "query": query });
       const { entry } = matches[0]!;
       if (!/^[1-9]\d{0,5}$/u.test(entry.id)) return;
       const role = await catalog.roleDetails(entry);
       const ranks = role && zzzCinemaRanks(role.ranks);
-      if (!role || !ranks) return `${entry.name}的六档意象影画资料不完整。`;
+      if (!role || !ranks) return $t("cinema.text_a75604690b", { "name": entry.name });
       const root = catalog.assetRoot(entry);
       const local = await openZzzCardTheme({ legacyResources: resources });
       async function gallery(path: string | undefined) {
@@ -169,11 +172,11 @@ export function createZzzCinema(signal: AbortSignal) {
       } catch (error) {
         if (!(error instanceof ZzzInlineImageLimitError)) throw error;
         if (signal.aborted) return [];
-        return [`${entry.name}意象影画`, error.message,
+        return [$t("cinema.text_cf5e650758", { "name": entry.name }), error.message,
           ...ranks.map(rank => `${rank.rank}. ${rank.name}\n${rank.description}`)].join("\n\n");
       }
     } catch {
-      return signal.aborted ? [] : "绝区零意象影画暂时无法查看。";
+      return signal.aborted ? [] : $t("cinema.text_dee26ae7e7");
     }
   };
 }

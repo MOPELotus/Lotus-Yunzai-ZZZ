@@ -1,9 +1,12 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzMonthlyKey, type ZzzMonthlyRecord } from "@lotus-yunzai/hoyo-client";
 
 const calendar = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit" });
 const names: Record<string, string> = {
-  daily_activity_rewards: "日常活跃奖励", growth_rewards: "成长奖励", event_rewards: "活动奖励", hollow_rewards: "零号空洞奖励",
-  shiyu_rewards: "式舆防卫战奖励", mail_rewards: "邮件奖励", other_rewards: "其他奖励",
+  daily_activity_rewards: $t("monthly-model.text_f206a13c33"), growth_rewards: $t("monthly-model.text_1decad6eb8"), event_rewards: $t("monthly-model.text_ebcbb4b06f"), hollow_rewards: $t("monthly-model.text_8ea44f94b4"),
+  shiyu_rewards: $t("monthly-model.text_ede98fcb79"), mail_rewards: $t("monthly-model.text_479d6bc50d"), other_rewards: $t("monthly-model.text_89f2284dc4"),
 };
 const currency = ["PolychromesData", "MatserTapeData", "BooponsData"] as const;
 
@@ -19,7 +22,7 @@ export function zzzMonthlyDate(year?: string, month?: string, now = new Date()) 
 }
 
 export function zzzMonthlyDateLabel(key: string) {
-  return `${key.slice(0, 4)}年${Number(key.slice(-2))}月`;
+  return $t("monthly-model.text_c85dda8b58", { "value1": key.slice(0, 4), "value2": Number(key.slice(-2)) });
 }
 
 export function zzzMonthlyOverview(record: ZzzMonthlyRecord) {
@@ -36,6 +39,6 @@ export function zzzMonthlyTotals(records: readonly ZzzMonthlyRecord[]) {
 
 export function zzzMonthlyIncome(record: ZzzMonthlyRecord) {
   return record.month_data.income_components.map(row => ({
-    label: Object.hasOwn(names, row.action) ? names[row.action]! : "未知奖励", count: row.num, percent: row.percent,
+    label: Object.hasOwn(names, row.action) ? names[row.action]! : $t("monthly-model.text_25c3a86575"), count: row.num, percent: row.percent,
   }));
 }

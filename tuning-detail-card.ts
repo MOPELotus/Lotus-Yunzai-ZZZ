@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
 import { constants } from "node:fs";
 import { open, realpath } from "node:fs/promises";
@@ -56,22 +59,22 @@ async function themeImage(root: string, path: string): Promise<Image | undefined
 
 async function loadTheme(root: string) {
   const originalFont = await themePath(root, "common/fonts/inpinhongmengti.ttf");
-  if (!originalFont) throw new Error("绝区零调频的原版字体不可用。");
+  if (!originalFont) throw new Error($t("tuning-detail-card.text_709e582f33"));
   try {
     FontLibrary.use("LotusZzzHongmeng", [originalFont]);
   } catch {
-    throw new Error("绝区零调频的原版字体不可用。");
+    throw new Error($t("tuning-detail-card.text_709e582f33"));
   }
   const [background, suit, uid, rank, up, blue, orange, red] = await Promise.all([
     "common/images/bg.jpg", "common/images/SuitBg.png", "common/images/UIDBg.png", "common/images/RANK_S.png",
     "gachalog/images/IconTabUP.png", "gachalog/images/bg1.png", "gachalog/images/bg2.png", "gachalog/images/bg3.png",
   ].map((path) => themeImage(root, path)));
   if (!background || !suit || !uid || !rank || !up || !blue || !orange || !red) {
-    throw new Error("绝区零调频的原版图片不可用。");
+    throw new Error($t("tuning-detail-card.text_544c6b4ace"));
   }
   const emojis = await Promise.all([4, 1, 16, 12, 6].map(async (number) =>
     [number, await themeImage(root, `gachalog/images/emoji/${number}.png`)] as const));
-  if (emojis.some(([, image]) => !image)) throw new Error("绝区零调频的原版评级素材不可用。");
+  if (emojis.some(([, image]) => !image)) throw new Error($t("tuning-detail-card.text_2b0bd98cfe"));
   return { background, suit, uid, rank, up, titles: [blue, orange, red], emojis: new Map(emojis) };
 }
 
@@ -199,7 +202,7 @@ function drawPlayer(ctx: Context, model: ZzzTuningDetailModel, theme: Theme, ima
   ctx.clip();
   const avatar = model.avatar && images.get(model.avatar);
   if (avatar) fitImage(ctx, avatar, 72, 40.8, 96, 96);
-  else text(ctx, model.nickname.slice(0, 2) || "绳匠", 120, 88.8, 23, muted, "center", 78);
+  else text(ctx, model.nickname.slice(0, 2) || $t("tuning-detail-card.text_4efe2edb6d"), 120, 88.8, 23, muted, "center", 78);
   ctx.restore();
 
   const tags = [
@@ -238,7 +241,7 @@ function drawTitle(ctx: Context, pool: ZzzTuningDetailPool, top: number, backgro
   ctx.restore();
   ctx.font = `36px ${font}`;
   const statusX = x + ctx.measureText(pool.name).width + 2.4;
-  const statusParts = pool.pityLabel ? [pool.pityLabel] : ["已", String(pool.lastFive), "抽未出S级"];
+  const statusParts = pool.pityLabel ? [pool.pityLabel] : [$t("tuning-detail-card.text_a3b445efc4"), String(pool.lastFive), $t("tuning-detail-card.text_af49bac102")];
   ctx.font = `19.2px ${font}`;
   const lengths = statusParts.map((part) => ctx.measureText(part).width);
   const pillWidth = 23 + lengths.reduce((sum, part) => sum + part, 0);
@@ -251,10 +254,10 @@ function drawTitle(ctx: Context, pool: ZzzTuningDetailPool, top: number, backgro
   text(ctx, pool.timeRange, x, top + 73, 14.4, muted, "left", 510);
 
   const summary = [
-    [pool.avgFive, "平均出金"], [pool.avgUp, pool.avgUpEstimated ? "平均UP（估算）" : "平均UP"],
-    [pool.totalCount, "抽卡总数"],
+    [pool.avgFive, $t("tuning-detail-card.text_8eb7ac45a0")], [pool.avgUp, pool.avgUpEstimated ? $t("tuning-detail-card.text_272186f4a8") : $t("tuning-detail-card.text_642368cb90")],
+    [pool.totalCount, $t("tuning-detail-card.text_fe61382ff1")],
     ...(pool.type === "GACHA_TYPE_PERMANENT" || pool.type === "GACHA_TYPE_BANGBOO" ? []
-      : [[pool.noWai, pool.noWaiEstimated ? "不歪率（估算）" : "不歪率"]]),
+      : [[pool.noWai, pool.noWaiEstimated ? $t("tuning-detail-card.text_f9275d770d") : $t("tuning-detail-card.text_f755d1c268")]]),
   ] as const;
   rect(ctx, x + 24, top + 92, 360, 72.78125, 38, "rgba(0,0,0,.50)");
   const cell = 336 / summary.length;
@@ -284,7 +287,7 @@ function drawRecord(ctx: Context, row: ZzzTuningDetailPool["list"][number], them
   if (row.isUp) fitImage(ctx, theme.up, x + 9.6, y + 7.2, 40.8, 40.8);
   fitImage(ctx, theme.rank, x + tileWidth - 44.8, y + 8.8, 36, 36);
 
-  const label = `${row.totalCount}抽`;
+  const label = $t("tuning-detail-card.text_3a196e5dc8", { "totalCount": row.totalCount });
   ctx.font = `21.6px ${font}`;
   const countWidth = ctx.measureText(label).width + 14.4;
   rect(ctx, innerX - 12, y + tileHeight - 34.8, countWidth + 12, 38, 10.8, "rgba(0,0,0,.30)");
@@ -301,18 +304,18 @@ export async function renderZzzTuningDetail(
     themeDirectory = Bun.env.LOTUS_ZZZ_GACHA_THEME_DIR?.trim() || defaultTheme,
     loadArtwork,
   } = options;
-  if (!Number.isFinite(scale) || scale < 1 || scale > 4) throw new RangeError("调频统计缩放须在 1 至 4 之间。");
+  if (!Number.isFinite(scale) || scale < 1 || scale > 4) throw new RangeError($t("tuning-detail-card.text_da4e58bb5e"));
   const layouts = model.data.map(({ list }) => list.length ? Math.ceil(list.length / 4) * rowHeight + 36 : 140);
   const height = header + layouts.reduce((sum, value) => sum + titleHeight + value, 0) + footHeight;
-  if (height > 24_000) throw new RangeError("绝区零调频统计超出可渲染高度。");
+  if (height > 24_000) throw new RangeError($t("tuning-detail-card.text_362f032062"));
   const root = await realpath(themeDirectory).catch(() => undefined);
-  if (!root) throw new Error("绝区零调频的原版主题目录不可用。");
+  if (!root) throw new Error($t("tuning-detail-card.text_a0b02900d1"));
   const theme = await themeAt(root);
   const images = await loadArt(model, loadArtwork);
 
   const standard = nativeImageRasterScale() === 4;
   const zoom = standard ? (height * scale > 24_000 ? Math.min(2, scale) : scale) : 4;
-  const inlineLimit = new ImageSizeLimitError("绝区零调频统计超过当前会话的图片大小上限。");
+  const inlineLimit = new ImageSizeLimitError($t("tuning-detail-card.text_b873026a86"));
   if (standard && height * zoom > 24_000) throw inlineLimit;
   const render = (density: number) => renderPng(Math.round(width * density), Math.round(height * density), (ctx) => {
     ctx.scale(density, density);
@@ -325,7 +328,7 @@ export async function renderZzzTuningDetail(
     for (const [index, pool] of model.data.entries()) {
       drawTitle(ctx, pool, top, theme.titles[Math.min(2, Math.floor(index / 2))]!, theme.emojis.get(pool.emoji));
       const next = top + titleHeight;
-      if (!pool.list.length) text(ctx, "暂无数据", width / 2, next + 40, 24, white, "center");
+      if (!pool.list.length) text(ctx, $t("tuning-detail-card.text_497c85690c"), width / 2, next + 40, 24, white, "center");
       for (const [item, row] of pool.list.entries()) {
         drawRecord(ctx, row, theme, images, 64.8 + item % 4 * 183.6, next + 12 + Math.floor(item / 4) * rowHeight);
       }

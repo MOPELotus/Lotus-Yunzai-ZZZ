@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { fileURLToPath } from "node:url";
 import { normalizeZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { panelInteger, panelObject } from "./panel-detail.ts";
@@ -6,12 +9,12 @@ import { readPanelJson } from "./panel-storage.ts";
 type Json = Record<string, unknown>;
 const bundledResources = fileURLToPath(new URL("./enka-data/", import.meta.url));
 const statDefinitions: Readonly<Record<number, readonly [string, string]>> = {
-  111: ["生命值", "HpMax"], 121: ["攻击力", "Attack"], 122: ["冲击力", "BreakStun"], 131: ["防御力", "Defence"],
-  201: ["暴击率", "Crit"], 211: ["暴击伤害", "CritDamage"], 231: ["穿透率", "PenRate"], 232: ["穿透值", "PenDelta"],
-  305: ["能量自动回复", "SpRecover"], 312: ["异常精通", "ElementMystery"], 314: ["异常掌控", "ElementAbnormalPower"],
-  315: ["物理属性伤害加成", "PhysDmgBonus"], 316: ["火属性伤害加成", "FireDmgBonus"],
-  317: ["冰属性伤害加成", "IceDmgBonus"], 318: ["电属性伤害加成", "ThunderDmgBonus"],
-  319: ["以太伤害加成", "EtherDmgBonus"], 323: ["风属性伤害加成", "WindDmgBonus"],
+  111: [$t("enka-panel-data.text_1a256e6376"), "HpMax"], 121: [$t("enka-panel-data.text_b84ee11f4f"), "Attack"], 122: [$t("enka-panel-data.text_1a7dc21762"), "BreakStun"], 131: [$t("enka-panel-data.text_1cb579e6ba"), "Defence"],
+  201: [$t("enka-panel-data.text_d4b0baf955"), "Crit"], 211: [$t("enka-panel-data.text_15bccc3951"), "CritDamage"], 231: [$t("enka-panel-data.text_0c52a4b50a"), "PenRate"], 232: [$t("enka-panel-data.text_1b3575c579"), "PenDelta"],
+  305: [$t("enka-panel-data.text_2d1c2a6cae"), "SpRecover"], 312: [$t("enka-panel-data.text_e7b27fa0b1"), "ElementMystery"], 314: [$t("enka-panel-data.text_d29c3efc8f"), "ElementAbnormalPower"],
+  315: [$t("enka-panel-data.text_9b60ac7c20"), "PhysDmgBonus"], 316: [$t("enka-panel-data.text_f2a30c8170"), "FireDmgBonus"],
+  317: [$t("enka-panel-data.text_be775a4fea"), "IceDmgBonus"], 318: [$t("enka-panel-data.text_70d32cc721"), "ThunderDmgBonus"],
+  319: [$t("enka-panel-data.text_8e28d6947b"), "EtherDmgBonus"], 323: [$t("enka-panel-data.text_136a704012"), "WindDmgBonus"],
 };
 const percentTotals = new Set([201, 211, 231, 315, 316, 317, 318, 319, 323]);
 const percentEquipment = new Set([11102, 12102, 12202, 13102, 30502, 31402]);
@@ -164,8 +167,8 @@ function totals(raw: Json, partner: Json, id: number, level: number, profession:
     const hp = Number(properties.find(row => row.property_id === 111)?.final);
     const attack = Number(properties.find(row => row.property_id === 121)?.final);
     const force = String(Math.trunc(hp / 10) + Math.trunc(attack * 0.3));
-    properties.push({ property_id: 19, property_name: "贯穿力", base: "0", add: force, final: force });
-    properties.push({ property_id: 20, property_name: "闪能自动累积", base: "2", add: "0", final: "2" });
+    properties.push({ property_id: 19, property_name: $t("enka-panel-data.text_309f1a6580"), base: "0", add: force, final: force });
+    properties.push({ property_id: 20, property_name: $t("enka-panel-data.text_7bbb5794e0"), base: "2", add: "0", final: "2" });
   }
   return properties;
 }

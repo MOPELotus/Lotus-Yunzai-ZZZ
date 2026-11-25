@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { createProfileStore } from "@lotus-yunzai/account";
 import type { createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
 import { challengeReminderWindow, createZzzChallengeReminderStore, type ChallengeReminderDefaults } from "./challenge-reminder-store.ts";
@@ -79,7 +82,7 @@ export function startZzzChallengeReminders(profiles: ReturnType<typeof createPro
       finished = await claim.finish();
       if (!finished || !delivery || !await stillActive()) return;
       // Seal the day before invoking the gateway. A lost response cannot trigger a second delivery.
-      await delivery.send(`【式舆/危局挑战提醒】\n${text}`);
+      await delivery.send($t("challenge-reminder-runtime.text_6e20127c91", { "text": text }));
     } finally {
       if (!finished) await claim.release().catch(() => undefined);
     }

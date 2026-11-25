@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { Canvas, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
 import { box, cover, label, zzzCardFooter } from "./card-theme.ts";
 import { fillRound, renderZzzBattlePng } from "./challenge-card.ts";
@@ -47,7 +50,7 @@ const gold = "#f6ca45";
 const border = "#ffffff33";
 const stripe = "#ffffff1a";
 const kindTitles = {
-  basic: "普通攻击", dodge: "闪避", assist: "支援技", special: "特殊技", chain: "连携技", core: "核心技",
+  basic: $t("skills-card.text_d90c73f75a"), dodge: $t("skills-card.text_3b89502eed"), assist: $t("skills-card.text_f3a96442e9"), special: $t("skills-card.text_fb6d88911b"), chain: $t("skills-card.text_c601aa644a"), core: $t("skills-card.text_f1739fc27c"),
 } as const;
 const buttonIcons: Readonly<Record<string, SkillSection["kind"]>> = {
   Normal: "basic", Evade: "dodge", Evaded: "dodge", Switch: "assist", Assist: "assist",
@@ -271,8 +274,8 @@ function drawSection(context: Context, block: ReturnType<typeof layout>, top: nu
   const nameY = padding + skillNameMargin + skillNameLine / 2;
   label(context, kindTitles[section.kind], infoX, top + nameY, skillNameSize, { color: gold });
   function level(x: number, y: number) {
-    label(context, "详细属性", x, y + levelTitleLine / 2, levelTitleSize, { color: gold });
-    const left = x + context.measureText("详细属性").width + 10.56;
+    label(context, $t("skills-card.text_d54bf7cccf"), x, y + levelTitleLine / 2, levelTitleSize, { color: gold });
+    const left = x + context.measureText($t("skills-card.text_d54bf7cccf")).width + 10.56;
     const text = `Lv.${section.level}`;
     context.font = '400 21.12px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
     const width = context.measureText(text).width + 2 * 6.336;
@@ -346,7 +349,7 @@ export async function renderZzzSkills(sections: readonly SkillSection[], source:
         drawSection(context, block, y, source.icons[block.section.kind]);
         y += block.height + sectionGap;
       }
-      label(context, "数据来源于 Nanoka", width / 2, end + 64, 24, { color: "#a09ca3", align: "center" });
+      label(context, $t("skills-card.text_833d247560"), width / 2, end + 64, 24, { color: "#a09ca3", align: "center" });
       label(context, zzzCardFooter, width / 2, end + 139, 16.8, { color: "#fff", align: "center" });
     }, 4, inlineImageByteLimit, { allowHalfScale: true }));
   }

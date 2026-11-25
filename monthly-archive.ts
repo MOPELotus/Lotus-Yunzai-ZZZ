@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { constants } from "node:fs";
 import { lstat, open, realpath } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -7,10 +10,10 @@ import { createRoleJsonArchive, type AcquireRoleArchiveLock } from "@lotus-yunza
 type Identity = { readonly qq: string; readonly uid: string; readonly region: string };
 type Snapshot = { readonly fetchedAt: number; readonly record: ZzzMonthlyRecord };
 const maxBytes = 4 * 1024 * 1024;
-const subject = "绝区零月报档案";
+const subject = $t("monthly-archive.text_d27d1612f0");
 
 function invalid(): never {
-  throw new Error(`${subject}内容或归属无效。`);
+  throw new Error($t("monthly-archive.text_648de7ec85", { "subject": subject }));
 }
 
 function json(value: unknown) {

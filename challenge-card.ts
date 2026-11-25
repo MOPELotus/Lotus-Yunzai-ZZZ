@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { ZzzShiyuPortrait } from "@lotus-yunzai/hoyo-client";
 import { nativeImageRasterScale, renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -103,7 +106,7 @@ export async function loadChallengePortrait(entry: ZzzShiyuPortrait | undefined,
 
 export class ZzzInlineImageLimitError extends Error {
   constructor() {
-    super("图片超过当前会话大小上限，已改为文字。");
+    super($t("challenge-card.text_900039a781"));
   }
 }
 

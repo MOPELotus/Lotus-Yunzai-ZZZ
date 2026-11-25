@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { constants, type Stats } from "node:fs";
 import { lstat, open, realpath } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -49,11 +52,11 @@ export class ZzzLegacyGachaError extends Error {
 }
 
 function invalid(field: string): never {
-  throw new ZzzLegacyGachaError("corrupt", `绝区零旧逐抽档案的${field}无效。`);
+  throw new ZzzLegacyGachaError("corrupt", $t("gacha-legacy.text_c0a01888f2", { "field": field }));
 }
 
 function changed(): never {
-  throw new ZzzLegacyGachaError("io", "绝区零旧逐抽档案正在变化，请稍后重试。");
+  throw new ZzzLegacyGachaError("io", $t("gacha-legacy.text_84a3b03a07"));
 }
 
 function object(value: unknown): Record<string, unknown> | undefined {
@@ -71,41 +74,41 @@ function idOf(value: unknown, field: string): string {
 }
 
 function timeOf(value: unknown): string {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/u.test(value)) invalid("抽卡时间");
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/u.test(value)) invalid($t("gacha-legacy.text_df9dfe0456"));
   const timestamp = Date.parse(`${value.replace(" ", "T")}Z`);
   if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 19).replace("T", " ") !== value) {
-    invalid("抽卡时间");
+    invalid($t("gacha-legacy.text_df9dfe0456"));
   }
   return value;
 }
 
 function drawOf(value: unknown, uid: string, [, gachaType, requestType]: typeof legacyBands[number]): ZzzLegacyGachaDraw {
   const row = object(value);
-  if (!row) invalid("记录结构");
-  if (wireString(row.uid) !== uid) invalid("记录 UID");
-  const id = idOf(row.id, "记录编号");
-  const itemId = idOf(row.item_id, "物品编号");
+  if (!row) invalid($t("gacha-legacy.text_fc6e12a2c3"));
+  if (wireString(row.uid) !== uid) invalid($t("gacha-legacy.text_6980b24770"));
+  const id = idOf(row.id, $t("gacha-legacy.text_1de967ae18"));
+  const itemId = idOf(row.item_id, $t("gacha-legacy.text_3fc0e85fe6"));
   const gachaId = wireString(row.gacha_id);
-  if (typeof gachaId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/u.test(gachaId)) invalid("活动编号");
+  if (typeof gachaId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/u.test(gachaId)) invalid($t("gacha-legacy.text_6d32211268"));
   const rank = wireString(row.rank_type);
-  if (rank !== "2" && rank !== "3" && rank !== "4") invalid("物品稀有度");
+  if (rank !== "2" && rank !== "3" && rank !== "4") invalid($t("gacha-legacy.text_0ece15300d"));
   const itemType = row.item_type;
-  if (itemType !== "代理人" && itemType !== "音擎" && itemType !== "邦布") invalid("物品类型");
-  const count = Number(idOf(row.count, "物品数量"));
-  if (!Number.isSafeInteger(count)) invalid("物品数量");
+  if (itemType !== "代理人" && itemType !== "音擎" && itemType !== "邦布") invalid($t("gacha-legacy.text_011ff1d948"));
+  const count = Number(idOf(row.count, $t("gacha-legacy.text_c48d6e6c40")));
+  if (!Number.isSafeInteger(count)) invalid($t("gacha-legacy.text_c48d6e6c40"));
   const { lang, name } = row;
-  if (typeof lang !== "string" || !/^[a-z]{2}-[a-z]{2}$/iu.test(lang)) invalid("记录语言");
+  if (typeof lang !== "string" || !/^[a-z]{2}-[a-z]{2}$/iu.test(lang)) invalid($t("gacha-legacy.text_bed1afdc30"));
   if (typeof name !== "string" || !name.isWellFormed() || Buffer.byteLength(name) > 512 || /[\x00-\x1F\x7F]/u.test(name)) {
-    invalid("物品名称");
+    invalid($t("gacha-legacy.text_b411fd04a9"));
   }
 
   const rawType = wireString(row.gacha_type);
   const realType = wireString(row.real_gacha_type);
-  if (realType !== undefined && realType !== gachaType && realType !== requestType) invalid("真实频段编号");
+  if (realType !== undefined && realType !== gachaType && realType !== requestType) invalid($t("gacha-legacy.text_a4aa2681c2"));
   // The old Cookie writer always saved type 2 and event 0, using the enclosing band as the actual type.
   const cookie = realType === undefined && rawType === "2" && gachaId === "0" && count === 1 && lang.toLowerCase() === "zh-cn";
   const returnBase = realType !== undefined && ((gachaType === "102" && rawType === "2") || (gachaType === "103" && rawType === "3"));
-  if (!cookie && !returnBase && rawType !== gachaType && rawType !== requestType) invalid("记录频段编号");
+  if (!cookie && !returnBase && rawType !== gachaType && rawType !== requestType) invalid($t("gacha-legacy.text_d4b94d7552"));
   const icon = row.square_icon;
   return {
     id, itemId, gachaId, count, time: timeOf(row.time), name, lang, itemType, rank,
@@ -126,8 +129,8 @@ function combineLegacyArchives(archives: readonly ZzzLegacyGachaSnapshot[], uid:
       for (const draw of archive.pools.find(pool => pool.type === type)!.records) {
         const previousBand = usedBands.get(draw.id);
         const previous = records.get(draw.id);
-        if (previousBand !== undefined && previousBand !== type) invalid("重复记录所属频段");
-        if (previous && !sameDraw(previous, draw)) invalid("重复记录内容");
+        if (previousBand !== undefined && previousBand !== type) invalid($t("gacha-legacy.text_dfadb48c2b"));
+        if (previous && !sameDraw(previous, draw)) invalid($t("gacha-legacy.text_93277307d6"));
         usedBands.set(draw.id, type);
         if (!previous || (previous.gachaId === "0" && draw.gachaId !== "0")) records.set(draw.id, draw);
       }
@@ -140,20 +143,20 @@ function combineLegacyArchives(archives: readonly ZzzLegacyGachaSnapshot[], uid:
 
 function parseArchive(value: unknown, uid: string): ZzzLegacyGachaSnapshot {
   const archive = object(value);
-  if (!archive || Object.keys(archive).some((name) => !supportedNames.has(name))) invalid("频段结构");
+  if (!archive || Object.keys(archive).some((name) => !supportedNames.has(name))) invalid($t("gacha-legacy.text_f2067e3394"));
   const previous = new Map<string, ZzzLegacyGachaPool["gachaType"]>();
   return { uid, pools: legacyBands.map((band) => {
     const [type, gachaType] = band;
     const { name } = zzzTuningPools[type];
     const input = Object.hasOwn(archive, name) ? archive[name] : [];
-    if (!Array.isArray(input)) invalid("频段记录");
+    if (!Array.isArray(input)) invalid($t("gacha-legacy.text_5f9f8d078d"));
     const records = new Map<string, ZzzLegacyGachaDraw>();
     for (const row of input) {
       const draw = drawOf(row, uid, band);
       const previousBand = previous.get(draw.id);
-      if (previousBand !== undefined && previousBand !== gachaType) invalid("重复记录所属频段");
+      if (previousBand !== undefined && previousBand !== gachaType) invalid($t("gacha-legacy.text_dfadb48c2b"));
       const existing = records.get(draw.id);
-      if (existing && !sameDraw(existing, draw)) invalid("重复记录内容");
+      if (existing && !sameDraw(existing, draw)) invalid($t("gacha-legacy.text_93277307d6"));
       previous.set(draw.id, gachaType);
       if (!existing || (existing.gachaId === "0" && draw.gachaId !== "0")) records.set(draw.id, draw);
     }
@@ -179,19 +182,19 @@ async function readFileSnapshot(directory: string, uid: string, qq?: string) {
   const rootPath = resolve(directory);
   const root = await statIfPresent(rootPath);
   if (!root) return;
-  if (!root.isDirectory()) invalid("根目录");
+  if (!root.isDirectory()) invalid($t("gacha-legacy.text_42ee2863b6"));
   const physicalRoot = await realpath(rootPath);
   const currentRoot = await statIfPresent(rootPath);
   if (!currentRoot?.isDirectory() || currentRoot.dev !== root.dev || currentRoot.ino !== root.ino) changed();
   const parent = qq === undefined ? physicalRoot : join(physicalRoot, qq);
   const parentInfo = qq === undefined ? currentRoot : await statIfPresent(parent);
   if (!parentInfo) return;
-  if (!parentInfo.isDirectory() || await realpath(parent) !== parent) invalid(qq === undefined ? "根目录" : "QQ 目录");
+  if (!parentInfo.isDirectory() || await realpath(parent) !== parent) invalid(qq === undefined ? $t("gacha-legacy.text_42ee2863b6") : $t("gacha-legacy.text_c4880d0af6"));
   const file = join(parent, `${uid}.json`);
   const expected = await statIfPresent(file);
   if (!expected) return;
-  if (!expected.isFile()) invalid("普通 JSON 文件");
-  if (expected.size > maxLegacyArchiveBytes) invalid("文件大小");
+  if (!expected.isFile()) invalid($t("gacha-legacy.text_6d0aaaab3a"));
+  if (expected.size > maxLegacyArchiveBytes) invalid($t("gacha-legacy.text_b9bf691643"));
 
   const handle = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
@@ -218,7 +221,7 @@ async function readArchive(directory: string, uid: string, qq?: string): Promise
     bytes = await readFileSnapshot(directory, uid, qq);
   } catch (error) {
     if (error instanceof ZzzLegacyGachaError) throw error;
-    throw new ZzzLegacyGachaError("io", "无法读取绝区零旧逐抽档案。");
+    throw new ZzzLegacyGachaError("io", $t("gacha-legacy.text_dec6e0c221"));
   }
   if (!bytes) return;
   let archive: unknown;
@@ -231,7 +234,7 @@ async function readArchive(directory: string, uid: string, qq?: string): Promise
 }
 
 export async function readZzzLegacyGacha(directory: string, qq: string, uid: string) {
-  if (typeof qq !== "string" || !qqPattern.test(qq) || typeof uid !== "string" || !uidPattern.test(uid)) invalid("QQ 或 UID");
+  if (typeof qq !== "string" || !qqPattern.test(qq) || typeof uid !== "string" || !uidPattern.test(uid)) invalid($t("gacha-legacy.text_28369d1f89"));
   return readArchive(directory, uid, qq);
 }
 

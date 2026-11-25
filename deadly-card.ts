@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { ZzzDeadlyRoom, ZzzDeadlySnapshot, ZzzShiyuPortrait } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
@@ -55,7 +58,7 @@ function drawOverview(context: Context, art: Art, snapshot: ZzzDeadlySnapshot, n
   if (avatar) cover(context, avatar, 88.8, 90.4, 28.8, 28.8);
   else box(context, "#3c313f", 88.8, 90.4, 28.8, 28.8);
   context.restore();
-  label(context, snapshot.nickname || nickname || "绳匠", 122.4, 105.3, 24, { maxWidth: 600 });
+  label(context, snapshot.nickname || nickname || $t("deadly-card.text_4efe2edb6d"), 122.4, 105.3, 24, { maxWidth: 600 });
 
   const scoreWidth = drawScore(context, art, snapshot.totalScore, 195000, 88.8, 159.5);
   drawPercent(context, art, snapshot.trialRank, 112.8 + scoreWidth, 158);
@@ -95,12 +98,12 @@ function drawRoom(context: Context, art: Art, room: ZzzDeadlyRoom, y: number, ra
     if (buffFrame) context.drawImage(buffFrame, 756, y, 60, 60);
     const buff = room.buffIcon && art.images.get(room.buffIcon);
     if (buff) contain(context, buff, 763.2, y + 7.2, 45.6, 45.6);
-    else label(context, "增益", 786, y + 30, 15, { align: "center", color: "#d3b8ea" });
+    else label(context, $t("deadly-card.text_76d70b2006"), 786, y + 30, 15, { align: "center", color: "#d3b8ea" });
   }
 
   drawBoss(context, art, room, y + 36);
   const left = 286;
-  const title = room.name || "首领";
+  const title = room.name || $t("deadly-card.text_58cae7ec87");
   const titleWidth = hard && rank !== undefined ? 323 : 457;
   label(context, title, left, y + (hard ? 66 : 55.5), 28.8, { color: "#d9d7da", maxWidth: titleWidth });
   if (hard) drawPercent(context, art, rank, left + 12 + Math.min(titleWidth, context.measureText(title).width), y + 66);
@@ -110,7 +113,7 @@ function drawRoom(context: Context, art: Art, room: ZzzDeadlyRoom, y: number, ra
   for (let index = 0; index < (room.availableStars ?? stars); index++) {
     star(context, art, left + scoreWidth + 6 + index * 24.9, y + offset + 106.65, index >= stars ? "blank" : hard ? "hard" : "lit");
   }
-  label(context, `通关时刻：${room.clearedAt ? dateLabel(room.clearedAt) : "—"}`, left, y + offset + 157.1, 19.2, { color: "#979797" });
+  label(context, $t("deadly-card.text_26bc3e21d1", { "value1": room.clearedAt ? dateLabel(room.clearedAt) : "—" }), left, y + offset + 157.1, 19.2, { color: "#979797" });
   room.avatars.forEach((entry, index) => drawPortrait(context, art, entry, left + index * 134.82, y + offset + 186.4, 110.8));
   drawPortrait(context, art, room.buddy, left + 404.45, y + offset + 219.7, 77.55, true);
 }
@@ -168,9 +171,9 @@ export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: str
     if (background) cover(context, background, 0, 0, width, height);
     drawOverview(context, art, snapshot, nickname);
     const period = snapshot.period;
-    label(context, `统计周期 ${period ? `${dateLabel(period.start.slice(0, 10))} - ${dateLabel(period.end.slice(0, 10))}` : "暂无记录"}`,
+    label(context, $t("deadly-card.text_e9438ab79d", { "value1": period ? `${dateLabel(period.start.slice(0, 10))} - ${dateLabel(period.end.slice(0, 10))}` : $t("deadly-card.text_46ca86da52") }),
       43.2, 280.2, 19.2, { color: "#979797" });
-    label(context, "*总得分与排名先更新，挑战详情约延迟 2 小时", 43.2, 316.2, 19.2, { color: "#979797" });
+    label(context, $t("deadly-card.text_ce19bf91b2"), 43.2, 316.2, 19.2, { color: "#979797" });
 
     let row = firstRoom;
     for (const room of snapshot.hard) {
@@ -182,8 +185,8 @@ export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: str
       row += trialHeight + 24;
     }
     frame(context, theme(art, "BgFrame01"), 24, footer, 792, 98);
-    const caption = options.rankVisibility === undefined ? (snapshot.scheduleType === 2 ? "危局强袭战 · 上期个人战绩" : "危局强袭战 · 本期个人战绩") :
-      `本群危局强袭战排名：${options.rankVisibility ? "显示" : "隐藏"}，可用 %显示危局排名 或 %隐藏危局排名 切换`;
+    const caption = options.rankVisibility === undefined ? (snapshot.scheduleType === 2 ? $t("deadly-card.text_0536381adc") : $t("deadly-card.text_8a29bd00e1")) :
+      $t("deadly-card.text_6322133b5c", { "value1": options.rankVisibility ? $t("deadly-card.text_4e1449e7d5") : $t("deadly-card.text_145219e726") });
     label(context, caption,
       width / 2, footer + 49, 19.2, { align: "center", weight: 700 });
     label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#fff", align: "center" });

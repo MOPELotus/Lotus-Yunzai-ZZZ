@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { createHash } from "node:crypto";
 import { ProfileError, type createProfileStore } from "@lotus-yunzai/account";
 import type { createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
@@ -41,7 +44,7 @@ export function createPanelRankIdentityReader(profiles: ReturnType<typeof create
         signal,
         async verifyProfile() {
           const latest = await profiles.internationalRoleContext(qq, profileId, "zzz");
-          if (latest?.revision !== source.revision) throw new ProfileError("changed", "国际服账号档案已变化。");
+          if (latest?.revision !== source.revision) throw new ProfileError("changed", $t("panel-rank-identity.text_9d3e1eb5d0"));
         },
       });
       catalogues.set(key, pending);

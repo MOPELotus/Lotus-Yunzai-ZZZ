@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { createGroupRankRefresh, MAX_PROFILE_ID, type createProfileStore } from "@lotus-yunzai/account";
 import { rankGroup, rankMembership, type ChallengeRankContext } from "./challenge-rank.ts";
@@ -32,9 +35,9 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
 
   return async (context: ChallengeRankContext, command: NonNullable<ReturnType<typeof zzzPanelRankCommand>>) => {
     const scope = rankGroup(context);
-    if (!scope) return "请在群聊中使用该命令！";
+    if (!scope) return $t("panel-rank.text_dc4e925566");
     const redis = globalThis.redis;
-    if (!redis) return "角色面板排名暂时不可用。";
+    if (!redis) return $t("panel-rank.text_b82cead464");
     const { group, actor } = scope;
     const key = rankKey(group);
     const participant = `${actor}:${command.profileId}`;
@@ -42,28 +45,28 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
     const roleFor = createPanelRankIdentityReader(profiles, { openHoYoLabZzzCheckin }, signal);
     try {
       const settings = await readRankConfig(group);
-      if (!settings.allowed && (command.kind !== "visibility" || command.enable)) return "当前群角色面板排名功能已关闭！";
+      if (!settings.allowed && (command.kind !== "visibility" || command.enable)) return $t("panel-rank.text_866216e6ce");
       const members = await rankMembership(context, actor);
-      if (!members) return "暂无法核对当前群成员，请稍后重试。";
+      if (!members) return $t("panel-rank.text_f9fd277d3d");
 
       if (command.kind === "visibility" && !command.enable) {
         if (signal.aborted) return;
         if (command.international) {
           await redis.eval(hideInternational, { keys: [key], arguments: [participant] });
-          return "本群已隐藏该档案的国际服角色面板排名。";
+          return $t("panel-rank.text_54f686811a");
         }
         await redis.hDel(key, participant);
-        return "本群已隐藏该档案的角色面板排名。";
+        return $t("panel-rank.text_895076daad");
       }
       if (command.kind === "visibility") {
         const viewer = await roleFor(actor, command.profileId, command.international ? "international" : undefined);
         if (!viewer) return command.international ?
-          "请先在私聊绑定已核验的国际服 Cookie，再在 HoYoLAB 选择要展示的绝区零角色。" :
-          "请先登录并选择已认证的绝区零角色。";
+          $t("panel-rank.text_1fa16ed1f2") :
+          $t("panel-rank.text_ad858b391d");
         if (signal.aborted) return;
         await redis.hSet(key, participant, viewer.value);
-        const label = panelRankMode(viewer.value) === "cn" ? "角色面板排名" : `国际服角色面板排名（UID ${viewer.uid}）`;
-        return `本群已显示该档案的${label}。查榜时仅将游戏 UID 发给 Enka 请求公开展柜。发送 %隐藏${command.international ? "国际服" : ""}角色面板排名${command.profileId} 可撤回。`;
+        const label = panelRankMode(viewer.value) === "cn" ? $t("panel-rank.text_a98f99ed89") : $t("panel-rank.text_3b488823cb", { "uid": viewer.uid });
+        return $t("panel-rank.text_4baf68b300", { "label": label, "value2": command.international ? $t("panel-rank.text_970d688dd6") : "", "profileId": command.profileId });
       }
 
       const localViewer = await roleFor(actor, command.profileId, "cn");
@@ -71,7 +74,7 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       const viewer = localViewer ?? (viewerRegistration
         ? await roleFor.registered(actor, command.profileId, viewerRegistration)
         : await roleFor(actor, command.profileId, "selected") ?? await roleFor(actor, command.profileId, "international"));
-      if (!viewer) return "请先登录并选择已认证的绝区零角色。";
+      if (!viewer) return $t("panel-rank.text_ad858b391d");
       const verifyViewer = () => viewerRegistration
         ? redis.hGet(key, participant).then(value => value === viewerRegistration
           ? roleFor.registered(actor, command.profileId, viewerRegistration, viewer.revision) : undefined)
@@ -88,15 +91,15 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
         const identity = await roleFor.registered(qq, profileId, value);
         if (identity) registered.push({ ...identity, field, qq, profileId });
       }
-      if (!registered.length) return "本群暂无已授权的角色面板。发送 %显示角色面板排名 可加入。";
+      if (!registered.length) return $t("panel-rank.text_0dbaeff610");
       const tables = await loadEnkaPanelTables(resources);
-      if (!tables) return "绝区零公开展柜所需的本地游戏资料不可用。";
+      if (!tables) return $t("panel-rank.text_bf3e1ea9a3");
 
       const characterIds = new Set(Object.entries(tables.partners).flatMap(([id, raw]) => {
         const { name: primary, full_name: full } = panelObject(raw);
         return [primary, full].some(value => typeof value === "string" && zzzRoleName(value) === name) ? [id] : [];
       }));
-      if (!characterIds.size) return "本地游戏资料暂无法核验该代理人。";
+      if (!characterIds.size) return $t("panel-rank.text_3f2718ee46");
 
       const byOwner = (a: RegisteredPanel, b: RegisteredPanel) => a.qq.localeCompare(b.qq, "en") || a.profileId - b.profileId;
       const seen = new Set<string>();
@@ -112,7 +115,7 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
           rankMembership(context, actor), redis.hGet(key, entry.field), readRankConfig(group),
         ]);
         if (!policy.allowed || !currentMembers?.has(entry.qq) || visible !== entry.value || current?.value !== entry.value) {
-          throw new Error("榜单成员、档案或可见状态已变化。");
+          throw new Error($t("panel-rank.text_58dcbef92f"));
         }
       };
       const results = await refresh(entries, async (entry, requestSignal) => {
@@ -122,27 +125,27 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
         if (!matched?.length) return;
         return matched.map(raw => {
           const avatar = formatEnkaPanel(raw, tables);
-          if (!avatar) throw new Error("本地游戏资料无法核验所查角色的公开展柜。");
+          if (!avatar) throw new Error($t("panel-rank.text_7183b53f9b"));
           return { ...buildZzzPanelRankRow(avatar), ...entry };
         });
       }, signal);
       const unique = results.flatMap(result => result.status === "fresh" ? result.value : []);
       const missing = results.filter(result => result.status === "not-listed").length;
       const failed = results.filter(result => result.status === "failed").length;
-      const overview = `Enka 公开展柜：${results.length - missing - failed} 个 UID 入榜，${missing} 个未公开展示该角色，${failed} 个刷新未确认。`;
-      if (new Set(unique.map(row => row.avatar.id)).size > 1) return "有多个同名代理人，请输入完整名称。";
-      if (!unique.length) return `${overview}\n本次没有确认可入榜的角色面板。`;
+      const overview = $t("panel-rank.text_63ace66ab0", { "value1": results.length - missing - failed, "missing": missing, "failed": failed });
+      if (new Set(unique.map(row => row.avatar.id)).size > 1) return $t("panel-rank.text_79ddd1a4ad");
+      if (!unique.length) return $t("panel-rank.text_6c424aa2fc", { "overview": overview });
       const mode = command.weighted ? "weighted" : "drive";
       unique.sort((a, b) => b[mode] - a[mode] || byOwner(a, b));
       const maxPage = Math.ceil(unique.length / settings.maximum);
-      if (command.page > maxPage) return `当前榜单共 ${maxPage} 页。`;
+      if (command.page > maxPage) return $t("panel-rank.text_b6a3984d7d", { "maxPage": maxPage });
       const first = (command.page - 1) * settings.maximum;
       const strongest = command.kind === "strongest" ? unique[0]! : undefined;
       const selected = strongest ? [strongest] : unique.slice(first, first + settings.maximum);
-      const leader = strongest && `本群最强${strongest.avatar.name_mi18n} · UID ${strongest.uid} · 驱动盘 ${strongest.drive.toFixed(2)} 分`;
-      const title = `${selected[0]!.avatar.name_mi18n}${command.weighted ? "综合榜" : "排名"}`;
-      const example = `%${command.name}${command.weighted ? "综合榜" : "排名"}${zzzCommandProfileSuffix(command.profileId)}`;
-      const next = command.page < maxPage ? `${example} 页${command.page + 1}` : undefined;
+      const leader = strongest && $t("panel-rank.text_a005ac788c", { "name_mi18n": strongest.avatar.name_mi18n, "uid": strongest.uid, "value3": strongest.drive.toFixed(2) });
+      const title = `${selected[0]!.avatar.name_mi18n}${command.weighted ? $t("panel-rank.text_a885a22d16") : $t("panel-rank.text_6570a98f28")}`;
+      const example = `%${command.name}${command.weighted ? $t("panel-rank.text_a885a22d16") : $t("panel-rank.text_6570a98f28")}${zzzCommandProfileSuffix(command.profileId)}`;
+      const next = command.page < maxPage ? $t("panel-rank.text_65394218f3", { "example": example, "value2": command.page + 1 }) : undefined;
       const image = await (strongest
         ? renderStrongest(strongest.avatar, strongest.uid, { showcase: true, legacyResources: resources, signal,
           inlineImageByteLimit: context.inlineImageByteLimit })
@@ -160,14 +163,14 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       const visible = await redis.hmGet(key, selected.map(row => row.field));
       if (visible.some((value, index) => value !== selected[index]!.value)) return changed;
       if (signal.aborted) return;
-      if (leader) return image ? [`${leader}\n${overview}`, { type: "image" as const, file: image.png }] : `${leader}\n${overview}\n角色面板图片暂时无法发送。`;
+      if (leader) return image ? [`${leader}\n${overview}`, { type: "image" as const, file: image.png }] : $t("panel-rank.text_0bcdffed52", { "leader": leader, "overview": overview });
       if (image) return [overview, { type: "image" as const, file: image.png }];
       return [title, overview, ...selected.map((row, index) => `${first + index + 1}. ${row.uid} · ${row[mode].toFixed(2)}`),
-        ...(next ? [`下一页 ${next}`] : [])].join("\n");
+        ...(next ? [$t("panel-rank.text_2cb43eac24", { "next": next })] : [])].join("\n");
     } catch {
-      if (!signal.aborted) return "角色面板排名暂时不可用。";
+      if (!signal.aborted) return $t("panel-rank.text_b82cead464");
     }
   };
 }
 
-const changed = "榜单成员、档案或可见状态已变化，请重新查询。";
+const changed = $t("panel-rank.text_bc0c8082f8");

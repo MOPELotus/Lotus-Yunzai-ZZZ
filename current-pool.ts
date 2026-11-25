@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { panelObject } from "./panel-detail.ts";
 
 const parameters = "game=nap&game_biz=nap_cn&lang=zh-cn&bundle_id=nap_cn";
@@ -7,7 +10,7 @@ export const zzzCurrentPoolCommand = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)
 const limitedNotice = /^\d{1,2}\.\d{1,2}版本限时频段[（(](?:上|下)期[）)]$/u;
 const day = 86_400_000;
 const chinaOffset = 28_800_000;
-const unavailable = "暂无法从国服官方公告核验当前限时频段。";
+const unavailable = $t("current-pool.text_bf438486f8");
 type Transport = (url: string, request: RequestInit) => Promise<Response>;
 type PoolKind = "代理人" | "音擎";
 
@@ -38,7 +41,7 @@ function array(value: unknown) {
 function pictureNotices(value: unknown) {
   const envelope = panelObject(value);
   const rows = panelObject(envelope.data).pic_list;
-  if (envelope.retcode !== 0 || !Array.isArray(rows) || rows.length > 200) throw new Error("国服公告格式异常");
+  if (envelope.retcode !== 0 || !Array.isArray(rows) || rows.length > 200) throw new Error($t("current-pool.text_873cc78f24"));
   return array(rows);
 }
 
@@ -114,7 +117,7 @@ export function decodeCurrentZzzPool(list: unknown, detail: unknown, now: number
 async function readBytes(response: Response, maximum: number) {
   if (!response.ok || !response.body || Number(response.headers.get("content-length")) > maximum) {
     await response.body?.cancel().catch(() => undefined);
-    throw new Error("国服公告数据不可用");
+    throw new Error($t("current-pool.text_0c1f27fe9f"));
   }
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -124,7 +127,7 @@ async function readBytes(response: Response, maximum: number) {
       const chunk = await reader.read();
       if (chunk.done) break;
       length += chunk.value.byteLength;
-      if (length > maximum) throw new Error("国服公告数据过大");
+      if (length > maximum) throw new Error($t("current-pool.text_c0bfc10917"));
       chunks.push(chunk.value);
     }
     const bytes = new Uint8Array(length);
@@ -187,14 +190,14 @@ export function createZzzCurrentPool(signal: AbortSignal, transport: Transport =
     const { period, images } = cached;
     const remaining = Math.ceil((period.end - now()) / day);
     return [
-      `=== 📅 绝区零本期卡池 ===\n${period.title}\n时间：${period.time}（国服）\n剩余约 ${remaining} 天\n`,
+      $t("current-pool.text_ca82da30bc", { "title": period.title, "time": period.time, "remaining": remaining }),
       ...(["代理人", "音擎"] as const).flatMap(kind => [
-        `\n【 ${kind === "代理人" ? "角色" : kind}调频 】\n`,
+        $t("current-pool.text_d1c77ada3a", { "value1": kind === "代理人" ? $t("current-pool.text_c47b54e84e") : kind }),
         ...period.banners.flatMap((banner, index) => banner.kind === kind ? [
           `◈ S-${banner.featured} · 「${banner.name}」\n`, ...(images[index] ? [images[index]] : []),
         ] : []),
       ]),
-      "\nA级名单以游戏内调频界面为准。",
+      $t("current-pool.text_324ae3a632"),
     ];
   };
 }

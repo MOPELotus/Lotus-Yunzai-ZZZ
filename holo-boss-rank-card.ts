@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { ZzzHoloBossRoom } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { box, drawTag, label, measureZzzCardLabel, zzzCardFooter, zzzRegionName } from "./card-theme.ts";
@@ -55,7 +58,7 @@ function paintMember(context: Context, art: HoloRankArt, row: RankRow, y: number
   label(context, uid, 156 + uidWidth / 2, y + 167, 21.6, { align: "center", color: "#ffffff99" });
 
   for (const [x, field, value] of [
-    [489, "总用时", holoBossDuration(row.score)], [603, "星级", String(row.bonus)], [699, "无伤", String(row.holo?.undamaged ?? 0)],
+    [489, $t("holo-boss-rank-card.text_3e4d06cde4"), holoBossDuration(row.score)], [603, $t("holo-boss-rank-card.text_9c55a439d7"), String(row.bonus)], [699, $t("holo-boss-rank-card.text_00a57f0862"), String(row.holo?.undamaged ?? 0)],
   ] as const) {
     label(context, field, x, y + 102, 36, { color: "#ddd", align: "center" });
     label(context, value, x, y + 150, 36, { weight: 700, align: "center", maxWidth: x === 489 ? 108 : undefined, ellipsis: false });
@@ -81,7 +84,7 @@ function paintTeam(context: Context, art: HoloRankArt, room: ZzzHoloBossRoom | u
   }
 
   const contentX = x + 40.8;
-  const name = `${room.name || "首领"}${room.undamaged ? " · 无伤" : ""}`;
+  const name = `${room.name || $t("holo-boss-rank-card.text_58cae7ec87")}${room.undamaged ? $t("holo-boss-rank-card.text_7c68e212d7") : ""}`;
   label(context, name, contentX, y + 55.5, 28.8, { weight: 700, color: gradientText(context, y + 55.5, 28.8), maxWidth: 323 });
   const time = holoBossDuration(room.duration);
   label(context, time, contentX, y + 105.8, 38.4, { weight: 700, color: gradientText(context, y + 105.8, 38.4), maxWidth: 220, ellipsis: false });
@@ -111,9 +114,9 @@ function paintTeam(context: Context, art: HoloRankArt, room: ZzzHoloBossRoom | u
 function instruction(context: Context, y: number) {
   let x = 72;
   const parts = [
-    ["•  请在群内使用 ", "#979797"], ["%显示拟境排名", "#ffd700"], [" 并查询 ", "#979797"],
-    ["%拟境湮灭战", "#ffd700"], [" 登记本期战绩。使用 ", "#979797"], ["%隐藏拟境排名", "#ffd700"],
-    [" 可关闭本群展示。", "#979797"],
+    [$t("holo-boss-rank-card.text_4114e6a39a"), "#979797"], [$t("holo-boss-rank-card.text_04c46e828b"), "#ffd700"], [$t("holo-boss-rank-card.text_da8aa7c647"), "#979797"],
+    [$t("holo-boss-rank-card.text_fe92926c65"), "#ffd700"], [$t("holo-boss-rank-card.text_b8fafc93e2"), "#979797"], [$t("holo-boss-rank-card.text_6e92252d5b"), "#ffd700"],
+    [$t("holo-boss-rank-card.text_b1cced053a"), "#979797"],
   ];
   for (const [text, color] of parts) {
     label(context, text!, x, y, 24, { color });
@@ -132,7 +135,7 @@ export function paintHoloRank(context: Context, art: HoloRankArt, rows: readonly
   const notesY = 96 + rows.length * rowHeight;
   frame(context, art.local.get(theme + "BgFrame01.png"), 24, notesY, 2152, notesHeight);
   instruction(context, notesY + 35.2);
-  label(context, "•  排名依据：1. 星数（更多优先）  2. 三间用时总和（更少优先）  3. 无伤间数（更多优先）  4. 战绩记录时间（更早优先）",
+  label(context, $t("holo-boss-rank-card.text_605e8bdee9"),
     72, notesY + 74.4, 24, { color: "#979797", maxWidth: 2050 });
   label(context, zzzCardFooter, holoRankWidth / 2, notesY + 145, 16.8, { color: "#fff", align: "center" });
 }

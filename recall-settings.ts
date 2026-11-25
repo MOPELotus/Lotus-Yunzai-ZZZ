@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import type { RecallableCommandReply } from "../../lib/commands.ts";
 import { defaultZzzRecallSeconds, maxZzzRecallSeconds, readZzzRecallSeconds } from "../../lib/zzz-recall-config.ts";
@@ -24,20 +27,20 @@ export function createZzzRecallSettings(signal: AbortSignal, root = installation
     if (!match) return;
     const connection = context.message_type === "group" ? context.groupActivitySignal : context.privateCredentialSignal;
     const allowed = () => connection?.aborted === false && ownsZzzManagement(context, signal);
-    if (!connection || !allowed()) return transient("仅限当前机器人的主人设置。");
+    if (!connection || !allowed()) return transient($t("recall-settings.text_c4a86edeab"));
     const next = Number(match[1]);
-    if (!Number.isSafeInteger(next) || next > maxZzzRecallSeconds) return transient(`撤回时间须在 0 到 ${maxZzzRecallSeconds} 秒之间。`);
+    if (!Number.isSafeInteger(next) || next > maxZzzRecallSeconds) return transient($t("recall-settings.text_29a1b7bb7b", { "maxZzzRecallSeconds": maxZzzRecallSeconds }));
 
     const operation = AbortSignal.any([signal, connection]);
     const group = rankGroup(context);
     return (async () => {
-      if (group && !await rankMembership(context, group.actor)) return transient("暂无法核对当前群成员，请稍后再试。");
+      if (group && !await rankMembership(context, group.actor)) return transient($t("recall-settings.text_52871380fe"));
       try {
         const { updateZzzPanelIntervals } = await import("../../lib/panel-zzz-settings.ts");
         await updateZzzPanelIntervals(root, { recallMsg: next }, allowed, operation, undefined, legacyResources);
-        return next ? `绝区零提示消息撤回时间已设置为 ${next} 秒。` : "绝区零提示消息已关闭自动撤回。";
+        return next ? $t("recall-settings.text_0d86667f23", { "next": next }) : $t("recall-settings.text_aa614ea32a");
       } catch {
-        if (!operation.aborted) return transient(allowed() ? "绝区零撤回时间未保存，请稍后再试。" : "仅限当前机器人的主人设置。");
+        if (!operation.aborted) return transient(allowed() ? $t("recall-settings.text_e8ff6be601") : $t("recall-settings.text_c4a86edeab"));
         return [];
       }
     })();

@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { constants } from "node:fs";
 import { lstat, open, realpath } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -10,7 +13,7 @@ const maxBytes = 4 * 1024 * 1024;
 const legacyDirectories = ["data/ZZZ-Plugin/monthly", "plugins/ZZZ-Plugin/data/monthly"];
 
 function object(value: unknown): Row {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("月报交还副本格式无效。");
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error($t("monthly-handback.text_7a4b556ac9"));
   return value as Row;
 }
 
@@ -20,7 +23,7 @@ function isMissing(error: unknown): boolean {
 
 function decimal(source: string) {
   const match = /^(-?)(\d+)(?:\.(\d+))?(?:e([+-]?\d+))?$/iu.exec(source);
-  if (!match) throw new Error("月报副本含无法无损导出的数字。");
+  if (!match) throw new Error($t("monthly-handback.text_da27a58f4f"));
   const [, sign, integral, fraction = "", power = "0"] = match;
   const significant = (integral! + fraction).replace(/^0+/u, "");
   if (!significant) return "0";
@@ -34,7 +37,7 @@ function decode(bytes: Uint8Array): unknown {
     if (typeof value === "number" && (!Number.isFinite(value) || Object.is(value, -0) ||
         (Number.isInteger(value) && !Number.isSafeInteger(value)) || !token?.source || token.source.length > 256 ||
         decimal(token.source) !== decimal(String(value)))) {
-      throw new Error("月报副本含无法无损导出的数字。");
+      throw new Error($t("monthly-handback.text_da27a58f4f"));
     }
     return value;
   });
@@ -46,24 +49,24 @@ async function readCopy(file: string) {
     if (!isMissing(error)) throw error;
   });
   if (!physical) return;
-  if (physical !== parent) throw new Error("月报交还须读取副本内的实际目录。");
+  if (physical !== parent) throw new Error($t("monthly-handback.text_58ce5d901b"));
   const handle = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK).catch((error: unknown) => {
     if (!isMissing(error)) throw error;
   });
   if (!handle) return;
   try {
     const stat = await handle.stat();
-    if (!stat.isFile() || stat.size > maxBytes) throw new Error("月报交还副本须为大小受限的普通文件。");
+    if (!stat.isFile() || stat.size > maxBytes) throw new Error($t("monthly-handback.text_9a4b88dcf3"));
     const bytes = Buffer.alloc(stat.size);
     for (let offset = 0; offset < bytes.length;) {
       const { bytesRead } = await handle.read(bytes, offset, bytes.length - offset, offset);
-      if (!bytesRead) throw new Error("月报交还副本读取期间已变化。");
+      if (!bytesRead) throw new Error($t("monthly-handback.text_55716801e2"));
       offset += bytesRead;
     }
     const latest = await lstat(file);
     if (!latest.isFile() || latest.ino !== stat.ino || latest.dev !== stat.dev ||
         latest.size !== stat.size || latest.mtimeMs !== stat.mtimeMs || latest.ctimeMs !== stat.ctimeMs ||
-        await realpath(parent) !== physical) throw new Error("月报交还副本读取期间已变化。");
+        await realpath(parent) !== physical) throw new Error($t("monthly-handback.text_55716801e2"));
     return decode(bytes);
   } finally {
     await handle.close();
@@ -75,18 +78,18 @@ function legacyRecord(value: unknown, identity: Identity): Row {
   const fields = object(row.month_data);
   if (typeof row.data_month !== "string" || !Array.isArray(fields.list) || !Array.isArray(fields.income_components) ||
       !normalizeZzzMonthly(row, identity).record) {
-    throw new Error("月报缺少固定旧版所需的年月或收支数组，不能安全交还。");
+    throw new Error($t("monthly-handback.text_d68e725f52"));
   }
   for (const value of fields.list) {
     const item = object(value);
     if ((item.data_type === "PolychromesData" || item.data_type === "MatserTapeData" || item.data_type === "BooponsData") &&
-        item.count != null && typeof item.count !== "number") throw new Error("月报货币数量无法由固定旧版安全汇总。");
+        item.count != null && typeof item.count !== "number") throw new Error($t("monthly-handback.text_5fe173f2bd"));
   }
   return row;
 }
 
 function validatedLegacy(value: unknown, identity: Identity) {
-  if (!Array.isArray(value)) throw new Error("旧版月报须为 JSON 数组。");
+  if (!Array.isArray(value)) throw new Error($t("monthly-handback.text_9f057d2674"));
   return value.map(row => legacyRecord(row, identity));
 }
 
@@ -112,17 +115,17 @@ function mergeRows(older: Row, incoming: Row, path: readonly string[] = []): Row
 }
 
 function conflict(): never {
-  throw new Error("同月份月报存在不一致的重叠值，请核对源档；未生成交还文件。");
+  throw new Error($t("monthly-handback.text_ea98780a16"));
 }
 
 function indexedItems(value: unknown, field: string) {
-  if (!Array.isArray(value)) throw new Error("旧版月报须保留收支数组。");
+  if (!Array.isArray(value)) throw new Error($t("monthly-handback.text_1a30a24b6d"));
   const rows = new Map<string, Row>();
   for (const entry of value) {
     const row = object(entry);
     const key = row[field];
     if (typeof key !== "string" || !key || rows.has(key)) {
-      throw new Error("同月份月报存在无法保序合并的重复货币或收入项。");
+      throw new Error($t("monthly-handback.text_6fd05f905d"));
     }
     rows.set(key, row);
   }
@@ -152,29 +155,29 @@ function combine(rows: readonly Row[]) {
 export async function prepareZzzMonthlyHandback({ managed, legacy, qq, uid, region }: {
   readonly managed: string; readonly legacy: string; readonly qq: string; readonly uid: string; readonly region: string;
 }) {
-  if (!/^[1-9]\d{0,18}$/u.test(qq) || !region) throw new Error("月报交还的 QQ 或区服无效。");
+  if (!/^[1-9]\d{0,18}$/u.test(qq) || !region) throw new Error($t("monthly-handback.text_1c42d08b5c"));
   const identity = resolveZzzGachaLinkRole({ uid, region });
   const previous = await Promise.all(legacyDirectories.map(directory => readCopy(join(legacy, directory, `${uid}.json`))));
   const oldRows = previous.flatMap(data => data === undefined ? [] : validatedLegacy(data, identity));
   const old = combine(oldRows);
   const source = await readCopy(join(managed, qq, `${uid}.json`));
-  if (source === undefined) throw new Error("指定 QQ、UID 和区服没有新版绝区零月报档案。");
+  if (source === undefined) throw new Error($t("monthly-handback.text_ba6e3a40d7"));
   const current = object(source);
   if (current.version !== 1 || current.qq !== qq || current.uid !== uid || current.region !== region ||
-      !Array.isArray(current.months) || !current.months.length) throw new Error("新版月报档案版本、归属或内容无效。");
+      !Array.isArray(current.months) || !current.months.length) throw new Error($t("monthly-handback.text_bcbec8819a"));
   const modern = current.months.map(value => {
     const entry = object(value);
     if (typeof entry.fetchedAt !== "number" || !Number.isSafeInteger(entry.fetchedAt) || entry.fetchedAt < 0) {
-      throw new Error("新版月报更新时间无效。");
+      throw new Error($t("monthly-handback.text_55d22a8e8c"));
     }
     return legacyRecord(entry.record, identity);
   });
-  if (new Set(modern.map(row => row.data_month)).size !== modern.length) throw new Error("新版月报存在重复月份。");
+  if (new Set(modern.map(row => row.data_month)).size !== modern.length) throw new Error($t("monthly-handback.text_58c5c6e487"));
   const merged = combine([...old.values(), ...modern]);
   const document = [...merged.keys()].sort().map(month => merged.get(month)!);
   const content = Buffer.from(JSON.stringify(document, null, 2) + "\n");
-  if (content.byteLength > maxBytes) throw new Error("月报交还文件超过可导出大小。");
+  if (content.byteLength > maxBytes) throw new Error($t("monthly-handback.text_3099033829"));
   const rebuilt = validatedLegacy(decode(content), identity);
-  if (!isDeepStrictEqual(rebuilt, document) || rebuilt.length !== merged.size) throw new Error("月报交还内容无法回读核验。");
+  if (!isDeepStrictEqual(rebuilt, document) || rebuilt.length !== merged.size) throw new Error($t("monthly-handback.text_46d0f9d180"));
   return { content, counts: { modern: modern.length, legacy: old.size, total: merged.size } };
 }

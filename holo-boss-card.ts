@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzHoloBossRoom, ZzzHoloBossSnapshot, ZzzShiyuPortrait } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -98,7 +101,7 @@ function drawRoom(context: Context, art: Art, room: ZzzHoloBossRoom, y: number, 
     contain(context, medal, 763.2, y + 7.2, 45.6, 45.6);
   }
 
-  gradientLabel(context, `${room.name || "首领"}${room.undamaged ? " 🏆" : ""}`, roomContentX, y + 55.5, 28.8,
+  gradientLabel(context, `${room.name || $t("holo-boss-card.text_58cae7ec87")}${room.undamaged ? " 🏆" : ""}`, roomContentX, y + 55.5, 28.8,
     { maxWidth: medal ? 419 : roomContentWidth });
   const rank = room.rank;
   const center = y + (rank === undefined ? 105.8 : 118.2);
@@ -132,7 +135,7 @@ function drawRoom(context: Context, art: Art, room: ZzzHoloBossRoom, y: number, 
 function drawOverview(context: Context, art: Art, snapshot: ZzzHoloBossSnapshot) {
   fillRound(context, "#444", 36, 36, 768, 255.2, 20);
   box(context, "#0b0b0b", 56, 56, 728, 215.2);
-  gradientLabel(context, "拟境湮灭战", width / 2, 131.3, 33.6, { align: "center", bottomOpacity: 0.6 });
+  gradientLabel(context, $t("holo-boss-card.text_29e80a0630"), width / 2, 131.3, 33.6, { align: "center", bottomOpacity: 0.6 });
   const y = 200.5;
   label(context, "⏳", 108.8, y, 31.2);
   gradientLabel(context, holoBossDuration(snapshot.totalDuration), 147.2, y, 40.8);
@@ -165,10 +168,10 @@ export async function renderZzzHoloBoss(snapshot: ZzzHoloBossSnapshot, _role: Ga
     drawOverview(context, art, snapshot);
     const period = snapshot.period;
     const format = (date: string) => date.slice(0, 10).replaceAll("-", ".");
-    label(context, `统计周期 ${period ? `${format(period.start)} - ${format(period.end)}` : "—"}`,
+    label(context, $t("holo-boss-card.text_e9438ab79d", { "value1": period ? `${format(period.start)} - ${format(period.end)}` : "—" }),
       43.2, 340.2, 19.2, { color: "#979797" });
-    label(context, snapshot.scheduleType === 2 ? "上期" : "本期", 797, 340.2, 19.2, { color: "#979797", align: "right" });
-    label(context, "*总得分&排名和挑战详情并非同时刷新，挑战详情存在2小时左右延迟", 43.2, 375.8, 19.2,
+    label(context, snapshot.scheduleType === 2 ? $t("holo-boss-card.text_2823616a99") : $t("holo-boss-card.text_474da3018a"), 797, 340.2, 19.2, { color: "#979797", align: "right" });
+    label(context, $t("holo-boss-card.text_9d9656981b"), 43.2, 375.8, 19.2,
       { color: "#979797" });
 
     let y = firstRoom;
@@ -179,18 +182,18 @@ export async function renderZzzHoloBoss(snapshot: ZzzHoloBossSnapshot, _role: Ga
     }
     frame(context, art.local.get(themePath + "BgFrame01.png"), 24, notes, 792, 98);
     if (options.rankVisibility === undefined) {
-      const instruction = "请在群内查询";
-      const command = "%拟境湮灭战";
+      const instruction = $t("holo-boss-card.text_e7135a7feb");
+      const command = $t("holo-boss-card.text_fe92926c65");
       const commandX = 103.2 + measureZzzCardLabel(context, instruction, 19.2) + 5.8;
       const suffixX = commandX + measureZzzCardLabel(context, command, 19.2) + 5.8;
       label(context, "•", 94, notes + 49, 19.2);
       label(context, instruction, 103.2, notes + 49, 19.2);
       label(context, command, commandX, notes + 49, 19.2, { color: "#ffd700" });
-      label(context, "，以参与对应群的拟境湮灭战排名", suffixX, notes + 49, 19.2);
+      label(context, $t("holo-boss-card.text_513ea8bd82"), suffixX, notes + 49, 19.2);
     } else {
-      const status = options.rankVisibility ? "显示" : "隐藏";
-      label(context, `• 本群拟境排名已${status}`, 94, notes + 49, 19.2);
-      label(context, "%显示拟境排名 / %隐藏拟境排名", 288, notes + 49, 19.2, { color: "#ffd700" });
+      const status = options.rankVisibility ? $t("holo-boss-card.text_4e1449e7d5") : $t("holo-boss-card.text_145219e726");
+      label(context, $t("holo-boss-card.text_d4896d0ba5", { "status": status }), 94, notes + 49, 19.2);
+      label(context, $t("holo-boss-card.text_805000a007"), 288, notes + 49, 19.2, { color: "#ffd700" });
     }
     label(context, zzzCardFooter, width / 2, height - 44.5, 16.8, { align: "center", color: "#fff" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });

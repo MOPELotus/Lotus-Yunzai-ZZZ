@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { isDeepStrictEqual } from "node:util";
 import { ProfileError, type createProfileStore } from "@lotus-yunzai/account";
 import { resolveZzzTuningRegion, type createHoyoClient, type ZzzTuningOptions } from "@lotus-yunzai/hoyo-client";
@@ -6,7 +9,7 @@ import { prepareZzzTuningUpdate, readZzzTuningHistory, type ZzzTuningIdentity } 
 
 export class ZzzTuningHistoryChangedError extends Error {
   constructor() {
-    super("绝区零调频历史已更新，请重新发起请求。");
+    super($t("tuning-sync.text_8ab3d9e0c7"));
   }
 }
 
@@ -17,9 +20,9 @@ export function createZzzTuningSync(
   acquireLock: AcquireRoleArchiveLock,
   retiredDirectories: readonly string[] = [],
 ) {
-  const history = createRoleJsonArchive(directory, acquireLock, { subject: "绝区零调频历史", lockSuffix: "lotus-tuning" });
+  const history = createRoleJsonArchive(directory, acquireLock, { subject: $t("tuning-sync.text_43a385001a"), lockSuffix: "lotus-tuning" });
   const retired = retiredDirectories.map(directory => createRoleJsonArchive(directory, acquireLock,
-    { subject: "绝区零旧调频汇总", lockSuffix: "lotus-tuning", maxBytes: 32 * 1024 * 1024, rejectNull: true }));
+    { subject: $t("tuning-sync.text_239befcbb1"), lockSuffix: "lotus-tuning", maxBytes: 32 * 1024 * 1024, rejectNull: true }));
 
   async function readRetired(qq: string, role: Omit<ZzzTuningIdentity, "profileId">) {
     const snapshots = await Promise.all(retired.map(async archive =>
@@ -27,7 +30,7 @@ export function createZzzTuningSync(
     const available = snapshots.filter(snapshot => snapshot !== null).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     const newest = available[0];
     if (newest && available.some(item => item.updatedAt === newest.updatedAt && !isDeepStrictEqual(item, newest))) {
-      throw new Error("两处绝区零旧调频汇总内容冲突。");
+      throw new Error($t("tuning-sync.text_1142b81c02"));
     }
     return newest ?? null;
   }
@@ -44,13 +47,13 @@ export function createZzzTuningSync(
       const role = { uid, region: resolveZzzTuningRegion(original) };
       const observed = current ?? await readRetired(qq, role);
       const latest = await client.fetchZzzTuning(original, options);
-      if (latest.uid !== uid || latest.region !== role.region) throw new Error("绝区零调频快照与请求角色不一致。");
+      if (latest.uid !== uid || latest.region !== role.region) throw new Error($t("tuning-sync.text_30ed134dfa"));
 
       async function verifyProfile() {
         options.signal?.throwIfAborted();
         const current = await profiles.requestSelectedContext(qq, profileId, "zzz").catch(() => undefined);
         if (current?.revision !== latest.revision || current?.role.uid !== uid) {
-          throw new ProfileError("changed", "保存绝区零调频历史时档案已变更，请重新发起请求。");
+          throw new ProfileError("changed", $t("tuning-sync.text_0de5760ae7"));
         }
         options.signal?.throwIfAborted();
       }

@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import { zzzExplorationColumns as columns, type ZzzExplorationSnapshot } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D, Image } from "skia-canvas";
@@ -23,18 +26,18 @@ function progress(value: { current?: number; maximum?: number }) {
 }
 
 function areaName(area: ZzzExplorationSnapshot["areas"][number]) {
-  return `${area.name ?? "区域"}${area.continued ? "（续）" : ""}`;
+  return `${area.name ?? $t("exploration-card.text_3382870bc4")}${area.continued ? $t("exploration-card.text_d065195833") : ""}`;
 }
 
 function continuation(snapshot: ZzzExplorationSnapshot, command: string) {
-  if (snapshot.page < snapshot.pageCount) return `下一页 ${command} 页 ${snapshot.page + 1}`;
+  if (snapshot.page < snapshot.pageCount) return $t("exploration-card.text_05a2a8504c", { "command": command, "value2": snapshot.page + 1 });
 }
 
 export function zzzExplorationText(snapshot: ZzzExplorationSnapshot, command: string) {
-  const title = snapshot.pageCount > 1 ? `区域收集 · ${snapshot.page} / ${snapshot.pageCount}` : "区域收集";
+  const title = snapshot.pageCount > 1 ? $t("exploration-card.text_53f6a935c5", { "page": snapshot.page, "pageCount": snapshot.pageCount }) : $t("exploration-card.text_8f85779c47");
   return [title, ...snapshot.areas.flatMap(area => [
     `${areaName(area)} · ${percent(area.progress)}`,
-    ...area.maps.map(map => `${map.name ?? "地图"} · ${percent(map.progress)}${map.collections.length ?
+    ...area.maps.map(map => `${map.name ?? $t("exploration-card.text_41ab2e0ecb")} · ${percent(map.progress)}${map.collections.length ?
       ` · ${map.collections.map(progress).join(" · ")}` : ""}`),
   ]), continuation(snapshot, command)].filter(Boolean).join("\n");
 }
@@ -82,8 +85,8 @@ function renderZzzExploration(snapshot: ZzzExplorationSnapshot, role: GameRole, 
     ctx.lineWidth = 9;
     ctx.strokeStyle = "#444";
     ctx.stroke();
-    label(ctx, "区域收集", side + 2, 244.8, 36, { color: "#383434" });
-    label(ctx, "区域收集", side, 241.8, 36, { color: "#e6e6e6" });
+    label(ctx, $t("exploration-card.text_8f85779c47"), side + 2, 244.8, 36, { color: "#383434" });
+    label(ctx, $t("exploration-card.text_8f85779c47"), side, 241.8, 36, { color: "#e6e6e6" });
     if (snapshot.pageCount > 1) label(ctx, `${snapshot.page} / ${snapshot.pageCount}`, 943, 241.8, 23,
       { align: "right", color: "#aaa" });
     box(ctx, "#444", side, 277.8, areaWidth, 2);

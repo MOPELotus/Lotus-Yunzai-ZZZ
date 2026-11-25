@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { CanvasRenderingContext2D as Context } from "skia-canvas";
 import { box, label } from "./card-theme.ts";
 import { fillRound } from "./challenge-card.ts";
@@ -29,14 +32,14 @@ function differences(english: string, title: string, data: readonly (readonly Pa
   const change = (label: PanelDamageCell["add"], sign: string) => ({ text: label.shortName, detail: sign + label.valueBase });
   return {
     english, title, columns: Array<number>(count + 1).fill(1),
-    rows: [[text("词条变化"), ...data[0].map(cell => change(cell.add, "+"))],
+    rows: [[text($t("panel-damage-card.text_ba0abfbf06")), ...data[0].map(cell => change(cell.add, "+"))],
       ...data.map(line => [line.length ? change(line[0]!.del, "−") : text("—"), ...line.map(cell => ({
         text: (cell.difference > 0 ? "+" : "") + cell.difference.toFixed(0),
         background: cell.difference > 0 ? "#522620" : cell.difference < 0 ? "#164121" : "#222",
       }))])],
     notes: [
-      "横轴是增加的词条，纵轴是减少的词条，数值为期望伤害变化。",
-      english === "MAINSTAT" ? "部分主词条组合在游戏中无法同时获得。" : "每次计算替换一个单位副词条。",
+      $t("panel-damage-card.text_1c1f3545ec"),
+      english === "MAINSTAT" ? $t("panel-damage-card.text_4ddc1d7555") : $t("panel-damage-card.text_9e60ca447d"),
     ],
   };
 }
@@ -46,31 +49,31 @@ export function panelDamageSections(model: PanelDamage, name: string, level: num
   const { selected, skillIndex } = model;
   const areas = selected.areas;
   const suffix = zzzCommandProfileSuffix(profileId);
-  const command = `%${name}伤害${skillIndex + 1}${suffix ? ` 档案${suffix}` : ""}`;
+  const command = $t("panel-damage-card.text_6dc6a2c598", { "name": name, "value2": skillIndex + 1, "value3": suffix ? $t("panel-damage-card.text_d80d2c5223", { "suffix": suffix }) : "" });
   const sections: Section[] = [{
-    english: "DAMAGE", title: "伤害统计", columns: [0.28, 2, 1, 1],
+    english: "DAMAGE", title: $t("panel-damage-card.text_14480a16f5"), columns: [0.28, 2, 1, 1],
     selection: skillIndex + 1,
-    rows: [row(["%", "技能类型", "暴击伤害", "期望伤害"]),
+    rows: [row(["%", $t("panel-damage-card.text_8b6a66bff7"), $t("panel-damage-card.text_15bccc3951"), $t("panel-damage-card.text_d5f4617e07")]),
       ...model.skills.map((item, index) => row([String(index + 1), item.skill.name,
         ...(item.result.critDMG === 0 ? [] : [value(item.result.critDMG, 0)]), value(item.result.expectDMG, 0)]))],
-    notes: [`敌人等级 ${level}，1 级基础防御力 50，有属性弱点。计算不含失衡易伤区。`,
-      `当前指令 ${command}`, `词条计算目标 ${selected.skill.name}`, `可通过 %${name}伤害加序号切换技能。`,
-      ...model.unavailableSkills.map(skill => `${skill}暂无原版计算结果。`)],
+    notes: [$t("panel-damage-card.text_9891f22d71", { "level": level }),
+      $t("panel-damage-card.text_14fa51e9e3", { "command": command }), $t("panel-damage-card.text_e109dbfcd1", { "name": selected.skill.name }), $t("panel-damage-card.text_3c348b34e3", { "name": name }),
+      ...model.unavailableSkills.map(skill => $t("panel-damage-card.text_0b4e7db6b1", { "skill": skill }))],
   }, {
-    english: "AREA", title: "乘区数据", columns: [1, 1, 1, 1, 1, 1],
-    rows: [row(["基础区", "暴击区", "增伤区", "易伤区", "抗性区", selected.skill.isSheerDMG ? "贯穿增伤区" : "防御区"]),
+    english: "AREA", title: $t("panel-damage-card.text_1cef28db5c"), columns: [1, 1, 1, 1, 1, 1],
+    rows: [row([$t("panel-damage-card.text_08b716f1d7"), $t("panel-damage-card.text_3d01997a6d"), $t("panel-damage-card.text_77effd41fc"), $t("panel-damage-card.text_d58672bfb1"), $t("panel-damage-card.text_4be7d19a68"), selected.skill.isSheerDMG ? $t("panel-damage-card.text_46679baa0e") : $t("panel-damage-card.text_25ad58433d")]),
       row([value(areas.BasicArea, 0), value(areas.CriticalArea, 2), value(areas.BoostArea, 2),
         value(areas.VulnerabilityArea, 2), value(areas.ResistanceArea, 2),
         selected.skill.isSheerDMG ? value(areas.SheerBoostArea, 2) : value(areas.DefenceArea, 4)]),
       ...(selected.skill.isAnomalyDMG ? [
-        row(["异常精通区", "异常增伤区", "等级区"]),
+        row([$t("panel-damage-card.text_0d2d79214e"), $t("panel-damage-card.text_3de322bdde"), $t("panel-damage-card.text_53c0159f78")]),
         row([value(areas.AnomalyProficiencyArea, 2), value(areas.AnomalyBoostArea, 2), value(areas.LevelArea, 2)]),
       ] : [])],
-    notes: ["一个技能含多段独立伤害时，这里显示其中一段的乘区。"],
+    notes: [$t("panel-damage-card.text_53a94dc16c")],
   }];
   if (selected.usefulBuffs.length) sections.push({
-    english: "BUFF", title: "Buff 统计", columns: [0.7, 5, 1.8, 2.5, 1.8],
-    rows: [row(["%", "名称", "来源", "增益类型", "增益值"]),
+    english: "BUFF", title: $t("panel-damage-card.text_b8526958b1"), columns: [0.7, 5, 1.8, 2.5, 1.8],
+    rows: [row(["%", $t("panel-damage-card.text_d44e9b3d3b"), $t("panel-damage-card.text_a488e93d69"), $t("panel-damage-card.text_eb548fd7a1"), $t("panel-damage-card.text_04d6b709de")]),
       ...selected.usefulBuffs.map((buff, index) => {
         const amount = buff.value;
         const display = typeof amount !== "number" ? "—" : amount < 2 ? `${(amount * 100).toFixed(0)}%` :
@@ -78,8 +81,8 @@ export function panelDamageSections(model: PanelDamage, name: string, level: num
         return row([String(index + 1), buff.name, buff.source, buff.type, display]);
       })],
   });
-  const sub = differences("SUBSTAT", "副词条差异计算", model.substats);
-  const main = differences("MAINSTAT", "主词条差异计算", model.mainstats);
+  const sub = differences("SUBSTAT", $t("panel-damage-card.text_3c0f8f4d00"), model.substats);
+  const main = differences("MAINSTAT", $t("panel-damage-card.text_a0b905c369"), model.mainstats);
   if (sub) sections.push(sub);
   if (main) sections.push(main);
   return sections;

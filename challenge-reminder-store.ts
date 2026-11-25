@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
@@ -27,7 +30,7 @@ const settings = "lotus-yunzai:zzz-challenge-reminders:settings";
 export const challengeReminderConfigFile = "config/zzz-challenge-reminder.yaml";
 const currentConfig = fileURLToPath(new URL(`../../${challengeReminderConfigFile}`, import.meta.url));
 const oldSettings = fileURLToPath(new URL("../ZZZ-Plugin/config/remind.yaml", import.meta.url));
-const defaults: ChallengeReminderDefaults = { enable: true, abyssCheckLevel: 5, deadlyStars: 6, remindTime: "每日20时" };
+const defaults: ChallengeReminderDefaults = { enable: true, abyssCheckLevel: 5, deadlyStars: 6, remindTime: $t("challenge-reminder-store.text_eb2a18a553") };
 const globalFields = ["enable", "abyssCheckLevel", "deadlyStars", "remindTime"] as const;
 
 const replaceUser = `
@@ -71,7 +74,7 @@ const shanghaiClock = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit",
   hour: "2-digit", minute: "2-digit", hourCycle: "h23", weekday: "short",
 });
-const weekNames: Record<string, string> = { Sun: "日", Mon: "一", Tue: "二", Wed: "三", Thu: "四", Fri: "五", Sat: "六" };
+const weekNames: Record<string, string> = { Sun: $t("challenge-reminder-store.text_85217f7aff"), Mon: $t("challenge-reminder-store.text_51a75f4634"), Tue: $t("challenge-reminder-store.text_084b42f6e9"), Wed: $t("challenge-reminder-store.text_a4c3313deb"), Thu: $t("challenge-reminder-store.text_754a9d5828"), Fri: $t("challenge-reminder-store.text_c9b87f516a"), Sat: $t("challenge-reminder-store.text_de07b53838") };
 
 export function challengeReminderWindow(input: string, now: number) {
   const rule = reminderTimePattern.exec(input);
@@ -85,11 +88,11 @@ export function challengeReminderWindow(input: string, now: number) {
 
 export function challengeReminderTime(input: string): { readonly time: string; readonly error?: never } | { readonly error: string; readonly time?: never } {
   const match = reminderTimePattern.exec(input);
-  if (!match) return { error: "时间格式错误，请使用每日20时或每周五20时30分。" } as const;
+  if (!match) return { error: $t("challenge-reminder-store.text_da92781cde") } as const;
   const hour = Number(match[2]), minute = Number(match[3] || 0);
-  if (hour > 23) return { error: "小时必须在 0 到 23 之间。" } as const;
-  if (minute >= 60 || minute % 10 !== 0) return { error: "分钟必须为整十分钟。" } as const;
-  return { time: `${match[1]}${hour}时${minute ? `${minute}分` : ""}` } as const;
+  if (hour > 23) return { error: $t("challenge-reminder-store.text_5d1e44655f") } as const;
+  if (minute >= 60 || minute % 10 !== 0) return { error: $t("challenge-reminder-store.text_5f4f05e766") } as const;
+  return { time: $t("challenge-reminder-store.text_13f9d6888b", { "value1": match[1], "hour": hour, "value3": minute ? $t("challenge-reminder-store.text_603abac298", { "minute": minute }) : "" }) } as const;
 }
 
 function object(value: unknown): Record<string, unknown> {
@@ -212,7 +215,7 @@ export function createZzzChallengeReminderStore(redis: Redis, configPath = Bun.e
         const changed = await redis.eval(replaceUser, { keys: [users], arguments: [qq, modern ?? "", JSON.stringify(next)] });
         if (changed === 1) return next;
       }
-      throw new Error("绝区零挑战提醒设置发生并发修改。");
+      throw new Error($t("challenge-reminder-store.text_d319a0b906"));
     },
   };
 }

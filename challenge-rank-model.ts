@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { gameCommandProfileId, MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import type { ZzzClimbingTowerSnapshot, ZzzDeadlyRoom, ZzzDeadlySnapshot, ZzzHoloBossRoom, ZzzHoloBossSnapshot, ZzzShiyuSnapshot, ZzzShiyuTeam, ZzzVoidFrontSnapshot, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 
@@ -31,26 +34,26 @@ export interface RankRow extends RankProfile {
 }
 
 export const rankLabels = {
-  ABYSS: "式舆防卫战",
-  DEADLY: "危局强袭战",
-  DEADLY_HARD: "危局强袭战绝境",
-  HOLO_BOSS: "拟境湮灭战",
-  VOID_FRONT_BATTLE: "临界推演",
-  CLIMBING_TOWER_S1: "拟真鏖战试炼",
-  CLIMBING_TOWER_S2: "鏖战试炼：末路",
-  CLIMBING_TOWER_S3: "鏖战试炼：荣耀",
-  CLIMBING_TOWER_S4: "鏖战试炼：狂澜",
+  ABYSS: $t("challenge-rank-model.text_f718dc4321"),
+  DEADLY: $t("challenge-rank-model.text_4b7b8e83d9"),
+  DEADLY_HARD: $t("challenge-rank-model.text_fd7c4e8e42"),
+  HOLO_BOSS: $t("challenge-rank-model.text_29e80a0630"),
+  VOID_FRONT_BATTLE: $t("challenge-rank-model.text_86bf7c9458"),
+  CLIMBING_TOWER_S1: $t("challenge-rank-model.text_16a75e0027"),
+  CLIMBING_TOWER_S2: $t("challenge-rank-model.text_98f7195705"),
+  CLIMBING_TOWER_S3: $t("challenge-rank-model.text_7a30bc3a6a"),
+  CLIMBING_TOWER_S4: $t("challenge-rank-model.text_b180896959"),
 } as const;
 const prefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)/iu;
-const shiyu = "(?:式舆防卫战|式舆|深渊|防卫战|防卫)";
-const deadly = "(?:危局强袭战|危局|强袭战|强袭)";
-const holo = "(?:拟境湮灭战|拟境|湮灭战|湮灭)";
-const voidFront = "(?:临界推演|临界|推演)";
-const towerS1 = "(?:爬塔 *S1|拟真鏖战试炼)";
-const towerS2 = "(?:爬塔 *S2|鏖战试炼[:：]?末路)";
-const towerS3 = "(?:爬塔 *S3|鏖战试炼[:：]?荣耀)";
-const towerS4 = "(?:爬塔 *S4|鏖战试炼[:：]?狂澜)";
-const hard = `(?:绝境|${deadly}绝境|绝境${deadly})`;
+const shiyu = $t("challenge-rank-model.text_37f15e8ae8");
+const deadly = $t("challenge-rank-model.text_fc96c707b2");
+const holo = $t("challenge-rank-model.text_17c2f9116e");
+const voidFront = $t("challenge-rank-model.text_d200104171");
+const towerS1 = $t("challenge-rank-model.text_4d6c9eaeb3");
+const towerS2 = $t("challenge-rank-model.text_d516880d50");
+const towerS3 = $t("challenge-rank-model.text_89627cb961");
+const towerS4 = $t("challenge-rank-model.text_1551c7904c");
+const hard = $t("challenge-rank-model.text_3bd7c85c4e", { "deadly": deadly, "value2": deadly });
 const adminToggle = new RegExp(`^(开启|打开|on|启用|启动|关闭|关掉|off|禁用|停止)群(?:内)?(?:${shiyu}|${deadly}|${voidFront})排名$`, "iu");
 const adminClear = new RegExp(`^(?:重置|清空)${shiyu}排名$`, "u");
 const boardCommand = new RegExp(`^(${shiyu}|${hard}|${deadly}|${holo}|${voidFront}|${towerS1}|${towerS2}|${towerS3}|${towerS4})排名$`, "iu");

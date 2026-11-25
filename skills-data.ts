@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { panelObject } from "./panel-detail.ts";
 import { zzzPrefixedCommand } from "./panel-command.ts";
 
@@ -5,9 +8,9 @@ export const skillKinds = ["basic", "dodge", "assist", "special", "chain", "core
 type SkillKind = typeof skillKinds[number];
 const defaults = [12, 12, 12, 12, 12, 6];
 const buttonNames: Readonly<Record<string, string>> = {
-  Normal: "普通攻击", Evade: "闪避", Evaded: "闪避反击", Switch: "支援技",
-  Assist: "支援技", Special: "特殊技", SpecialReady: "强化特殊技",
-  Ultimate: "连携技", UltimateReady: "终结技", Core: "核心技", CoreSkill: "核心技",
+  Normal: $t("skills-data.text_d90c73f75a"), Evade: $t("skills-data.text_3b89502eed"), Evaded: $t("skills-data.text_c74ede8277"), Switch: $t("skills-data.text_f3a96442e9"),
+  Assist: $t("skills-data.text_f3a96442e9"), Special: $t("skills-data.text_fb6d88911b"), SpecialReady: $t("skills-data.text_85ebf039c1"),
+  Ultimate: $t("skills-data.text_c601aa644a"), UltimateReady: $t("skills-data.text_a985bc32b7"), Core: $t("skills-data.text_f1739fc27c"), CoreSkill: $t("skills-data.text_f1739fc27c"),
 };
 
 export function zzzSkillCommand(raw: string) {

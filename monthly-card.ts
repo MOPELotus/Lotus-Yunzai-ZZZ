@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzMonthlyRecord } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -39,16 +42,16 @@ function dateTitle(view: View) {
 }
 
 function nextPage(view: View) {
-  if (view.collect && view.page * zzzMonthlyPageSize < view.all.length) return `下一页 ${view.command} 页 ${view.page + 1}`;
+  if (view.collect && view.page * zzzMonthlyPageSize < view.all.length) return $t("monthly-card.text_05a2a8504c", { "command": view.command, "value2": view.page + 1 });
 }
 
 export function zzzMonthlyText(view: View) {
-  const totals = overview(view).map((value, index) => `${["菲林", "母带", "邦布券"][index]} ${count(value)}`).join(" · ");
+  const totals = overview(view).map((value, index) => `${[$t("monthly-card.text_241bb2544c"), $t("monthly-card.text_6439bcf7ed"), $t("monthly-card.text_364a5e6ba2")][index]} ${count(value)}`).join(" · ");
   const lines = selection(view).flatMap(record => [
     ...(view.collect ? [`${zzzMonthlyDateLabel(record.data_month)} · ${zzzMonthlyOverview(record).map(count).join(" / ")}`] : []),
     ...breakdown(record).slice(0, view.collect ? 16 : 64).map(item => `${item.label} ${count(item.count)} · ${percentage(item.percent)}`),
   ]);
-  return [`绝区零月报 · ${dateTitle(view)}`, view.warning, totals, ...lines, nextPage(view)].filter(Boolean).join("\n");
+  return [$t("monthly-card.text_61d4f3bdb6", { "value1": dateTitle(view) }), view.warning, totals, ...lines, nextPage(view)].filter(Boolean).join("\n");
 }
 
 function texture(ctx: Context, image: Image | undefined, x: number, y: number, w: number, h: number, cut: number, side: number, top: number) {
@@ -78,7 +81,7 @@ function currencyStrip(ctx: Context, images: ReadonlyMap<string, Image | undefin
     const icon = images.get(iconPath);
     const size = compact ? 27 : 81;
     if (icon) contain(ctx, icon, cx - size / 2, y + h * 0.23, size, size);
-    else label(ctx, ["菲林", "母带", "邦布券"][i]!, cx, y + h * 0.43, compact ? 11 : 23, { align: "center", color: "#12131a" });
+    else label(ctx, [$t("monthly-card.text_241bb2544c"), $t("monthly-card.text_6439bcf7ed"), $t("monthly-card.text_364a5e6ba2")][i]!, cx, y + h * 0.43, compact ? 11 : 23, { align: "center", color: "#12131a" });
     label(ctx, count(values[i]), cx, y + h * 0.79, compact ? 15 : 38,
       { align: "center", color: "#11121a", maxWidth: (compact ? w / 3 - 5 : w / 3 - 20), weight: 700 });
   }
@@ -133,12 +136,12 @@ export async function renderZzzMonthly(view: View, role: GameRole, region: strin
     ctx.restore();
     const bangboo = images.get("bamboo.png");
     if (bangboo) contain(ctx, bangboo, 596, 102, 206, 206);
-    label(ctx, "收入一览", 68, 342, 33, { weight: 700 });
+    label(ctx, $t("monthly-card.text_2ab6a8edb1"), 68, 342, 33, { weight: 700 });
     const decoration = images.get("icon-title-deco.png");
     if (decoration) contain(ctx, decoration, 215, 319, 63, 42);
     currencyStrip(ctx, images, overview(view), 60, 365, 720, 292);
     texture(ctx, images.get("list.png"), 60, listY, 720, detailsHeight, 550, 30, Math.min(528, detailsHeight - 30));
-    label(ctx, view.collect ? "每月细则" : "菲林收入组成", 87, listY + 42, 29, { weight: 700 });
+    label(ctx, view.collect ? $t("monthly-card.text_b48d227bf4") : $t("monthly-card.text_4f0241f58d"), 87, listY + 42, 29, { weight: 700 });
     if (view.collect) {
       const pages = Math.ceil(view.all.length / zzzMonthlyPageSize);
       if (pages > 1) label(ctx, `${view.page} / ${pages}`, 748, listY + 42, 19, { align: "right" });
@@ -149,7 +152,7 @@ export async function renderZzzMonthly(view: View, role: GameRole, region: strin
       }
     } else {
       const income = breakdown(records[0]!);
-      if (!income.length) label(ctx, "暂无细分收入", 92, listY + 103, 21, { color: "#ddd" });
+      if (!income.length) label(ctx, $t("monthly-card.text_2a2ce8ba50"), 92, listY + 103, 21, { color: "#ddd" });
       for (const [i, item] of income.entries()) {
         const y = listY + 88 + i * 58;
         label(ctx, item.label, 91, y, 22, { color: "#e3e3e3" });
@@ -166,11 +169,11 @@ export async function renderZzzMonthly(view: View, role: GameRole, region: strin
       label(ctx, follow, 51, footer, 21, { color: "#ffd970" });
       footer += 34;
     }
-    label(ctx, "* 数据统计存在约 2 小时延迟", 51, footer, 18, { color: "#dfdfdf" });
-    label(ctx, "* 菲林收入不含充值获得底片后兑换的菲林", 51, footer + 28, 18, { color: "#dfdfdf" });
+    label(ctx, $t("monthly-card.text_4ee5c45761"), 51, footer, 18, { color: "#dfdfdf" });
+    label(ctx, $t("monthly-card.text_e31ac7c79b"), 51, footer + 28, 18, { color: "#dfdfdf" });
     if (view.collect) {
-      const service = region.endsWith("_cn") ? "米游社" : "HoYoLAB";
-      label(ctx, `* ${service} 已不可查且从未存档的月份不会显示`, 51, footer + 56, 18, { color: "#dfdfdf" });
+      const service = region.endsWith("_cn") ? $t("monthly-card.text_6ca05b2485") : "HoYoLAB";
+      label(ctx, $t("monthly-card.text_ab237dda44", { "service": service }), 51, footer + 56, 18, { color: "#dfdfdf" });
     }
     const bottom = images.get("bottom-deco.gif");
     if (bottom) cover(ctx, bottom, 0, height - 28, width, 28);

@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
 import { realpath, stat } from "node:fs/promises";
 import { join, sep } from "node:path";
@@ -7,8 +10,8 @@ import { renderZzzBattlePng } from "./challenge-card.ts";
 import { fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
 export const inventoryFields = [
-  ["monochrome", "菲林底片"], ["polychrome", "菲林"], ["encryptedMasterTape", "加密母带"],
-  ["masterTape", "原装母带"], ["boopon", "邦布券"],
+  ["monochrome", $t("tuning-inventory-card.text_5bcc7f70c8")], ["polychrome", $t("tuning-inventory-card.text_241bb2544c")], ["encryptedMasterTape", $t("tuning-inventory-card.text_e637c84359")],
+  ["masterTape", $t("tuning-inventory-card.text_afb3a703d5")], ["boopon", $t("tuning-inventory-card.text_364a5e6ba2")],
 ] as const;
 
 export interface InventoryCard {
@@ -98,21 +101,21 @@ export async function renderZzzInventoryCard(model: InventoryCard, {
     context.fillStyle = "#24242b";
     context.fillRect(40, 92, 102, 102);
     if (player) cover(context, player, 40, 92, 102, 102);
-    else label(context, "绳", 90, 140, 35, { align: "center" });
+    else label(context, $t("tuning-inventory-card.text_231e8863ee"), 90, 140, 35, { align: "center" });
     context.restore();
     context.strokeStyle = "#ccc";
     context.beginPath();
     context.roundRect(40, 92, 102, 102, 4);
     context.stroke();
 
-    chip(context, "等级：" + (model.level ?? "未知"), 122);
+    chip(context, $t("tuning-inventory-card.text_0f50d2928e") + (model.level ?? $t("tuning-inventory-card.text_4d8c1c5b42")), 122);
     chip(context, "UID：" + model.uid, 147);
-    chip(context, "昵称：" + (model.nickname || "未知"), 172);
+    chip(context, $t("tuning-inventory-card.text_c9f36e703d") + (model.nickname || $t("tuning-inventory-card.text_4d8c1c5b42")), 172);
     if (logo) {
       const w = 50 * logo.width / logo.height;
       context.drawImage(logo, 510 - w, 122, w, 50);
     } else {
-      text(context, "绝区零", 510, 145, 26, "#fff", "right");
+      text(context, $t("tuning-inventory-card.text_b1110352c9"), 510, 145, 26, "#fff", "right");
     }
 
     for (const [index, { name, value }] of model.rows.entries()) {

@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import type { createProfileStore, GameRole } from "@lotus-yunzai/account";
 import { previewRedeemIdentity } from "@lotus-yunzai/hoyo-client/redeem-submit";
@@ -57,32 +60,32 @@ async function manageZzzChallengeRanks(context: ChallengeRankContext, command: A
   const group = rankGroup(context);
   const user = context.user_id;
   if (context.isDelegated || (context.message_type !== "private" && !group) || (command.kind === "admin-clear" && !group)) {
-    return "请在群聊中使用该命令！";
+    return $t("challenge-rank.text_dc4e925566");
   }
   function isOwner() {
     if (signal.aborted || !user || context.isBotMaster?.(user) !== true) return false;
     if (context.message_type === "private" && (!context.privateCredentialSignal || context.privateCredentialSignal.aborted)) return false;
     return context.adapter === "milky" || context.isMaster === true;
   }
-  const denied = command.kind === "admin-toggle" ? "仅限主人设置。" : "仅限主人操作。";
+  const denied = command.kind === "admin-toggle" ? $t("challenge-rank.text_e3c1df5c60") : $t("challenge-rank.text_2457e1bd85");
   if (!isOwner()) return denied;
   const redis = globalThis.redis;
-  if (!redis) return "绝区零群榜设置暂时不可用。";
+  if (!redis) return $t("challenge-rank.text_0bd2d2d617");
   try {
-    if (group && !await rankMembership(context, group.actor)) return "暂无法核对当前群成员，请稍后重试。";
+    if (group && !await rankMembership(context, group.actor)) return $t("challenge-rank.text_f9fd277d3d");
     if (!isOwner()) return denied;
     if (command.kind === "admin-clear" && group) {
       if (await createChallengeRankStore(redis).clearShiyu(group.group)) {
-        return "已清空本群式舆防卫战排行榜。群成员查询本期战绩后可重新登记。";
+        return $t("challenge-rank.text_1b5edd625f");
       }
     }
     if (command.kind === "admin-toggle" && await setRankGroupEnabled(redis, command.enabled)) {
-      return command.enabled ? "已开启绝区零群榜总开关。此设置影响所有群，黑名单中的群仍不可使用。" :
-        "已关闭绝区零群榜总开关。此设置影响所有群，白名单中的群仍可使用。";
+      return command.enabled ? $t("challenge-rank.text_dc7cf27750") :
+        $t("challenge-rank.text_f686a21af5");
     }
-    return "群榜操作未确认，请稍后查询。";
+    return $t("challenge-rank.text_682f347ed7");
   } catch {
-    return "群榜操作未确认，请稍后查询。";
+    return $t("challenge-rank.text_682f347ed7");
   }
 }
 
@@ -130,39 +133,39 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
       if (command.kind === "admin-toggle" || command.kind === "admin-clear") return manageZzzChallengeRanks(context, command, signal);
       const scope = rankGroup(context);
       if (command.kind === "tower-help") {
-        return [scope ? undefined : "请在群聊中查询排名！", "当前可查的爬塔排名：",
-          "%爬塔S1排名（拟真鏖战试炼）", "%爬塔S2排名（鏖战试炼：末路）",
-          "%爬塔S3排名（鏖战试炼：荣耀）", "%爬塔S4排名（鏖战试炼：狂澜）",
-          "使用 %显示爬塔S1排名 或 %隐藏爬塔S1排名 设置该季，季号可换。"].filter(Boolean).join("\n");
+        return [scope ? undefined : $t("challenge-rank.text_3b1a607871"), $t("challenge-rank.text_c2cf2b0e72"),
+          $t("challenge-rank.text_9fcf352858"), $t("challenge-rank.text_5334b00788"),
+          $t("challenge-rank.text_cbab07d3b4"), $t("challenge-rank.text_55f0733049"),
+          $t("challenge-rank.text_fc5abe2522")].filter(Boolean).join("\n");
       }
-      if (!scope) return "请在群聊中使用该命令！";
+      if (!scope) return $t("challenge-rank.text_dc4e925566");
       const redis = globalThis.redis;
-      if (!redis) return "绝区零群排名暂时不可用。";
+      if (!redis) return $t("challenge-rank.text_8d7a032aee");
       const store = createChallengeRankStore(redis);
       const { group, actor } = scope;
 
       try {
         if (command.kind === "visibility") {
-          if (!await rankMembership(context, actor)) return "暂无法核对当前群成员，请稍后重试。";
+          if (!await rankMembership(context, actor)) return $t("challenge-rank.text_f9fd277d3d");
           const ownedType = command.types.find(isOwnedRank);
           const role = ownedType ?
             (await ownedRankRole(profiles, actor, command.profileId).catch(() => undefined))?.role :
             await profiles.savedRole(actor, command.profileId, "zzz").catch(() => undefined);
           if (!role || !rankIdentity(role.uid, role.region)) return ownedType ?
-            `请先登录并选择已认证的国服绝区零角色，再设置${rankLabels[ownedType]}排名。` : "未绑定国服绝区零 UID，请先绑定。";
+            $t("challenge-rank.text_7ff656ddba", { "value1": rankLabels[ownedType] }) : $t("challenge-rank.text_6e7b4ff3ac");
           if (signal.aborted) return;
           await store.setVisibility(group, command.types, role.uid, role.region, command.enabled, { qq: actor, profileId: command.profileId });
           return [{
             type: "at" as const, qq: actor,
-          }, `绝区零 UID ${role.uid}，${command.types.map(type => rankLabels[type]).join("、")}排名已设为${command.enabled ? "显示" : "隐藏"}。`];
+          }, $t("challenge-rank.text_b09172acbf", { "uid": role.uid, "value2": command.types.map(type => rankLabels[type]).join("、"), "value3": command.enabled ? $t("challenge-rank.text_4e1449e7d5") : $t("challenge-rank.text_145219e726") })];
         }
 
         const { mode } = command;
         const name = rankLabels[mode];
         const settings = await readRankConfig(group);
-        if (!settings.allowed) return `当前群${name}排名功能已关闭！`;
+        if (!settings.allowed) return $t("challenge-rank.text_13c5673406", { "name": name });
         const members = await rankMembership(context, actor);
-        if (!members) return "暂无法核对当前群成员，请稍后重试。";
+        if (!members) return $t("challenge-rank.text_f9fd277d3d");
         const generation = await store.generation(group, rankType(mode));
         const candidates = await store.rows(group, mode, members, Date.now(), generation);
         const rows: RankRow[] = [];
@@ -173,9 +176,9 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         }
         if (!rows.length) {
           const season = rankTowerSeason(rankType(mode));
-          if (season) return `没有爬塔S${season}排名，请先 %显示爬塔S${season}排名，并在本群用 %爬塔 查询战绩。`;
-          const include = mode === "ABYSS" ? "深渊" : mode === "HOLO_BOSS" ? "拟境" : mode === "VOID_FRONT_BATTLE" ? "临界" : "危局";
-          return `没有${name}排名，请先 %显示${include}排名，并在本群用 %${include} 查询本期战绩。`;
+          if (season) return $t("challenge-rank.text_3b5f19a85b", { "season": season, "value2": season });
+          const include = mode === "ABYSS" ? $t("challenge-rank.text_2c73012572") : mode === "HOLO_BOSS" ? $t("challenge-rank.text_90d20e4089") : mode === "VOID_FRONT_BATTLE" ? $t("challenge-rank.text_5fe46e6ded") : $t("challenge-rank.text_d5636be4da");
+          return $t("challenge-rank.text_2bdf276b7b", { "name": name, "include": include, "value3": include });
         }
         const result = await renderChallengeRank(mode, rows, {
           signal, legacyResources: zzzResourceDirectory(), inlineImageByteLimit: context.inlineImageByteLimit,
@@ -184,23 +187,23 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         const after = await rankMembership(context, actor);
         if (!after || !(await Promise.all(rows.map(roleKeepsOwnership))).every(Boolean) ||
             !(await readRankConfig(group)).allowed || !await store.stillVisible(group, mode, after, rows, Date.now(), generation)) {
-          return "群排名的成员或可见状态已变化，请重新查询。";
+          return $t("challenge-rank.text_164398a2cd");
         }
         if (signal.aborted) return;
         if (result) return { type: "image" as const, file: result.png };
         const season = rankTowerSeason(rankType(mode));
-        return [`${name}排名`, ...rows.map((row, index) => {
+        return [$t("challenge-rank.text_75328387da", { "name": name }), ...rows.map((row, index) => {
           const member = `${index + 1}. ${row.nickname}`;
-          if (row.holo) return `${member} · ${row.bonus} 星 · ${holoBossDuration(row.score)} · 无伤 ${row.holo.undamaged}`;
+          if (row.holo) return $t("challenge-rank.text_4933ee76a2", { "member": member, "bonus": row.bonus, "value3": holoBossDuration(row.score), "undamaged": row.holo.undamaged });
           if (row.tower && season) {
-            const metrics = [...(season >= 3 ? [`${row.score} 分`] : []), `${row.tower.layer} 层`];
-            if (row.tower.noDamage !== undefined) metrics.push(`无伤 ${row.tower.noDamage}`);
+            const metrics = [...(season >= 3 ? [$t("challenge-rank.text_60ff550fcf", { "score": row.score })] : []), $t("challenge-rank.text_d1c41e0dde", { "layer": row.tower.layer })];
+            if (row.tower.noDamage !== undefined) metrics.push($t("challenge-rank.text_7fc38da62a", { "noDamage": row.tower.noDamage }));
             return [member, ...metrics].join(" · ");
           }
           return `${member} · ${row.score}`;
         })].join("\n");
       } catch {
-        if (!signal.aborted) return "绝区零群排名暂时不可用。";
+        if (!signal.aborted) return $t("challenge-rank.text_8d7a032aee");
       }
     },
   };

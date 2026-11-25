@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 
 export function panelObject(value: unknown): Record<string, unknown> {
@@ -70,9 +73,9 @@ export function buildZzzPanelDetail(avatar: ZzzPanelAvatar) {
   const subId = panelInteger(avatar.sub_element_type, 0, 99_999) ?? 0;
   const element = elements[elementId];
   const statNames = [
-    "生命值", profession === 7 ? "锐暴伤害" : "攻击力", "防御力", "冲击力",
-    "暴击率", "暴击伤害", "异常掌控", "异常精通",
-    ...(profession === 6 ? ["贯穿力", "闪能自动累积"] : ["穿透率", profession === 7 ? "锐能自动累积" : "能量自动回复"]),
+    $t("panel-detail.text_1a256e6376"), profession === 7 ? $t("panel-detail.text_b140fde2e6") : $t("panel-detail.text_b84ee11f4f"), $t("panel-detail.text_1cb579e6ba"), $t("panel-detail.text_1a7dc21762"),
+    $t("panel-detail.text_d4b0baf955"), $t("panel-detail.text_15bccc3951"), $t("panel-detail.text_d29c3efc8f"), $t("panel-detail.text_e7b27fa0b1"),
+    ...(profession === 6 ? [$t("panel-detail.text_309f1a6580"), $t("panel-detail.text_7bbb5794e0")] : [$t("panel-detail.text_0c52a4b50a"), profession === 7 ? $t("panel-detail.text_2a9d11c3a5") : $t("panel-detail.text_2d1c2a6cae")]),
   ];
   const sourceStats = Array.isArray(avatar.properties) ? avatar.properties.slice(0, 64).map(panelObject) : [];
   const damage = element?.[1] ? sourceStats.find(row => panelInteger(row.property_id, 1, 999_999) === element[1]) : undefined;

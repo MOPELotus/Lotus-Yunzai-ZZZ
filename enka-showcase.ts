@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { setTimeout as delay } from "node:timers/promises";
 import { withReadRetries } from "@lotus-yunzai/http";
 import { panelInteger, panelObject } from "./panel-detail.ts";
@@ -26,7 +29,7 @@ export class ZzzShowcaseError extends Error {
 }
 
 function invalid() {
-  return new ZzzShowcaseError("response", "Enka 公开展柜返回的数据无法核验。");
+  return new ZzzShowcaseError("response", $t("enka-showcase.text_ae70a2f1bd"));
 }
 
 function uidMatches(value: unknown, uid: string) {
@@ -64,12 +67,12 @@ export function decodeEnkaShowcase(value: unknown, { uid, region }: PublicIdenti
   const profile = panelObject(data.PlayerInfo);
   const social = panelObject(panelObject(profile.SocialDetail).ProfileDetail);
   if (!uidMatches(data.uid, uid) || !uidMatches(social.Uid, uid)) {
-    throw new ZzzShowcaseError("identity", "Enka 公开展柜回复的 UID 与当前档案不一致。");
+    throw new ZzzShowcaseError("identity", $t("enka-showcase.text_615ddecb3d"));
   }
   if (data.region !== undefined &&
       (typeof data.region !== "string" || !Object.hasOwn(regions, data.region.toLowerCase()) ||
         regions[data.region.toLowerCase()] !== region)) {
-    throw new ZzzShowcaseError("identity", "Enka 公开展柜回复的区服与当前档案不一致。");
+    throw new ZzzShowcaseError("identity", $t("enka-showcase.text_3db89bc862"));
   }
   const lifetime = panelInteger(data.ttl, 0, maxLifetime);
   if (lifetime === undefined) throw invalid();
@@ -103,7 +106,7 @@ function retrySeconds(response: Response, now: number) {
 }
 
 function rateLimited(seconds: number, reason: string) {
-  return new ZzzShowcaseError("rate-limited", `${reason}，请在 ${Math.max(1, Math.ceil(seconds))} 秒后再试。`);
+  return new ZzzShowcaseError("rate-limited", $t("enka-showcase.text_ad7fcbfa9b", { "reason": reason, "value2": Math.max(1, Math.ceil(seconds)) }));
 }
 
 export function createZzzShowcaseClient(transport: Transport = fetch, now = Date.now) {
@@ -119,17 +122,17 @@ export function createZzzShowcaseClient(transport: Transport = fetch, now = Date
   ) {
     const { uid } = target;
     signal.throwIfAborted();
-    if (!/^[1-9]\d{7,9}$/u.test(uid)) throw new ZzzShowcaseError("identity", "当前档案的绝区零 UID 无效。");
-    if (inFlight?.uid === uid) throw rateLimited(1, "此 UID 的公开展柜正在更新");
-    if (inFlight) throw rateLimited(1, "Enka 公开展柜请求正在进行");
+    if (!/^[1-9]\d{7,9}$/u.test(uid)) throw new ZzzShowcaseError("identity", $t("enka-showcase.text_821b4f856d"));
+    if (inFlight?.uid === uid) throw rateLimited(1, $t("enka-showcase.text_06f24307d0"));
+    if (inFlight) throw rateLimited(1, $t("enka-showcase.text_bbdf77604a"));
     const active = Promise.withResolvers<void>();
     inFlight = { uid, done: active.promise };
     try {
       const started = now();
       const perUid = nextRequestByUid.get(uid) ?? 0;
-      if (!liveRank && perUid > started) throw rateLimited((perUid - started) / 1000, "Enka 展柜数据仍在缓存期");
-      if (serviceBlockedUntil > started) throw rateLimited((serviceBlockedUntil - started) / 1000, "Enka 公开展柜限流中");
-      if (nextRequest > started) throw rateLimited((nextRequest - started) / 1000, "Enka 公开展柜请求间隔未到");
+      if (!liveRank && perUid > started) throw rateLimited((perUid - started) / 1000, $t("enka-showcase.text_ea533400c8"));
+      if (serviceBlockedUntil > started) throw rateLimited((serviceBlockedUntil - started) / 1000, $t("enka-showcase.text_b7fed71fc6"));
+      if (nextRequest > started) throw rateLimited((nextRequest - started) / 1000, $t("enka-showcase.text_1d0d9f6dd6"));
       for (const [key, expires] of nextRequestByUid) if (expires <= started) nextRequestByUid.delete(key);
       await beforeRequest();
       signal.throwIfAborted();
@@ -148,10 +151,10 @@ export function createZzzShowcaseClient(transport: Transport = fetch, now = Date
         if (response.status === 429 || (response.status === 503 && response.headers.has("retry-after"))) {
           const retry = retrySeconds(response, now());
           serviceBlockedUntil = now() + retry * 1000;
-          throw rateLimited(retry, "Enka 公开展柜限流中");
+          throw rateLimited(retry, $t("enka-showcase.text_b7fed71fc6"));
         }
-        if (response.status === 404) throw new ZzzShowcaseError("not-listed", "找不到该 UID 的公开展柜，请确认游戏内已开启角色展示。");
-        throw new ZzzShowcaseError("unavailable", "Enka 公开展柜暂时不可用。");
+        if (response.status === 404) throw new ZzzShowcaseError("not-listed", $t("enka-showcase.text_17291852bd"));
+        throw new ZzzShowcaseError("unavailable", $t("enka-showcase.text_901c55c75a"));
       }
       const result = decodeEnkaShowcase(await payload(response), target);
       signal.throwIfAborted();
@@ -167,7 +170,7 @@ export function createZzzShowcaseClient(transport: Transport = fetch, now = Date
     for (;;) {
       signal.throwIfAborted();
       const time = now();
-      if (serviceBlockedUntil > time) throw rateLimited((serviceBlockedUntil - time) / 1000, "Enka 公开展柜限流中");
+      if (serviceBlockedUntil > time) throw rateLimited((serviceBlockedUntil - time) / 1000, $t("enka-showcase.text_b7fed71fc6"));
       if (inFlight) {
         await inFlight.done;
         continue;

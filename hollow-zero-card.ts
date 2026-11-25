@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzHollowChallenge, ZzzHollowProgress, ZzzHollowSnapshot, ZzzShiyuPortrait } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -10,10 +13,10 @@ const width = 840;
 const start = 229;
 const talentIcon = "https://act-webstatic.mihoyo.com/darkmatter/nap/prod_gf_cn/item_icon_uc45id/3ae6457d965f876adb61a1bdfb2384b8.png";
 const collectionNames = {
-  withered: ["鸣徽图鉴", "特殊区域记录", "哨站课题", "异域模块", "战术棱镜方案"],
-  lost: ["探究勋证", "武备图鉴", "战术档案", "异域模块", "战术棱镜方案", "零号碎片", "空洞异闻"],
+  withered: [$t("hollow-zero-card.text_c4d2b6ba33"), $t("hollow-zero-card.text_67993a8cad"), $t("hollow-zero-card.text_0999acf598"), $t("hollow-zero-card.text_3cbda1f9dc"), $t("hollow-zero-card.text_2c11232e16")],
+  lost: [$t("hollow-zero-card.text_ab5cd65cb6"), $t("hollow-zero-card.text_266427d0b7"), $t("hollow-zero-card.text_b062420b77"), $t("hollow-zero-card.text_3cbda1f9dc"), $t("hollow-zero-card.text_2c11232e16"), $t("hollow-zero-card.text_7e4f5dd200"), $t("hollow-zero-card.text_1fc7e0527b")],
 };
-export const zzzHollowTitles = { withered: "零号空洞：枯萎苗圃", lost: "零号空洞：迷失之地" } as const;
+export const zzzHollowTitles = { withered: $t("hollow-zero-card.text_e865364b94"), lost: $t("hollow-zero-card.text_fc57224a51") } as const;
 type Row = readonly [label: string, value: string, icon?: string];
 type Section = { readonly title: string; readonly rows: readonly Row[] };
 
@@ -29,27 +32,27 @@ function progress(value?: ZzzHollowProgress) {
 
 function challenge(data?: ZzzHollowChallenge): readonly Row[] {
   return [
-    ["已通关最高难度", `${data?.name || "—"} · 以太活性 ${data?.heat ?? "—"}`],
-    ["通关最高难度次数", String(data?.count ?? "—")],
-    ["通关最高难度最短耗时", duration(data?.seconds)],
+    [$t("hollow-zero-card.text_296e43e755"), $t("hollow-zero-card.text_c438f4deb2", { "value1": data?.name || "—", "value2": data?.heat ?? "—" })],
+    [$t("hollow-zero-card.text_76e4d3ade7"), String(data?.count ?? "—")],
+    [$t("hollow-zero-card.text_7b38d6db69"), duration(data?.seconds)],
   ];
 }
 
 function sections(snapshot: ZzzHollowSnapshot): Section[] {
-  const license: Row = ["执照等级", progress(snapshot.license), snapshot.license?.icon];
+  const license: Row = [$t("hollow-zero-card.text_adb3e21f4f"), progress(snapshot.license), snapshot.license?.icon];
   const basic: Section = { title: "", rows: snapshot.hollowMode === "withered" ?
-    [license, ["作战机略", progress(snapshot.talent), talentIcon]] :
-    [license, ["悬赏委托进度", progress(snapshot.duty)], ["探索任务", progress(snapshot.task)]] };
-  const collection: Section = { title: "收集数据", rows: collectionNames[snapshot.hollowMode]
+    [license, [$t("hollow-zero-card.text_662048e98b"), progress(snapshot.talent), talentIcon]] :
+    [license, [$t("hollow-zero-card.text_d974ddea26"), progress(snapshot.duty)], [$t("hollow-zero-card.text_4fc1daa882"), progress(snapshot.task)]] };
+  const collection: Section = { title: $t("hollow-zero-card.text_9fe5d5a19e"), rows: collectionNames[snapshot.hollowMode]
     .map((name, index) => [name, progress(snapshot.collection[index])] as const) };
-  if (snapshot.hollowMode === "withered") return [basic, collection, { title: "刀耕火焚", rows: [
-    ["探索耗时", duration(snapshot.throne?.seconds)],
-    ["对「尼尼微」造成伤害", String(snapshot.throne?.damage ?? snapshot.maxDamage ?? "—")],
+  if (snapshot.hollowMode === "withered") return [basic, collection, { title: $t("hollow-zero-card.text_24ec01f42b"), rows: [
+    [$t("hollow-zero-card.text_127d116c3e"), duration(snapshot.throne?.seconds)],
+    [$t("hollow-zero-card.text_b8feeec1ee"), String(snapshot.throne?.damage ?? snapshot.maxDamage ?? "—")],
   ] }];
-  return [basic, collection, { title: "矩阵行动", rows: challenge(snapshot.matrix) },
-    { title: "特遣调查", rows: challenge(snapshot.taskForce) },
+  return [basic, collection, { title: $t("hollow-zero-card.text_46c327c914"), rows: challenge(snapshot.matrix) },
+    { title: $t("hollow-zero-card.text_c2f77bfcc7"), rows: challenge(snapshot.taskForce) },
     ...(snapshot.specialMission?.seconds === undefined ? [] : [
-      { title: "特别行动", rows: [["最短耗时", duration(snapshot.specialMission.seconds)]] } satisfies Section,
+      { title: $t("hollow-zero-card.text_63904a0cad"), rows: [[$t("hollow-zero-card.text_020043149d"), duration(snapshot.specialMission.seconds)]] } satisfies Section,
     ])];
 }
 
@@ -58,9 +61,9 @@ export function zzzHollowText(snapshot: ZzzHollowSnapshot) {
     [section.title, ...section.rows.map(([name, value]) => `${name} ${value}`)].filter(Boolean).join("\n"));
   if (snapshot.hollowMode === "withered" && snapshot.throne) {
     const team = [...snapshot.throne.avatars, snapshot.throne.buddy].flatMap(entry => entry ? [
-      `${entry.name ?? (entry === snapshot.throne?.buddy ? "邦布" : "代理人")} · Lv.${entry.level ?? "—"}${entry.damageRate ? ` · ${entry.damageRate}%` : ""}`,
+      `${entry.name ?? (entry === snapshot.throne?.buddy ? $t("hollow-zero-card.text_aa46a7c35b") : $t("hollow-zero-card.text_5aea7d747f"))} · Lv.${entry.level ?? "—"}${entry.damageRate ? ` · ${entry.damageRate}%` : ""}`,
     ] : []);
-    if (team.length) groups.push(["通关阵容", ...team].join("\n"));
+    if (team.length) groups.push([$t("hollow-zero-card.text_d626448021"), ...team].join("\n"));
   }
   return [zzzHollowTitles[snapshot.hollowMode], ...groups].join("\n\n");
 }
@@ -115,7 +118,7 @@ export async function renderZzzHollowZero(snapshot: ZzzHollowSnapshot, role: Gam
         }
         if (group.title === "刀耕火焚" && throne) {
           fillRound(context, "#0006", 53, y + 175, 734, 214, 15);
-          title(context, "通关阵容", 75, y + 201, 26);
+          title(context, $t("hollow-zero-card.text_d626448021"), 75, y + 201, 26);
           for (let n = 0; n < 4; n++) {
             const entry = n === 3 ? throne.buddy : throne.avatars[n];
             const x = 76 + n * 181, size = n === 3 ? 115 : 148, row = y + 224 + (148 - size);

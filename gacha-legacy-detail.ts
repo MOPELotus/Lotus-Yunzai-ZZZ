@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { ZzzLegacyGachaDraw, ZzzLegacyGachaPool, ZzzLegacyGachaSnapshot } from "./gacha-legacy.ts";
 import type { ZzzTuningDetailEntry, ZzzTuningDetailModel, ZzzTuningDetailPool } from "./tuning-detail.ts";
 
@@ -12,7 +15,7 @@ const poolTypes = [
   "GACHA_TYPE_WEAPON_UP", "GACHA_TYPE_WEAPON_RETURN",
   "GACHA_TYPE_PERMANENT", "GACHA_TYPE_BANGBOO",
 ] as const satisfies readonly ZzzLegacyGachaPool["type"][];
-const tags = ["非到极致", "运气不好", "平稳保底", "小欧一把", "欧狗在此"] as const;
+const tags = [$t("gacha-legacy-detail.text_8d4011aa6a"), $t("gacha-legacy-detail.text_449e4419c0"), $t("gacha-legacy-detail.text_1038ca6f98"), $t("gacha-legacy-detail.text_3b0c768385"), $t("gacha-legacy-detail.text_e3ead1a16b")] as const;
 const emojis = [4, 1, 16, 12, 6] as const;
 
 function intervalColor(interval: number, lowerCeiling: boolean): string {
@@ -47,9 +50,9 @@ function analyzePool(pool: ZzzLegacyGachaPool, resolveIcon: ZzzLegacyDetailOptio
   });
   return {
     type, name, totalCount, list, fiveStars: fiveStars.length, upCount: 0,
-    timeRange: totalCount ? `${records[0]!.time} ～ ${records.at(-1)!.time}` : "还没有抽卡",
+    timeRange: totalCount ? `${records[0]!.time} ～ ${records.at(-1)!.time}` : $t("gacha-legacy-detail.text_33010258e7"),
     lastFive: newest?.index ?? "-",
-    ...(!newest ? { pityLabel: totalCount ? "档案内未出S级" : "暂无抽卡记录" } : {}),
+    ...(!newest ? { pityLabel: totalCount ? $t("gacha-legacy-detail.text_8d055493e7") : $t("gacha-legacy-detail.text_b60895e8b7") } : {}),
     avgFive: average?.toFixed(1) ?? "-", avgUp: "-", noWai: "-",
     avgUpEstimated: false, noWaiEstimated: false,
     level, tag: tags[level]!, emoji: emojis[level]!,
@@ -60,7 +63,7 @@ export function buildZzzLegacyDetail({ stats, player, resolveIcon }: ZzzLegacyDe
   const byType = new Map(stats.pools.map((pool) => [pool.type, pool]));
   const data = poolTypes.map((type) => {
     const pool = byType.get(type);
-    if (!pool) throw new TypeError("绝区零旧逐抽档案缺少频段。");
+    if (!pool) throw new TypeError($t("gacha-legacy-detail.text_d53bc23ead"));
     return analyzePool(pool, resolveIcon);
   });
   return {

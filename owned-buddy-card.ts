@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
 import { genshinTemplateFont } from "../../lib/game-template-fonts.ts";
 import { realpath } from "node:fs/promises";
@@ -17,9 +20,9 @@ export function zzzOwnedBuddyText(roster: ZzzOwnedBuddyRoster) {
   return [
     `ID: ${roster.uid}`,
     ...roster.buddies.map(({ name, level, rank, rarity }) =>
-      `${name} · ${rarity} · Lv.${level}${rank > 1 ? ` · ${rank}命` : ""}`),
-    ...(roster.buddies.length ? [] : ["暂无已拥有的邦布"]),
-    "*仅显示已拥有的邦布",
+      `${name} · ${rarity} · Lv.${level}${rank > 1 ? $t("owned-buddy-card.text_142e591ff1", { "rank": rank }) : ""}`),
+    ...(roster.buddies.length ? [] : [$t("owned-buddy-card.text_58612629b8")]),
+    $t("owned-buddy-card.text_18682e4331"),
   ].join("\n");
 }
 
@@ -117,7 +120,7 @@ export async function renderZzzOwnedBuddyCard(roster: ZzzOwnedBuddyRoster, {
     context.textAlign = "left";
     context.fillStyle = "#7f858a";
     context.font = `12px ${bodyFont}`;
-    if (!roster.buddies.length) context.fillText("暂无已拥有的邦布", 22, 92);
-    context.fillText("*仅显示已拥有的邦布", 22, height - 25);
+    if (!roster.buddies.length) context.fillText($t("owned-buddy-card.text_58612629b8"), 22, 92);
+    context.fillText($t("owned-buddy-card.text_18682e4331"), 22, height - 25);
   }, 4, inlineImageByteLimit, { allowHalfScale: true });
 }

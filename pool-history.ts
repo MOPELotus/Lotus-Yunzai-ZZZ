@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { readZzzRoleAliases, zzzRoleAlias, zzzRoleName } from "./role-alias.ts";
 import { panelObject } from "./panel-detail.ts";
 import { readPanelJson } from "./panel-storage.ts";
@@ -85,7 +88,7 @@ const opening = [
 ] as const;
 
 export function decodeZzzPoolHistory(raw: unknown) {
-  if (!Array.isArray(raw) || !raw.length || raw.length > 1_000) throw new Error("绝区零卡池历史格式异常");
+  if (!Array.isArray(raw) || !raw.length || raw.length > 1_000) throw new Error($t("pool-history.text_427bc46106"));
   const rows = raw.map(panelObject);
   if (!rows.some(row => row.version === "1.0上半")) rows.push(...opening);
   const sorted = rows.map(row => {
@@ -96,13 +99,13 @@ export function decodeZzzPoolHistory(raw: unknown) {
     const end = dates.length === 2 ? time(dates[1]!) : undefined;
     if ((type !== "角色" && type !== "武器") || typeof version !== "string" || !/^\d{1,2}\.\d{1,2}(?:上半|下半)?$/u.test(version) ||
         !headliner || !items || items.some(item => item === undefined) || end === undefined) {
-      throw new Error("绝区零卡池历史格式异常");
+      throw new Error($t("pool-history.text_427bc46106"));
     }
     // The official 2.7 notice confirms the April–May 机巧心种 row; the public archive labels it 2.6.
     // https://zzz.mihoyo.com/news/163519
     const mislabeled = type === "武器" && version === "2.6下半" && headliner === "机巧心种" &&
       dates[0] === "2026/04/15 12:00:00" && dates[1] === "2026/05/05 14:59:59";
-    return { type, version: mislabeled ? "2.7下半" : version, headliner, items, startText: dates[0]!, end,
+    return { type, version: mislabeled ? $t("pool-history.text_b7b496c092") : version, headliner, items, startText: dates[0]!, end,
       artwork: originalArtwork(row.img), title: name(row.title) };
   }).sort((left, right) => left.end - right.end);
 
@@ -118,7 +121,7 @@ export function decodeZzzPoolHistory(raw: unknown) {
       const nextLocalDay = Math.floor((previousEnd + chinaOffset) / day) * day + day;
       start = nextLocalDay - chinaOffset + 11 * 60 * 60 * 1000;
     }
-    if (start === undefined || start > row.end) throw new Error("绝区零卡池历史时间异常");
+    if (start === undefined || start > row.end) throw new Error($t("pool-history.text_92da6dab04"));
     return { ...row, start, dateRange: `${calendar(start).slice(0, 10)} ~ ${calendar(row.end).slice(0, 10)}` };
   });
 }
@@ -137,24 +140,24 @@ function poolSummary(rows: ReturnType<typeof decodeZzzPoolHistory>, request: Poo
   const ages = [...newest].filter(([, end]) => end < snapshot)
     .map(([item, end]) => ({ item, days: Math.floor((snapshot - end) / day) }))
     .sort((left, right) => right.days - left.days);
-  const kind = request.type === "武器" ? "音擎" : "代理人";
+  const kind = request.type === "武器" ? $t("pool-history.text_2ce0392ca1") : $t("pool-history.text_5aea7d747f");
   return [
-    `【 ${request.rank}级${kind}复刻统计 】`,
-    ...ages.map(row => `${row.item}: ${String(row.days).padStart(3, " ")}天未复刻`),
-    `按 ${calendar(snapshot).slice(0, 10)} 统计。来源所载频段截至 ${calendar(lastEnd).slice(0, 10)}。`,
+    $t("pool-history.text_0c97c23704", { "rank": request.rank, "kind": kind }),
+    ...ages.map(row => $t("pool-history.text_8f6813a539", { "item": row.item, "value2": String(row.days).padStart(3, " ") })),
+    $t("pool-history.text_e1e89d5874", { "value1": calendar(snapshot).slice(0, 10), "value2": calendar(lastEnd).slice(0, 10) }),
   ].join("\n");
 }
 
 function versionParts(rows: ReturnType<typeof decodeZzzPoolHistory>, request: PoolVersion, artwork = false) {
   const stages = request.phase ? [request.version + request.phase] :
-    [request.version, request.version + "上半", request.version + "下半"];
+    [request.version, request.version + $t("pool-history.text_3401df6359"), request.version + $t("pool-history.text_38866b106e")];
   const selected = stages.flatMap(stage => {
     const entries = rows.filter(row => row.version === stage);
     return entries.length ? [{ stage, entries }] : [];
   });
   if (!selected.length) return;
   const title = selected.length === 1 ? selected[0]!.stage : request.version;
-  const lines: (string | PoolImage)[] = [`【 绝区零 v${title} 卡池 】`];
+  const lines: (string | PoolImage)[] = [$t("pool-history.text_c80542283c", { "title": title })];
   for (const { stage, entries } of selected) {
     if (selected.length > 1) lines.push(`【 ${stage} 】`);
     const ranges = new Set(entries.map(row => row.dateRange));
@@ -163,7 +166,7 @@ function versionParts(rows: ReturnType<typeof decodeZzzPoolHistory>, request: Po
       for (const type of ["角色", "武器"] as const) {
         for (const row of entries) {
           if (row.type !== type || row.dateRange !== range) continue;
-          lines.push(`◈ ${type === "角色" ? type : "音擎"}：S-${row.headliner} | A-${row.items.join("，")}`);
+          lines.push(`◈ ${type === "角色" ? type : $t("pool-history.text_2ce0392ca1")}：S-${row.headliner} | A-${row.items.join("，")}`);
           if (artwork && row.artwork) lines.push({ type: "image", file: row.artwork });
         }
       }
@@ -173,14 +176,14 @@ function versionParts(rows: ReturnType<typeof decodeZzzPoolHistory>, request: Po
 }
 
 function historyCoverage(rows: ReturnType<typeof decodeZzzPoolHistory>) {
-  return `来源所载频段截至 ${calendar(rows.at(-1)!.end).slice(0, 10)}。`;
+  return $t("pool-history.text_c76cf8aff6", { "value1": calendar(rows.at(-1)!.end).slice(0, 10) });
 }
 
 function versionHistory(rows: ReturnType<typeof decodeZzzPoolHistory>, request: PoolVersion) {
   const parts = versionParts(rows, request);
   const coverage = historyCoverage(rows);
   return parts ? [...parts, coverage].join("\n")
-    : `未查询到绝区零${request.version}${request.phase ?? ""}版本的卡池历史数据。${coverage}`;
+    : $t("pool-history.text_212dc0c820", { "version": request.version, "value2": request.phase ?? "", "coverage": coverage });
 }
 
 function allHistory(rows: ReturnType<typeof decodeZzzPoolHistory>) {
@@ -190,7 +193,7 @@ function allHistory(rows: ReturnType<typeof decodeZzzPoolHistory>) {
     if (!parts) return [];
     return [parts.map(part => typeof part === "string" ? `${part}\n` : part)];
   });
-  return { type: "forward" as const, nodes: ["绝区零全版本卡池记录", historyCoverage(rows), ...nodes] };
+  return { type: "forward" as const, nodes: [$t("pool-history.text_b6506d7196"), historyCoverage(rows), ...nodes] };
 }
 
 function legacyHistory(label: string, rows: ReturnType<typeof decodeZzzPoolHistory>, result: ReturnType<typeof decodeZzzPoolHistory>, now: number) {
@@ -204,19 +207,19 @@ function legacyHistory(label: string, rows: ReturnType<typeof decodeZzzPoolHisto
   const delta = calendarDay(latest.end) - calendarDay(snapshot);
   const next = calendarDay(latest.start) - calendarDay(snapshot);
   const status = now > last
-    ? `截至 ${calendar(last).slice(0, 10)}，${Math.max(0, -delta)}天未复刻`
-    : delta < 0 ? `${-delta}天未复刻` : next > 0 ? `下期UP，还有${next}天开启卡池`
-      : `当期UP，${delta ? `还有${delta}天` : "今天"}结束卡池`;
-  const pools = sorted.map(row => [`所属版本：${row.version}`, row.title && `卡池名称：${row.title}`,
-    `S级UP：${row.headliner}`, row.items.length && `A级UP：${row.items.join("，")}`,
-    `开始时间：${calendar(row.start)}`, `结束时间：${calendar(row.end)}`].filter(Boolean).join("\n"));
-  return { type: "forward" as const, nodes: [`${label}卡池详情`, status, ...pools] };
+    ? $t("pool-history.text_ad8c7ba357", { "value1": calendar(last).slice(0, 10), "value2": Math.max(0, -delta) })
+    : delta < 0 ? $t("pool-history.text_d7693df1b7", { "value1": -delta }) : next > 0 ? $t("pool-history.text_c613201f2a", { "next": next })
+      : $t("pool-history.text_cd98cf1512", { "value1": delta ? $t("pool-history.text_7ce659fe3f", { "delta": delta }) : $t("pool-history.text_d5f5a7a010") });
+  const pools = sorted.map(row => [$t("pool-history.text_36e70d44f3", { "version": row.version }), row.title && $t("pool-history.text_404bad945d", { "title": row.title }),
+    $t("pool-history.text_28e6eb5466", { "headliner": row.headliner }), row.items.length && $t("pool-history.text_f256dfa79d", { "value1": row.items.join("，") }),
+    $t("pool-history.text_9e6b4b8e54", { "value1": calendar(row.start) }), $t("pool-history.text_fa829d0387", { "value1": calendar(row.end) })].filter(Boolean).join("\n"));
+  return { type: "forward" as const, nodes: [$t("pool-history.text_e817f4b6dc", { "label": label }), status, ...pools] };
 }
 
 async function readResponse(response: Response) {
   if (!response.ok || !response.body || Number(response.headers.get("content-length")) > maximumBytes) {
     await response.body?.cancel().catch(() => undefined);
-    throw new Error("绝区零卡池历史请求失败");
+    throw new Error($t("pool-history.text_1ed3ace983"));
   }
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -226,7 +229,7 @@ async function readResponse(response: Response) {
       const chunk = await reader.read();
       if (chunk.done) break;
       length += chunk.value.byteLength;
-      if (length > maximumBytes) throw new Error("绝区零卡池历史超出大小限制");
+      if (length > maximumBytes) throw new Error($t("pool-history.text_556e2680cb"));
       text += decoder.decode(chunk.value, { stream: true });
     }
     return decodeZzzPoolHistory(JSON.parse(text + decoder.decode()) as unknown);
@@ -265,7 +268,7 @@ export function createZzzPoolHistory(signal: AbortSignal,
     if (typeof query !== "string" && !("query" in query)) {
       const rows = await read();
       if (signal.aborted) return [];
-      if (!rows) return "卡池历史记录数据获取失败";
+      if (!rows) return $t("pool-history.text_cfcda154f0");
       if ("kind" in query) return allHistory(rows);
       return "version" in query ? versionHistory(rows, query) : poolSummary(rows, query, now());
     }
@@ -283,19 +286,19 @@ export function createZzzPoolHistory(signal: AbortSignal,
       return [entry.name, entry.full_name].some(item => typeof item === "string" && zzzRoleName(item) === key);
     });
     const label = alias ?? name(panelObject(partner).name) ?? input;
-    if (typeof query !== "string" && permanentRoles.has(label.replace(/[「」]/gu, ""))) return "常驻角色不支持查询";
-    if (!rows) return "卡池历史记录数据获取失败";
+    if (typeof query !== "string" && permanentRoles.has(label.replace(/[「」]/gu, ""))) return $t("pool-history.text_169eb52154");
+    if (!rows) return $t("pool-history.text_cfcda154f0");
     const match = zzzRoleName(label);
     const result = rows.filter(row => zzzRoleName(row.headliner) === match ||
       row.items.some(item => item !== undefined && zzzRoleName(item) === match));
     if (typeof query !== "string") return legacyHistory(label, rows, result, now());
     const first = result[0];
     const until = calendar(rows.at(-1)!.end).slice(0, 10);
-    if (!first) return `未找到【${label}】卡池记录，请确保角色名称/别称存在。来源所载频段截至 ${until}。`;
+    if (!first) return $t("pool-history.text_d7c5ca85c9", { "label": label, "until": until });
     const display = zzzRoleName(first.headliner) === match ? first.headliner :
       first.items.find(item => item !== undefined && zzzRoleName(item) === match) ?? label;
-    const kind = first.type === "武器" ? "音擎" : "代理人";
-    return [`【 ${display}(${display === first.headliner ? "S" : "A"}级${kind}) 卡池记录 】`,
-      ...result.map((row, index) => `${index + 1}. ${row.version} (${row.dateRange})`), `来源所载频段截至 ${until}。`].join("\n");
+    const kind = first.type === "武器" ? $t("pool-history.text_2ce0392ca1") : $t("pool-history.text_5aea7d747f");
+    return [$t("pool-history.text_18677466e9", { "display": display, "value2": display === first.headliner ? "S" : "A", "kind": kind }),
+      ...result.map((row, index) => `${index + 1}. ${row.version} (${row.dateRange})`), $t("pool-history.text_517932d56c", { "until": until })].join("\n");
   };
 }

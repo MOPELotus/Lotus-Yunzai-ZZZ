@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { renderStatusCard, type StatusCardOptions } from "@lotus-yunzai/skia/status-card";
 import type { createZzzTuningSync } from "./tuning-sync.ts";
 
@@ -6,13 +9,13 @@ type TuningCardResult = Pick<SyncResult, "uid" | "profileId" | "pools"> & {
   readonly stats: Pick<SyncResult["stats"], "updatedAt">;
 };
 
-const title = "绝区零抽卡记录";
+const title = $t("tuning-result-card.text_8efe873b92");
 const failureMessages = {
-  "rate-limited": "访问过于频繁。",
-  "network-failed": "网络连接失败。",
-  "service-unavailable": "官方服务暂时不可用。",
-  "profile-changed": "档案已变更，请重新更新抽卡记录。",
-  "request-failed": "绝区零抽卡记录更新失败。",
+  "rate-limited": $t("tuning-result-card.text_3f341e6635"),
+  "network-failed": $t("tuning-result-card.text_aef566e1e7"),
+  "service-unavailable": $t("tuning-result-card.text_45f501d999"),
+  "profile-changed": $t("tuning-result-card.text_e77f1910c7"),
+  "request-failed": $t("tuning-result-card.text_2abe38ab62"),
 } as const;
 
 export function zzzTuningFailureText(reason: keyof typeof failureMessages) {
@@ -29,15 +32,15 @@ interface TuningCardFailure {
 export function renderZzzTuningResult(
   qq: string, { uid, profileId, pools, stats }: TuningCardResult, options?: StatusCardOptions,
 ) {
-  const lead = `QQ ${qq} · 档案 ${profileId} · UID ${uid}`;
+  const lead = $t("tuning-result-card.text_e747eddef9", { "qq": qq, "profileId": profileId, "uid": uid });
   const contents = pools.length ? pools.map(({ name, totalDraws, total, added, pity }) =>
-    `${name}：共 ${totalDraws} 抽 · S 级 ${total}（新增 ${added}）· 当前垫 ${pity ?? "—"}`) : ["卡池：无新增记录"];
+    $t("tuning-result-card.text_dc7677bc1d", { "name": name, "totalDraws": totalDraws, "total": total, "added": added, "value5": pity ?? "—" })) : [$t("tuning-result-card.text_be8582ff79")];
   return renderStatusCard(title, lead, contents, new Date(stats.updatedAt), options);
 }
 
 export function renderZzzTuningFailure(
   { qq, profileId, reason = "request-failed", at = new Date() }: TuningCardFailure, options?: StatusCardOptions,
 ) {
-  const lead = `QQ ${qq} · 档案 ${profileId}\n${failureMessages[reason]}`;
+  const lead = $t("tuning-result-card.text_7a351db5c1", { "qq": qq, "profileId": profileId, "value3": failureMessages[reason] });
   return renderStatusCard(title, lead, [], at, options);
 }

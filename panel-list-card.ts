@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -68,8 +71,8 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
     context.fillRect(0, 0, width, height);
     if (background) cover(context, background, 0, 0, width, height);
     box(context, "#0006", 0, 0, width, 112.53);
-    const count = options.showcase ? `公开展柜已保存 ${rows.length} 个角色` :
-      options.updatedIds ? `已为您更新 ${options.updatedIds.size} 个角色` : `共计 ${rows.length} 个角色`;
+    const count = options.showcase ? $t("panel-list-card.text_80a0745d27", { "length": rows.length }) :
+      options.updatedIds ? $t("panel-list-card.text_62d158342b", { "size": options.updatedIds.size }) : $t("panel-list-card.text_ad62774c4b", { "length": rows.length });
     // The original top bar gives the message its own width before fitting the player row.
     const countSize = 23.52;
     const countWidth = measureZzzCardLabel(context, count, countSize, 700) + 2 * 0.7 * countSize;
@@ -92,11 +95,11 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
     if (title) contain(context, title, 747.6, 26.86, 58.8, 58.8);
     else {
       circle(context, "#29468a", 777, 56, 27);
-      label(context, "面板", 777, 56, 17, { align: "center" });
+      label(context, $t("panel-list-card.text_3c8c5939d6"), 777, 56, 17, { align: "center" });
     }
 
     fillRound(context, "#0008", 37, 130.4, 766, listHeight - 2, 12, "#574f66");
-    if (!rows.length) label(context, "暂无数据，请先刷新面板", width / 2, 161, 19, { align: "center" });
+    if (!rows.length) label(context, $t("panel-list-card.text_24fadcc884"), width / 2, 161, 19, { align: "center" });
     rows.forEach((row, index) => {
       const x = 125.9 + (index % 5) * 147.03;
       const y = 145.72 + Math.floor(index / 5) * rowHeight;

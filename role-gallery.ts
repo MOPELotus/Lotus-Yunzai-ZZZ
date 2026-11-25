@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
@@ -90,7 +93,7 @@ export interface ZzzRoleGalleryContext extends ChallengeRankContext {
 }
 
 function listingKey(context: ZzzRoleGalleryContext, role: string, page: number) {
-  const room = context.message_type === "group" ? context.group_id : "私聊";
+  const room = context.message_type === "group" ? context.group_id : $t("role-gallery.text_6add2714c4");
   if (!context.self_id || !context.user_id || !room) return;
   return `lotus-yunzai:zzz-character-gallery:${context.adapter ?? "onebot"}:${context.self_id}:${room}:${context.user_id}:${role}:${page}`;
 }
@@ -102,25 +105,25 @@ export function createZzzRoleGallery(signal: AbortSignal) {
   return async (context: ZzzRoleGalleryContext, command: NonNullable<ReturnType<typeof zzzRoleGalleryCommand>>) => {
     if (signal.aborted || context.isDelegated) return;
     const owns = () => !!context.characterGallerySignal && !context.characterGallerySignal.aborted && ownsZzzManagement(context, signal);
-    if (command.kind !== "list" && !owns()) return "仅限主人设置。";
+    if (command.kind !== "list" && !owns()) return $t("role-gallery.text_e3c1df5c60");
     const group = rankGroup(context);
     try {
-      if (command.kind !== "list" && group && !await rankMembership(context, group.actor)) return "暂无法核对当前群成员。";
+      if (command.kind !== "list" && group && !await rankMembership(context, group.actor)) return $t("role-gallery.text_b9eeade8a7");
       const [snapshot, aliases] = await Promise.all([catalogue.read(), readZzzRoleAliases(legacy).catch(() => undefined)]);
       const matches = findTraditionalEntries(snapshot, zzzRoleAlias(aliases, command.role) ?? command.role, "zzz", "character");
       const role = matches.length === 1 ? matches[0]?.entry : undefined;
-      if (!role || !/^[\p{L}\p{N}\p{M} .·・_-]{1,80}$/u.test(role.name) || /^\.+$/u.test(role.name)) return "未找到对应代理人。";
+      if (!role || !/^[\p{L}\p{N}\p{M} .·・_-]{1,80}$/u.test(role.name) || /^\.+$/u.test(role.name)) return $t("role-gallery.text_ebcb4d619b");
       if (snapshot.pages.some(page => page.game === "zzz" && page.kind === "character" &&
-          page.entries.filter(entry => entry.name === role.name).length !== 1)) return "代理人名称不唯一，暂无法管理角色图。";
+          page.entries.filter(entry => entry.name === role.name).length !== 1)) return $t("role-gallery.text_d599ec206c");
 
       const path = ["zzz-character", role.name];
       if (command.kind === "add") {
         const images = await context.readCharacterGalleryImages?.() ?? [];
-        if (images === "too-many" || images.length > 5) return "每次最多添加 5 张角色图。";
-        if (!images.length) return "请随指令发送图片，或引用本会话中含图片的消息。";
-        if (!owns()) return "仅限主人设置。";
+        if (images === "too-many" || images.length > 5) return $t("role-gallery.text_4dea5c6155");
+        if (!images.length) return $t("role-gallery.text_9be316a81b");
+        if (!owns()) return $t("role-gallery.text_e3c1df5c60");
         const directory = await galleryBase(root, path, true);
-        if (!directory) return "图库目录暂不可写。";
+        if (!directory) return $t("role-gallery.text_6fd774c3af");
         let added = 0, duplicates = 0;
         for (const bytes of images) {
           const extension = bytes && bytes.byteLength <= maxBytes && rasterExtension(bytes);
@@ -144,14 +147,14 @@ export function createZzzRoleGallery(signal: AbortSignal) {
             await unlink(temporary);
           }
         }
-        return `已为 ${role.name} 添加 ${added} 张角色图，已有 ${duplicates} 张，未添加 ${images.length - added - duplicates} 张。`;
+        return $t("role-gallery.text_645777035d", { "name": role.name, "added": added, "duplicates": duplicates, "value4": images.length - added - duplicates });
       }
 
       const redis = globalThis.redis;
       const writable = await galleryBase(root, path);
       if (command.kind === "remove") {
-        if (!redis) return "角色图库设置暂时不可用。";
-        if (!writable) return "暂无可删除的角色图。";
+        if (!redis) return $t("role-gallery.text_8875eeee1e");
+        if (!writable) return $t("role-gallery.text_6ed6545809");
         const removed: number[] = [];
         for (const id of command.ids) {
           const key = id > 0 && listingKey(context, role.id, Math.ceil(id / pageSize));
@@ -166,8 +169,8 @@ export function createZzzRoleGallery(signal: AbortSignal) {
           if (deleted) removed.push(id);
         }
         const missing = command.ids.filter(id => !removed.includes(id));
-        return [removed.length && `已删除角色图 ID ${removed.join("、")}。`,
-          missing.length && `ID ${missing.join("、")} 无法删除，请重新查看对应页。旧图库和外部资源只读。`].filter(Boolean).join("\n");
+        return [removed.length && $t("role-gallery.text_f8522e0bb9", { "value1": removed.join("、") }),
+          missing.length && $t("role-gallery.text_b2f061c373", { "value1": missing.join("、") })].filter(Boolean).join("\n");
       }
 
       const legacyPath = ["images", "panel"];
@@ -190,53 +193,53 @@ export function createZzzRoleGallery(signal: AbortSignal) {
         }
       }
       const pages = Math.ceil(entries.length / pageSize);
-      if (!pages) return `${role.name} 暂无角色图。`;
-      if (command.page > pages) return `只有 ${pages} 页角色图。`;
+      if (!pages) return $t("role-gallery.text_7dfe6501a8", { "name": role.name });
+      if (command.page > pages) return $t("role-gallery.text_25d7dcd198", { "pages": pages });
       const start = (command.page - 1) * pageSize;
-      const title = `${role.name} 角色图第 ${command.page}/${pages} 页，查询指定页请在指令后加页码。`;
+      const title = $t("role-gallery.text_61c6cc3bdf", { "name": role.name, "page": command.page, "pages": pages });
       const listing: { id: number; node: GalleryNode; size: number; editableFile?: string }[] = [];
       for (const [offset, entry] of entries.slice(start, start + pageSize).entries()) {
         const id = start + offset + 1;
         const image = await readRaster(join(entry.directory, entry.filename));
         const editable = entry.editable && image && digest(image) === managedName.exec(entry.filename)?.[1];
         const node: GalleryNode = image
-          ? [`ID：${id}${editable ? "" : "（只读）"}`, { type: "image", file: image }]
-          : `ID：${id} 暂无法读取。`;
+          ? [`ID：${id}${editable ? "" : $t("role-gallery.text_7e3ecacc57")}`, { type: "image", file: image }]
+          : $t("role-gallery.text_79fcc39cf1", { "id": id });
         listing.push({ id, node, size: image?.byteLength ?? 0, editableFile: editable ? entry.filename : undefined });
       }
       const key = owns() && listingKey(context, role.id, command.page);
       const ticket = randomUUID();
-      let receipt = "待回执:" + ticket;
+      let receipt = $t("role-gallery.text_72cd59ea73") + ticket;
       const pending = key && redis && await redis.set(key, receipt, { EX: listingTtl }).catch(() => undefined);
       const batches = batchInlineImagePages(listing, context.inlineImageByteLimit, entry => entry.size);
-      if (!batches) return "本页有角色原图超过当前会话大小上限，未发送本页。";
-      if (!context.forward) return "当前会话无法合并转发角色图。";
+      if (!batches) return $t("role-gallery.text_8d3bf6abf6");
+      if (!context.forward) return $t("role-gallery.text_8a54a20950");
 
       // A unique ticket keeps late confirmations from updating a newer listing of the same page.
       const delivered: Record<string, string> = { listing: ticket };
       for (const [index, batch] of batches.entries()) {
         if (signal.aborted) return [];
-        if (pending && !owns()) return "角色图库管理权限已变化，请重新查看。";
-        const heading = batches.length === 1 ? title : `${title}（第 ${index + 1}/${batches.length} 段）`;
+        if (pending && !owns()) return $t("role-gallery.text_98b50aba16");
+        const heading = batches.length === 1 ? title : $t("role-gallery.text_11d4132897", { "title": title, "value2": index + 1, "length": batches.length });
         const nodes = [heading, ...batch.map(entry => entry.node)];
-        if (pending) nodes.push("主人可在本段确认送达后五分钟内删除本段自建角色图。");
+        if (pending) nodes.push($t("role-gallery.text_ea49264174"));
         try {
-          if (!await context.forward(nodes)) return `第 ${index + 1} 段角色图合并转发未发送，其余段落已停止。`;
+          if (!await context.forward(nodes)) return $t("role-gallery.text_eb833b8e8c", { "value1": index + 1 });
         } catch {
-          return `第 ${index + 1} 段角色图合并转发结果未确认，请在聊天中核对。`;
+          return $t("role-gallery.text_de79d52d9c", { "value1": index + 1 });
         }
         if (pending && key && redis && owns()) {
           for (const { id, editableFile } of batch) if (editableFile) delivered[id] = editableFile;
           const confirmed = JSON.stringify(delivered);
           const saved = await redis.eval(listingDelivery, { keys: [key], arguments: [receipt, confirmed, String(listingTtl)] })
             .catch(() => undefined);
-          if (saved !== 1) return "角色图已发送，但本页删除回执未登记，请重新查看。";
+          if (saved !== 1) return $t("role-gallery.text_176464cbca");
           receipt = confirmed;
         }
       }
       return [];
     } catch {
-      return "角色图库暂时不可用。";
+      return $t("role-gallery.text_1ef4232779");
     }
   };
 }

@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzClimbingTowerSnapshot, ZzzShiyuPortrait, ZzzTowerSeason } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -11,7 +14,7 @@ const top = 184.8;
 const sectionInset = 33;
 const portraitGap = 28.8;
 const portraitSize = (width - 2 * sectionInset - 2 * portraitGap) / 3;
-const titles = { 1: "拟真鏖战试炼", 2: "鏖战试炼：末路", 3: "鏖战试炼：荣耀", 4: "鏖战试炼：狂澜" } as const;
+const titles = { 1: $t("climbing-tower-card.text_16a75e0027"), 2: $t("climbing-tower-card.text_98f7195705"), 3: $t("climbing-tower-card.text_7a30bc3a6a"), 4: $t("climbing-tower-card.text_b180896959") } as const;
 
 function percentage(value: number | undefined) {
   return value === undefined ? "—" : `${(value / 100).toFixed(2)}%`;
@@ -22,21 +25,21 @@ function score(value: number | undefined) {
 }
 
 function mainMetrics(season: ZzzTowerSeason): readonly (readonly [string, string])[] {
-  const layer = ["层数", score(season.layer)] as const;
+  const layer = [$t("climbing-tower-card.text_6e35682bee"), score(season.layer)] as const;
   if (season.number === 1) return [layer];
-  if (season.number === 2) return [layer, ["无伤通关", score(season.mvp)]];
-  return [layer, ["分数", score(season.score)]];
+  if (season.number === 2) return [layer, [$t("climbing-tower-card.text_7c0ac18ce6"), score(season.mvp)]];
+  return [layer, [$t("climbing-tower-card.text_89e35e662a"), score(season.score)]];
 }
 
 function mvpMetrics(season: ZzzTowerSeason): readonly (readonly [string, string])[] {
-  return [["无伤通关", score(season.mvp)], ["排名", percentage(season.percentile)]];
+  return [[$t("climbing-tower-card.text_7c0ac18ce6"), score(season.mvp)], [$t("climbing-tower-card.text_6570a98f28"), percentage(season.percentile)]];
 }
 
 export function zzzClimbingTowerText(snapshot: ZzzClimbingTowerSnapshot) {
   return snapshot.seasons.map(season => {
     const metrics = [...mainMetrics(season), ...(season.number >= 3 ? mvpMetrics(season) : [])];
     return [titles[season.number], metrics.map(([name, value]) => `${name} ${value}`).join(" · "),
-      ...season.avatars.map(entry => `${entry.name ?? "代理人"} · ${score(entry.score)} · ${percentage(entry.percentile)}`)].join("\n");
+      ...season.avatars.map(entry => `${entry.name ?? $t("climbing-tower-card.text_5aea7d747f")} · ${score(entry.score)} · ${percentage(entry.percentile)}`)].join("\n");
   }).join("\n\n");
 }
 
@@ -81,7 +84,7 @@ function metrics(context: Context, entries: readonly (readonly [string, string])
 function drawTowerPlayer(context: Context, role: GameRole, region: string,
   { frame, uidBar, avatar }: Awaited<ReturnType<typeof loadZzzCardPlayer>>) {
   const x = 24, centerY = 112.8, size = 96;
-  const nickname = role.nickname || "绳匠";
+  const nickname = role.nickname || $t("climbing-tower-card.text_4efe2edb6d");
   const level = role.level === undefined ? undefined : `Lv${role.level}`;
   const nicknameWidth = measureZzzCardLabel(context, nickname, 28.8, 700);
   const levelWidth = level ? measureZzzCardLabel(context, level, 21.6) + 19.2 : 0;
@@ -100,7 +103,7 @@ function drawTowerPlayer(context: Context, role: GameRole, region: string,
   context.arc(x + radius, centerY, radius, 0, 2 * Math.PI);
   context.clip();
   if (avatar) cover(context, avatar, x, y, diameter, diameter);
-  else label(context, "绳", x + radius, centerY, Math.min(25, diameter / 2), { align: "center", weight: 700 });
+  else label(context, $t("climbing-tower-card.text_231e8863ee"), x + radius, centerY, Math.min(25, diameter / 2), { align: "center", weight: 700 });
   context.restore();
 
   const info = x + diameter + 24;
@@ -182,20 +185,20 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
       y += layout.height + 24;
     }
     if (showVisibility && visibility) {
-      const state = (value: boolean | undefined) => value === undefined ? "未登记" : value ? "显示" : "隐藏";
-      label(context, `• 本群爬塔排名 · ${visibility.map((value, index) => `S${index + 1} ${state(value)}`).join(" · ")}`,
+      const state = (value: boolean | undefined) => value === undefined ? $t("climbing-tower-card.text_0db3db4421") : value ? $t("climbing-tower-card.text_4e1449e7d5") : $t("climbing-tower-card.text_145219e726");
+      label(context, $t("climbing-tower-card.text_ab6a049061", { "value1": visibility.map((value, index) => `S${index + 1} ${state(value)}`).join(" · ") }),
         57, noteY + 37, 19.2, { maxWidth: 386, ellipsis: false });
-      label(context, "发送 %爬塔排名 查看各季命令", 67.2, noteY + 63, 19.2, { color: "#ffd700" });
+      label(context, $t("climbing-tower-card.text_a37017e9f7"), 67.2, noteY + 63, 19.2, { color: "#ffd700" });
     } else {
-      const instruction = "请在群内查询";
-      const command = "%拟真鏖战试炼";
+      const instruction = $t("climbing-tower-card.text_e7135a7feb");
+      const command = $t("climbing-tower-card.text_b96df69e42");
       const commandX = 67.2 + measureZzzCardLabel(context, instruction, 19.2) + 5.8;
       const suffixX = commandX + measureZzzCardLabel(context, command, 19.2) + 5.8;
       label(context, "•", 57, noteY + 37, 19.2);
       label(context, instruction, 67.2, noteY + 37, 19.2);
       label(context, command, commandX, noteY + 37, 19.2, { color: "#ffd700" });
-      label(context, "，以参与对", suffixX, noteY + 37, 19.2);
-      label(context, "应群的拟真鏖战试炼排名", 67.2, noteY + 63, 19.2);
+      label(context, $t("climbing-tower-card.text_365a333c94"), suffixX, noteY + 37, 19.2);
+      label(context, $t("climbing-tower-card.text_6fb4ff4797"), 67.2, noteY + 63, 19.2);
     }
     label(context, zzzCardFooter, width / 2, height - 44.5, 16.8, { align: "center", color: "#fff" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });

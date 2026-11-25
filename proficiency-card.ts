@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import { ImageSizeLimitError, nativeImageRasterScale, renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -25,7 +28,7 @@ const gap = 24;
 const skew = Math.tan(25 * Math.PI / 180);
 const rankColor = ["#666", "#3a742b", "#3d84d6", "#df7676", "#3336a1", "#667f13", "#da3020"];
 const rarityBorder = { S: "#e9be4f", A: "#a429d2", B: "#6582a1" } as const;
-const skillNames = ["普", "闪", "援", "特", "连", "核"] as const;
+const skillNames = [$t("proficiency-card.text_a223d4521a"), $t("proficiency-card.text_02c6f46a33"), $t("proficiency-card.text_7bb1340403"), $t("proficiency-card.text_25bd63d817"), $t("proficiency-card.text_91bb18682b"), $t("proficiency-card.text_e90ae9b53b")] as const;
 
 async function loadProficiencyArt(model: Proficiency, options: Options) {
   const local = await openZzzCardTheme(options);
@@ -103,7 +106,7 @@ function drawRow(context: Context, row: Row, images: RowArtwork, art: Awaited<Re
   artTile(context, images.portrait, 93, y + 1, 119, rowHeight - 2, stroke);
   if (!images.portrait) label(context, avatar.name_mi18n, 154, y + 27, 17, { align: "center", maxWidth: 88 });
   skewedBox(context, 80, y + 2, 55, 19, rankColor[avatar.rank]!);
-  label(context, `${avatar.rank}影`, 107, y + 11, 13, { align: "center" });
+  label(context, $t("proficiency-card.text_68b16e68e7", { "rank": avatar.rank }), 107, y + 11, 13, { align: "center" });
   skewedBox(context, 175, y + 32, 65, 18, rankColor[Math.min(6, Math.trunc(avatar.level / 10))]!);
   label(context, `Lv${avatar.level}`, 207, y + 41, 13, { align: "center" });
   const elementIcon = element && art.badges.get(`common/images/element/${element}.png`);
@@ -120,12 +123,12 @@ function drawRow(context: Context, row: Row, images: RowArtwork, art: Awaited<Re
   }
 
   artTile(context, images.weapon, 482, y + 1, 86, rowHeight - 2, stroke);
-  if (!weapon) label(context, "未装配", 620, y + 26, 16, { align: "center", color: "#dadada" });
+  if (!weapon) label(context, $t("proficiency-card.text_e055af7b73"), 620, y + 26, 16, { align: "center", color: "#dadada" });
   else {
     const badge = weapon.rarity && art.badges.get(`common/images/Rarity_${weapon.rarity}.png`);
     if (badge) contain(context, badge, 573, y + 4, 20, 20);
     label(context, weapon.name, 596, y + 15, 15, { maxWidth: 95 });
-    const stars = weapon.star === undefined ? "—精" : `${weapon.star}精`;
+    const stars = weapon.star === undefined ? $t("proficiency-card.text_066a62e797") : $t("proficiency-card.text_9d86d2df73", { "star": weapon.star });
     const level = weapon.level === undefined ? "Lv—" : `Lv${weapon.level}`;
     skewedBox(context, 569, y + 30, 49, 18, rankColor[weapon.star ?? 0]!);
     skewedBox(context, 621, y + 30, 57, 18, rankColor[Math.min(6, Math.trunc((weapon.level ?? 0) / 10))]!);
@@ -136,8 +139,8 @@ function drawRow(context: Context, row: Row, images: RowArtwork, art: Awaited<Re
   context.transform(1, 0, -skew, 1, 705, y);
   box(context, stroke, 0, 0, 2, rowHeight);
   context.restore();
-  label(context, "驱动盘", 734, y + 15, 13, { align: "center" });
-  label(context, driveDiscGrade ?? (row.withDriveDiscs ? "未评分" : "未装备"), 734, y + 37,
+  label(context, $t("proficiency-card.text_d245c1825d"), 734, y + 15, 13, { align: "center" });
+  label(context, driveDiscGrade ?? (row.withDriveDiscs ? $t("proficiency-card.text_f58e9a5870") : $t("proficiency-card.text_2e03e7c94f")), 734, y + 37,
     driveDiscGrade ? 19 : 13, { align: "center", color: driveDiscGrade ? zzzScoreColors[driveDiscGrade] : "#a09ca3" });
 }
 
@@ -152,7 +155,7 @@ function drawTitle(context: Context) {
     box(context, "#f6ca45", 0, 0, 16, 30);
     context.restore();
   }
-  label(context, "练度统计", 420, 379, 34, { align: "center", weight: 700 });
+  label(context, $t("proficiency-card.text_7f4826dbdb"), 420, 379, 34, { align: "center", weight: 700 });
 }
 
 // Skia adaptation of ZZZure/ZZZ-Plugin 2057599 resources/proficiency/index.html and index.css.
@@ -175,10 +178,10 @@ export async function renderZzzProficiency(model: Proficiency, role: GameRole, o
     context.restore();
     metricsFrame(context, art.frame);
     [
-      [`${model.agentS}/${model.total}`, "S级代理人"],
-      [model.sWeaponRate === undefined ? "—" : `${model.sWeaponRate.toFixed(1)}%`, "S级音擎率"],
-      [`${model.highRank}/${model.total}`, "高影代理人"],
-      [String(model.highGrades), "SSS+驱动盘"],
+      [`${model.agentS}/${model.total}`, $t("proficiency-card.text_1b79578a70")],
+      [model.sWeaponRate === undefined ? "—" : `${model.sWeaponRate.toFixed(1)}%`, $t("proficiency-card.text_44230c2fcb")],
+      [`${model.highRank}/${model.total}`, $t("proficiency-card.text_40f397ec2f")],
+      [String(model.highGrades), $t("proficiency-card.text_04a1b34e0f")],
     ].forEach(([value, name], index) => {
       const x = 153 + 174 * index;
       const pillWidth = 29 + value!.length * 11.3;
@@ -188,7 +191,7 @@ export async function renderZzzProficiency(model: Proficiency, role: GameRole, o
     });
     drawTitle(context);
     fillRound(context, "#18171bdd", 641, 399, 124, 24, 8);
-    label(context, options.source === "showcase" ? "Enka 公开展柜" : "本地面板", 703, 411, 15, {
+    label(context, options.source === "showcase" ? $t("proficiency-card.text_5304f62a0d") : $t("proficiency-card.text_918e3dd5be"), 703, 411, 15, {
       align: "center", color: options.source === "showcase" ? "#f3c858" : "#b8b5bd",
     });
     for (const [index, row] of model.rows.entries()) drawRow(context, row, art.art[index]!, art, listTop + (rowHeight + gap) * index);
@@ -210,5 +213,5 @@ export async function renderZzzProficiency(model: Proficiency, role: GameRole, o
     }, "gpu");
     if (reduced.png.byteLength <= limit) return reduced;
   }
-  throw new ImageSizeLimitError("绝区零练度统计超过当前会话的图片大小上限。");
+  throw new ImageSizeLimitError($t("proficiency-card.text_b100340b6a"));
 }

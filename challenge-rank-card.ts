@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { ZzzDeadlyRoom, ZzzShiyuPortrait, ZzzShiyuTeam, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, label, openZzzCardTheme, zzzCardFooter, zzzRegionName, type ZzzCardOptions } from "./card-theme.ts";
@@ -39,7 +42,7 @@ function heading(context: Context, mode: RankMode, width: number) {
   }
   context.fillStyle = "#f6ca45";
   context.fill();
-  label(context, `${rankLabels[mode]}排名`, width / 2, 61, 36, { align: "center" });
+  label(context, $t("challenge-rank-card.text_85b772fa7e", { "value1": rankLabels[mode] }), width / 2, 61, 36, { align: "center" });
 }
 
 function badgeRating(context: Context, art: Art, rating: string | undefined, x: number, y: number, height = 60) {
@@ -94,14 +97,14 @@ function member(context: Context, art: Art, row: RankRow, mode: RankMode, y: num
   label(context, `UID ${row.uid}`, 268.5, uidY + 21, 22, { align: "center", color: "#ffffff99" });
 
   if (row.voidFront) {
-    label(context, "总得分", 489, y + 114, 36, { color: "#ddd", align: "center" });
+    label(context, $t("challenge-rank-card.text_18c6ed8a22"), 489, y + 114, 36, { color: "#ddd", align: "center" });
     score(context, art, row.score, 663000, 422, y + 163, true);
     return;
   }
   if (mode === "DEADLY_HARD") return;
-  label(context, "总得分", 488, y + 91, 36, { color: "#ddd", align: "center" });
+  label(context, $t("challenge-rank-card.text_18c6ed8a22"), 488, y + 91, 36, { color: "#ddd", align: "center" });
   score(context, art, row.score, shiyu ? 150000 : 195000, 423, y + 140, true);
-  label(context, shiyu ? "评级" : "星级", 624, y + 91, 36, { color: "#ddd", align: "center" });
+  label(context, shiyu ? $t("challenge-rank-card.text_0cc6b0da25") : $t("challenge-rank-card.text_9c55a439d7"), 624, y + 91, 36, { color: "#ddd", align: "center" });
   if (shiyu) badgeRating(context, art, row.rating, 579, y + 112);
   else label(context, String(row.bonus), 624, y + 140, 36, { align: "center" });
 }
@@ -134,7 +137,7 @@ function team(context: Context, art: Art, mode: RankMode, entry: ZzzShiyuTeam | 
   } else {
     const room = entry as ZzzDeadlyRoom;
     const starCount = room.availableStars ?? room.stars ?? 0;
-    const name = room.name || "首领";
+    const name = room.name || $t("challenge-rank-card.text_58cae7ec87");
     const buffer = room.buffIcon && art.buffIcons.get(room.buffIcon);
     const frameIcon = theme(art, mode, "PetSelectBG");
     if (frameIcon && room.buffIcon) context.drawImage(frameIcon, x + 468, y, 60, 60);
@@ -163,7 +166,7 @@ function voidFrontTeam(context: Context, art: Art, stage: ZzzVoidFrontStage | un
   const ink = context.createLinearGradient(0, y + 29, 0, y + 125);
   ink.addColorStop(0, "#fff");
   ink.addColorStop(1, "#aaa");
-  label(context, stage.name || (index === 0 ? "最终关" : "关卡"), x + 34, y + 48, 29, { color: ink, maxWidth: 272 });
+  label(context, stage.name || (index === 0 ? $t("challenge-rank-card.text_f68f7ec0a7") : $t("challenge-rank-card.text_ff534801b8")), x + 34, y + 48, 29, { color: ink, maxWidth: 272 });
   const cap = index <= 1 ? 182000 : 149500;
   const maximum = stage.score === cap && art.local.get(`common/images/max_score/${cap}.png`);
   if (maximum) contain(context, maximum, x + 26, y + 70, 169, 63);
@@ -273,21 +276,21 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     const noteSize = voidFront ? 24 : 19.2;
     let noteY = startNotes + (voidFront ? 31 : 36);
     if (mode === "ABYSS") {
-      label(context, "• 式舆防卫战排名仅统计第五防线", 74, noteY, 19.2, { color: "#979797" });
+      label(context, $t("challenge-rank-card.text_681957118b"), 74, noteY, 19.2, { color: "#979797" });
       noteY += 40;
     }
-    const intro = "• 请在本群查询 ";
+    const intro = $t("challenge-rank-card.text_a3c0f281f8");
     label(context, intro, 74, noteY, noteSize, { color: "#979797" });
     const x = 74 + context.measureText(intro).width;
     const query = `%${rankLabels[mode === "DEADLY_HARD" ? "DEADLY" : mode]}`;
     label(context, query, x, noteY, noteSize, { color: "#ffd700" });
-    label(context, " 以登记本期战绩", x + context.measureText(query).width, noteY, noteSize, { color: "#979797" });
-    const tie = mode === "ABYSS" ? "同分同评级" : mode === "DEADLY" ? "同星同分" : "同分";
-    const order = voidFront ? "总分持平时，最终关及普通关的最晚通关时间较早者排前" :
-      `${tie}时，最后通关时间较早者排前`;
+    label(context, $t("challenge-rank-card.text_6f3b1787d6"), x + context.measureText(query).width, noteY, noteSize, { color: "#979797" });
+    const tie = mode === "ABYSS" ? $t("challenge-rank-card.text_458c614669") : mode === "DEADLY" ? $t("challenge-rank-card.text_fbd3443696") : $t("challenge-rank-card.text_d7d59b2277");
+    const order = voidFront ? $t("challenge-rank-card.text_9bab211601") :
+      $t("challenge-rank-card.text_80aa1820d6", { "tie": tie });
     label(context, `• ${order}`, 74, noteY + (voidFront ? 32 : 39), noteSize, { color: "#979797", maxWidth: width - 145 });
     if (voidFront) {
-      label(context, `• 使用 %显示临界排名 或 %隐藏临界排名 设置本群可见性`, 74, noteY + (voidFront ? 63 : 78), 19.2, { color: "#f3cb45" });
+      label(context, $t("challenge-rank-card.text_3168437267"), 74, noteY + (voidFront ? 63 : 78), 19.2, { color: "#f3cb45" });
     }
     label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#fff", align: "center" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });

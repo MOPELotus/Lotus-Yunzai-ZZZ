@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzTuningPools } from "@lotus-yunzai/hoyo-client";
 import { createRoleJsonArchive, type AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
 import type { ZzzLegacyGachaDraw, ZzzLegacyGachaPool, ZzzLegacyGachaSnapshot } from "./gacha-legacy";
@@ -15,7 +18,7 @@ interface Role {
 
 type Pool = ZzzLegacyGachaPool["type"];
 const poolTypes = Object.keys(zzzTuningPools) as Pool[];
-const subject = "绝区零链接逐抽档案";
+const subject = $t("gacha-link-history.text_107f8820ac");
 const maxBytes = 32 * 1024 * 1024;
 const idPattern = /^[1-9]\d{0,18}$/u;
 const wallTime = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/u;
@@ -25,7 +28,7 @@ function invalid(reason: string): never {
 }
 
 function object(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) invalid("格式无效");
+  if (!value || typeof value !== "object" || Array.isArray(value)) invalid($t("gacha-link-history.text_38056cf30c"));
   return value as Record<string, unknown>;
 }
 
@@ -47,7 +50,7 @@ function storedDraw(input: unknown): ZzzLegacyGachaDraw {
       /[\x00-\x1F\x7F]|https?:\/\//iu.test(name) ||
       typeof lang !== "string" || !/^[a-z]{2}-[a-z]{2}$/iu.test(lang) ||
       (itemType !== "代理人" && itemType !== "音擎" && itemType !== "邦布") ||
-      (rank !== "2" && rank !== "3" && rank !== "4")) invalid("记录无效");
+      (rank !== "2" && rank !== "3" && rank !== "4")) invalid($t("gacha-link-history.text_8a08f1c4b1"));
   return { id, itemId, gachaId, count, time, name, lang, itemType, rank };
 }
 
@@ -61,9 +64,9 @@ function isRoleRegion(uid: string, region: unknown, gameBiz: unknown) {
 function validatedSnapshot(value: unknown, role: Role): ZzzLinkedGachaSnapshot {
   const { uid, region, gameBiz, timezone, pools } = object(value);
   if (uid !== role.uid || typeof region !== "string" || region !== role.region || typeof gameBiz !== "string" ||
-      !isRoleRegion(uid, region, gameBiz)) invalid("与当前 UID 或地区不一致");
-  if (typeof timezone !== "number" || !Number.isInteger(timezone) || timezone < -12 || timezone > 14) invalid("时区无效");
-  if (!Array.isArray(pools) || pools.length !== poolTypes.length) invalid("频段无效");
+      !isRoleRegion(uid, region, gameBiz)) invalid($t("gacha-link-history.text_3ba8af1f95"));
+  if (typeof timezone !== "number" || !Number.isInteger(timezone) || timezone < -12 || timezone > 14) invalid($t("gacha-link-history.text_4bf261e735"));
+  if (!Array.isArray(pools) || pools.length !== poolTypes.length) invalid($t("gacha-link-history.text_535993d9a9"));
   const indexed = new Map(pools.map((pool) => {
     const entry = object(pool);
     return [entry.type, entry] as const;
@@ -75,11 +78,11 @@ function validatedSnapshot(value: unknown, role: Role): ZzzLinkedGachaSnapshot {
       const entry = indexed.get(type);
       const { name, id } = zzzTuningPools[type];
       const gachaType = String(id) as ZzzLegacyGachaPool["gachaType"];
-      if (entry?.name !== name || entry.gachaType !== gachaType || !Array.isArray(entry.records)) invalid("频段无效");
+      if (entry?.name !== name || entry.gachaType !== gachaType || !Array.isArray(entry.records)) invalid($t("gacha-link-history.text_535993d9a9"));
       const records = new Map<string, ZzzLegacyGachaDraw>();
       for (const row of entry.records) {
         const draw = storedDraw(row);
-        if (usedIds.has(draw.id) && usedIds.get(draw.id) !== type) invalid("记录所属频段冲突");
+        if (usedIds.has(draw.id) && usedIds.get(draw.id) !== type) invalid($t("gacha-link-history.text_4c597ba063"));
         usedIds.set(draw.id, type);
         const existing = records.get(draw.id);
         records.set(draw.id, existing ? mergeDraw(existing, draw) : draw);
@@ -96,12 +99,12 @@ function newestFirst(a: ZzzLegacyGachaDraw, b: ZzzLegacyGachaDraw): number {
 function mergeDraw(older: ZzzLegacyGachaDraw, fresh: ZzzLegacyGachaDraw, legacy = false): ZzzLegacyGachaDraw {
   if (older.itemId !== fresh.itemId || older.rank !== fresh.rank || older.itemType !== fresh.itemType ||
       older.count !== fresh.count || (!legacy && older.time !== fresh.time) ||
-      (!(legacy && older.gachaId === "0") && older.gachaId !== fresh.gachaId)) invalid("重复记录内容冲突");
+      (!(legacy && older.gachaId === "0") && older.gachaId !== fresh.gachaId)) invalid($t("gacha-link-history.text_0efabf5e0a"));
   return legacy ? fresh : older;
 }
 
 function combine(previous: ZzzLegacyGachaSnapshot, latest: ZzzLegacyGachaSnapshot, legacy: boolean) {
-  if (previous.uid !== latest.uid) invalid("与旧逐抽 UID 不一致");
+  if (previous.uid !== latest.uid) invalid($t("gacha-link-history.text_7183cff838"));
   const oldPools = new Map(previous.pools.map((pool) => [pool.type, pool]));
   const oldBands = new Map<string, Pool>();
   for (const { type, records } of previous.pools) {
@@ -114,7 +117,7 @@ function combine(previous: ZzzLegacyGachaSnapshot, latest: ZzzLegacyGachaSnapsho
     let count = 0;
     for (const draw of pool.records) {
       const priorType = oldBands.get(draw.id);
-      if (priorType !== undefined && priorType !== pool.type) invalid("记录所属频段冲突");
+      if (priorType !== undefined && priorType !== pool.type) invalid($t("gacha-link-history.text_4c597ba063"));
       const old = records.get(draw.id);
       const combined = old ? mergeDraw(old, draw, legacy) : draw;
       if (!old) count++;
@@ -140,7 +143,7 @@ export function createZzzLinkHistory(directory: string, acquireLock: AcquireRole
   function decode(value: unknown, qq: string, role: Role): ZzzLinkedGachaSnapshot | undefined {
     if (value === null) return;
     const stored = object(value);
-    if (stored.version !== 1 || stored.qq !== qq) invalid("版本或所有者无效");
+    if (stored.version !== 1 || stored.qq !== qq) invalid($t("gacha-link-history.text_b664220167"));
     return validatedSnapshot(stored, role);
   }
 
@@ -152,7 +155,7 @@ export function createZzzLinkHistory(directory: string, acquireLock: AcquireRole
       const incoming = validatedSnapshot(input, identity);
       return files.update(identity, verifyProfile, (saved) => {
         const previous = decode(saved, identity.qq, identity);
-        if (previous && (previous.timezone !== incoming.timezone || previous.gameBiz !== incoming.gameBiz)) invalid("时区或服务区改变");
+        if (previous && (previous.timezone !== incoming.timezone || previous.gameBiz !== incoming.gameBiz)) invalid($t("gacha-link-history.text_7f73025aae"));
         const { pools, added, addedTotal } = combine(previous ?? { uid: incoming.uid, pools: [] }, incoming, false);
         const stats: ZzzLinkedGachaSnapshot = { ...incoming, pools };
         const result = { stats, added, addedTotal };

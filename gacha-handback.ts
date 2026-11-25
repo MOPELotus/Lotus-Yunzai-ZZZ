@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { realpath, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { resolveZzzGachaLinkRole } from "@lotus-yunzai/hoyo-client";
@@ -12,7 +15,7 @@ async function legacyDirectory(path: string) {
     throw error;
   });
   if (actual && (actual !== path || !(await stat(actual)).isDirectory())) {
-    throw new Error("旧逐抽路径须为副本内的实际目录。");
+    throw new Error($t("gacha-handback.text_75c9db3c80"));
   }
   return actual;
 }
@@ -22,7 +25,7 @@ function mergeDraw(previous: ZzzLegacyGachaDraw, next: ZzzLegacyGachaDraw) {
       previous.count !== next.count || previous.time !== next.time || previous.name !== next.name ||
       previous.lang !== next.lang ||
       (previous.gachaId !== next.gachaId && previous.gachaId !== "0" && next.gachaId !== "0")) {
-    throw new Error("同一逐抽编号的内容不一致，请核对频段、时间和源档案后重新导出。");
+    throw new Error($t("gacha-handback.text_f8a84bdbb7"));
   }
   const gachaId = previous.gachaId === "0" ? next.gachaId : previous.gachaId;
   return { ...previous, gachaId, icon: previous.icon || next.icon };
@@ -41,7 +44,7 @@ function combine(archives: readonly ZzzLegacyGachaSnapshot[]) {
       }
       for (const draw of records) {
         const previousName = ids.get(draw.id);
-        if (previousName !== undefined && previousName !== name) throw new Error("同一逐抽编号被归入不同频段。");
+        if (previousName !== undefined && previousName !== name) throw new Error($t("gacha-handback.text_812739b754"));
         ids.set(draw.id, name);
         const previous = band.records.get(draw.id);
         band.records.set(draw.id, previous ? mergeDraw(previous, draw) : draw);
@@ -88,7 +91,7 @@ export async function prepareZzzGachaHandback({ managed, legacy, qq, uid, region
       return scoped ? readZzzLegacyGacha(directory, qq, uid) : readZzzFlatLegacyGacha([directory], uid);
     }),
   ]);
-  if (!modern) throw new Error("指定 QQ、UID 和区服没有新版绝区零链接逐抽档案。");
+  if (!modern) throw new Error($t("gacha-handback.text_9550003f1e"));
   const oldArchives = previous.filter(archive => archive !== undefined);
   const combined = combine([...oldArchives, modern]);
   const counts = { modern: modern.pools.reduce((total, pool) => total + pool.records.length, 0),

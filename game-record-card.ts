@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzGameRecordItem, ZzzGameRecordSnapshot } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D, Image } from "skia-canvas";
@@ -14,19 +17,19 @@ const tileGap = 24;
 const rarityColors = { S: "#e67733", A: "#8a33b7", B: "#5db7f9" };
 const rankColors = ["#757575", "#3a742b", "#3d84d6", "#df7676", "#3336a1", "#667f13", "#da3020"];
 const elementNames: Readonly<Record<string, string>> = {
-  Physical: "物", Fire: "火", Ice: "冰", Electric: "电", Wind: "风", Ether: "以", Lumiflux: "流",
-  HonedEdge: "刃", Frost: "霜", AuricInk: "墨",
+  Physical: $t("game-record-card.text_326653ee81"), Fire: $t("game-record-card.text_d4cfe8c82c"), Ice: $t("game-record-card.text_ce1b850700"), Electric: $t("game-record-card.text_1763e47d08"), Wind: $t("game-record-card.text_be65bd5518"), Ether: $t("game-record-card.text_09680c3fbe"), Lumiflux: $t("game-record-card.text_d526fa6412"),
+  HonedEdge: $t("game-record-card.text_1ec07accea"), Frost: $t("game-record-card.text_16eda9b1c1"), AuricInk: $t("game-record-card.text_fe47861776"),
 };
 
 function recordOverview({ stats }: ZzzGameRecordSnapshot) {
   return [
-    ["活跃天数", stats.active_days], ["获得代理人", stats.avatar_num],
-    ["获得邦布", stats.buddy_num], ["式舆防卫战", stats.cur_period_zone_layer_count],
+    [$t("game-record-card.text_829827347a"), stats.active_days], [$t("game-record-card.text_23c9ef5316"), stats.avatar_num],
+    [$t("game-record-card.text_ee0752c107"), stats.buddy_num], [$t("game-record-card.text_f718dc4321"), stats.cur_period_zone_layer_count],
   ] as const;
 }
 
 export function zzzGameRecordText(record: ZzzGameRecordSnapshot) {
-  return ["绝区零个人战绩", `UID ${record.uid}`, ...recordOverview(record).map(([name, value]) => `${name}：${value ?? "—"}`)]
+  return [$t("game-record-card.text_90c78a10b4"), `UID ${record.uid}`, ...recordOverview(record).map(([name, value]) => `${name}：${value ?? "—"}`)]
     .join("\n");
 }
 
@@ -81,15 +84,15 @@ function tile(context: Context, item: ZzzGameRecordItem, x: number, y: number, p
   const footer = y + tileHeight - 32;
   box(context, "#08080b", x, footer, tileWidth, 32);
   box(context, rankColors[item.rank] ?? rankColors[0]!, x, footer, 48, 32);
-  label(context, `${item.rank}${unit}`, x + 24, footer + 16, 22, { align: "center" });
-  label(context, `等级${item.level}`, x + 96, footer + 16, 24, { align: "center" });
+  label(context, `${item.rank}${unit === "影" ? $t("game-record-card.text_1cc19d290f") : $t("game-record-card.text_42abb81858")}`, x + 24, footer + 16, 22, { align: "center" });
+  label(context, $t("game-record-card.text_d4813d01f4", { "level": item.level }), x + 96, footer + 16, 24, { align: "center" });
 }
 
 function drawGrid(context: Context, list: readonly ZzzGameRecordItem[], images: readonly (Image | undefined)[],
   badges: ReadonlyMap<string, Image | undefined>, y: number, unit: "影" | "命") {
   list.forEach((item, index) => tile(context, item, (width - gridWidth) / 2 + index % 4 * (tileWidth + tileGap),
     y + Math.floor(index / 4) * (tileHeight + tileGap), images[index], badges, unit));
-  if (!list.length) label(context, unit === "影" ? "暂无代理人" : "暂无邦布", width / 2, y + 24, 23, { align: "center" });
+  if (!list.length) label(context, unit === "影" ? $t("game-record-card.text_9bd65a2970") : $t("game-record-card.text_65cf64d002"), width / 2, y + 24, 23, { align: "center" });
 }
 
 function gridHeight(list: readonly unknown[]) {
@@ -162,9 +165,9 @@ export async function renderZzzGameRecord(record: ZzzGameRecordSnapshot, role: G
       label(context, name, x, 347, 23, { color: "#e2e2e2", align: "center" });
     });
 
-    title(context, startGrid - 48, "AGENT", "代理人信息");
+    title(context, startGrid - 48, "AGENT", $t("game-record-card.text_af692b415f"));
     drawGrid(context, record.avatars, agents, badges, startGrid, "影");
-    title(context, nextGrid - 48, "BANGBOO", "邦布信息");
+    title(context, nextGrid - 48, "BANGBOO", $t("game-record-card.text_b810265f82"));
     drawGrid(context, record.buddies, buddies, badges, nextGrid, "命");
     label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#fff", align: "center" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });

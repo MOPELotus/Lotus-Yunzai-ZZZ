@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzShiyuPortrait, ZzzVoidFrontRound, ZzzVoidFrontSnapshot, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 import { Canvas, type CanvasRenderingContext2D as Context, type Image } from "skia-canvas";
@@ -82,11 +85,11 @@ function drawPlayer(context: Context, role: GameRole, region: string,
   if (avatar) contain(context, avatar, 48, 64.8, 96, 96);
   else {
     box(context, "#292a35", 48, 64.8, 96, 96);
-    label(context, "绳", 96, 112.8, 36, { weight: 800, align: "center" });
+    label(context, $t("void-front-card.text_231e8863ee"), 96, 112.8, 36, { weight: 800, align: "center" });
   }
   context.restore();
 
-  const nickname = role.nickname || "绳匠";
+  const nickname = role.nickname || $t("void-front-card.text_4efe2edb6d");
   label(context, nickname, 180, 89.4, 28.8, { weight: 700, maxWidth: 370 });
   let badgeX = 192 + Math.min(measure(context, nickname, 28.8, 700), 370);
   for (const [value, color] of [[role.level === undefined ? undefined : `Lv${role.level}`, "#f3cb45"], [region, "#51b1fd"]] as const) {
@@ -235,7 +238,7 @@ function drawSummary(context: Context, art: Art, snapshot: ZzzVoidFrontSnapshot)
   const percent = art.local.get(`common/images/rank_bg/${snapshot.rank === undefined ? 5 : rankBand(snapshot.rank)}.png`);
   if (percent) contain(context, percent, rankX, center - 36, 144, 72);
   else fillRound(context, "#c080bb", rankX, center - 17, 124, 34, 12);
-  label(context, snapshot.rank === undefined ? "排名未知" : `${(snapshot.rank / 100).toFixed(2)}%`,
+  label(context, snapshot.rank === undefined ? $t("void-front-card.text_3e191e7585") : `${(snapshot.rank / 100).toFixed(2)}%`,
     rankX + 57.6, center, 24, { align: "center", color: "#222", maxWidth: 103 });
   if (snapshot.ending) {
     context.save();
@@ -321,12 +324,12 @@ function drawStage(context: Context, art: Art, layout: ReturnType<typeof stagesL
   const scoreY = y + 42.6 + nameHeight + 12 + scoreHeight / 2;
   if (badge) contain(context, badge, x, scoreY - 32.4, scoreWidth, 64.8);
   else shadowText(context, score, x, scoreY, scoreFont, "#e6e6e6", 2, 3);
-  const ratio = `得分倍率：${stage.ratio ?? "—"}`;
+  const ratio = $t("void-front-card.text_379b38e2e5", { "value1": stage.ratio ?? "—" });
   const ratioX = x + scoreWidth + 33.6;
   const ratioWidth = measure(context, ratio, 21.6) + 25.92;
   fillRound(context, "#333", ratioX, scoreY - 20.97, ratioWidth, 41.94, 20.97);
   label(context, ratio, ratioX + 12.96, scoreY, 21.6, { color: "#ccc" });
-  label(context, `通关时间：${stage.clearedAt ?? "—"}`, x, scoreY + scoreHeight / 2 + 26.5, 21.6,
+  label(context, $t("void-front-card.text_d23d0c445b", { "value1": stage.clearedAt ?? "—" }), x, scoreY + scoreHeight / 2 + 26.5, 21.6,
     { color: "#979797", maxWidth: 555 });
   team(context, art, stage, x, y + 21 + mainHeight - 21.6, mainTeam);
 
@@ -335,7 +338,7 @@ function drawStage(context: Context, art: Art, layout: ReturnType<typeof stagesL
       const subX = 45 + index * 375;
       frame(context, art.local.get(themePath + "BgFrame01.png"), subX, row.y, 375, row.height);
       rating(context, art, round.rating, subX + 288.6, row.y + 9.6, 72);
-      const name = round.name ?? "子关";
+      const name = round.name ?? $t("void-front-card.text_089bce08ee");
       const titleHeight = buffImage(art, round) ? 50.19 : 39;
       const titleY = row.y + 24 + titleHeight / 2;
       shadowText(context, name, subX + 28.8, titleY, 28.8, "#ddd", 2, 4, 205);
@@ -349,8 +352,8 @@ function drawStage(context: Context, art: Art, layout: ReturnType<typeof stagesL
 function drawRankNotes(context: Context, art: Art, y: number, visibility: boolean | undefined) {
   frame(context, art.local.get(themePath + "BgFrame01.png"), unit, y, contentWidth, 74);
   const segments = visibility === undefined
-    ? ["请在群内查询", "%临界推演", "，以参与对应群的临界推演排名"]
-    : [`当前临界推演排名状态：${visibility ? "显示" : "隐藏"}，可通过`, "%显示/隐藏推演排名", "切换"];
+    ? [$t("void-front-card.text_e7135a7feb"), $t("void-front-card.text_437e8e18d4"), $t("void-front-card.text_ed947dac84")]
+    : [$t("void-front-card.text_99534f0824", { "value1": visibility ? $t("void-front-card.text_4e1449e7d5") : $t("void-front-card.text_145219e726") }), $t("void-front-card.text_98f91425aa"), $t("void-front-card.text_eff514b8b8")];
   label(context, "•", 68.4, y + 37, 19.2);
   let x = 91.2;
   for (const [index, part] of segments.entries()) {
@@ -375,12 +378,12 @@ export async function renderZzzVoidFront(snapshot: ZzzVoidFrontSnapshot, role: G
     const background = art.local.get(themePath + "bg.png");
     if (background) cover(context, background, 0, 0, width, height);
     drawPlayer(context, role, zzzRegionName(snapshot.region, role.regionName), player);
-    label(context, `统计周期：${snapshot.start ?? "起始未知"} ~ ${snapshot.end ?? "结束未知"}`, 43.2, 216.8, 19.2,
+    label(context, $t("void-front-card.text_442c37936d", { "value1": snapshot.start ?? $t("void-front-card.text_d0697ab3cf"), "value2": snapshot.end ?? $t("void-front-card.text_cbdbb0a566") }), 43.2, 216.8, 19.2,
       { color: "#979797" });
     drawSummary(context, art, snapshot);
     for (const [i, row] of layout.rows.entries()) {
       const final = row.stage === snapshot.finalStage;
-      drawStage(context, art, row, final, final ? "最终关" : `关卡 ${i + (snapshot.finalStage ? 0 : 1)}`);
+      drawStage(context, art, row, final, final ? $t("void-front-card.text_f68f7ec0a7") : $t("void-front-card.text_e9a4798f8e", { "value1": i + (snapshot.finalStage ? 0 : 1) }));
     }
     if (showNotes) drawRankNotes(context, art, layout.bottom, options.rankVisibility);
     label(context, zzzCardFooter, width / 2, footerY + 11, 16.8, { align: "center", color: "#fff" });

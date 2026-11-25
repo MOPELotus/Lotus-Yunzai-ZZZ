@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, drawTag, label, measureZzzCardLabel, openZzzCardTheme, zzzCardFooter, zzzRegionName,
   type ZzzCardOptions } from "./card-theme.ts";
@@ -7,10 +10,10 @@ import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
 type Season = 1 | 2 | 3 | 4;
 const layout = {
-  1: { width: 900, result: 540, offsets: [48], medal: 108, order: "按爬塔层数排名" },
-  2: { width: 1000, result: 452, offsets: [48, 180], medal: 276, order: "层数相同，再比较无伤通关数" },
-  3: { width: 1150, offsets: [108, 300, 486], medal: 600, order: "先比较总得分、爬塔层数，再比较无伤通关数" },
-  4: { width: 1150, offsets: [108, 300, 486], medal: 600, order: "先比较总得分、爬塔层数，再比较无伤通关数" },
+  1: { width: 900, result: 540, offsets: [48], medal: 108, order: $t("climbing-tower-rank-card.text_70b43c4dfc") },
+  2: { width: 1000, result: 452, offsets: [48, 180], medal: 276, order: $t("climbing-tower-rank-card.text_6a72657a9f") },
+  3: { width: 1150, offsets: [108, 300, 486], medal: 600, order: $t("climbing-tower-rank-card.text_088ce2292f") },
+  4: { width: 1150, offsets: [108, 300, 486], medal: 600, order: $t("climbing-tower-rank-card.text_088ce2292f") },
 } as const;
 const rowTop = 96;
 const rowHeight = 168;
@@ -37,7 +40,7 @@ function heading(context: Context, title: string, season: Season, width: number)
   }
   context.fillStyle = "#f6ca45";
   context.fill();
-  label(context, `${title}排名`, width / 2, 60, 36, { align: "center", maxWidth: width - 592, ellipsis: false });
+  label(context, $t("climbing-tower-rank-card.text_567826bb8d", { "title": title }), width / 2, 60, 36, { align: "center", maxWidth: width - 592, ellipsis: false });
 }
 
 function playerRow(context: Context, season: Season, row: RankRow, y: number, art: PlayerArtwork) {
@@ -75,7 +78,7 @@ function playerRow(context: Context, season: Season, row: RankRow, y: number, ar
 
   box(context, "#ffffff1a", result, y + 29.5, card.medal + 84, 1);
   const labels = {
-    1: ["层数"], 2: ["层数", "无伤通关"], 3: ["总得分", "爬塔层数", "无伤通关数"], 4: ["总得分", "爬塔层数", "无伤通关数"],
+    1: [$t("climbing-tower-rank-card.text_6e35682bee")], 2: [$t("climbing-tower-rank-card.text_6e35682bee"), $t("climbing-tower-rank-card.text_7c0ac18ce6")], 3: [$t("climbing-tower-rank-card.text_18c6ed8a22"), $t("climbing-tower-rank-card.text_f5f7a2cf1c"), $t("climbing-tower-rank-card.text_37607cf0b4")], 4: [$t("climbing-tower-rank-card.text_18c6ed8a22"), $t("climbing-tower-rank-card.text_f5f7a2cf1c"), $t("climbing-tower-rank-card.text_37607cf0b4")],
   }[season];
   const values = season === 1 ? [row.tower.layer] : season === 2 ? [row.tower.layer, row.tower.noDamage]
     : [row.score, row.tower.layer, row.tower.noDamage];
@@ -97,21 +100,21 @@ function notes(context: Context, title: string, season: Season, top: number, hei
   }
 
   const size = 26.4;
-  const intro = "请在群内查询 ";
-  const command = "%拟真鏖战试炼";
+  const intro = $t("climbing-tower-rank-card.text_b9c1bd3569");
+  const command = $t("climbing-tower-rank-card.text_b96df69e42");
   let x = 83.8;
   label(context, "•", 57, top + 30.5, size, { color: "#ddd" });
   label(context, intro, x, top + 30.5, size, { color: "#ddd" });
   x += measureZzzCardLabel(context, intro, size);
   label(context, command, x, top + 30.5, size, { color: "#ffc107" });
   x += measureZzzCardLabel(context, command, size);
-  const subject = `，以参与对应群的${title}`;
-  const suffix = `（爬塔 S${season}）排名`;
+  const subject = $t("climbing-tower-rank-card.text_911a055379", { "title": title });
+  const suffix = $t("climbing-tower-rank-card.text_42f40f9c32", { "season": season });
   const wraps = x + measureZzzCardLabel(context, subject + suffix, size) > width - 50;
   label(context, wraps ? subject : subject + suffix, x, top + 30.5, size,
     { color: "#ddd", maxWidth: width - 50 - x, ellipsis: false });
   if (wraps) label(context, suffix, 83.8, top + 66.5, size, { color: "#ddd" });
-  label(context, `本群可见性 %显示爬塔S${season}排名 / %隐藏爬塔S${season}排名 · ${order}`, 83.8,
+  label(context, $t("climbing-tower-rank-card.text_cb2a958115", { "season": season, "value2": season, "order": order }), 83.8,
     top + height - 17, 17, { color: "#f3cb45", maxWidth: width - 131.8 });
 }
 

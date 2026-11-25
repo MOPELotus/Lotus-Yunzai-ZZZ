@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -98,7 +101,7 @@ export function zzzPanelCommandHint(raw: string) {
   if (!command || showcaseCommand.test(command)) return;
   const refresh = updateCommand.exec(command);
   if (refresh && showcaseName.test(refresh[1] ?? "") && Number(refresh[2] ?? 1) <= MAX_PROFILE_ID) {
-    return "展柜更新不支持指定角色，请使用%更新展柜面板";
+    return $t("panel-command.text_186253f940");
   }
 }
 
@@ -134,7 +137,7 @@ export async function readZzzPanelConfigDocument(resources = zzzResourceDirector
 export function parseZzzPanelConfig(inherited: Json) {
   const roleInterval = Number(inherited?.roleInterval ?? 3000);
   if (!Number.isSafeInteger(roleInterval) || roleInterval < 0 || roleInterval > 2_147_483_647) {
-    throw new Error("绝区零面板配置的刷新间隔无效。");
+    throw new Error($t("panel-command.text_e4f8605f21"));
   }
   return { roleInterval };
 }
@@ -183,7 +186,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   async function verifyRole(qq: string, profileId: number, expected: { uid: string; region: string }) {
     const current = await profiles.savedRole(qq, profileId, "zzz");
     if (current.uid !== expected.uid || zzzPanelRegion(current.uid, current.region, current.gameBiz) !== expected.region) {
-      throw new ProfileError("changed", "绝区零档案角色已变化。");
+      throw new ProfileError("changed", $t("panel-command.text_9cf98a9cde"));
     }
     signal.throwIfAborted();
   }
@@ -195,9 +198,9 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     const sourceId = sources?.[0]?.id;
     if (context.reply_id === undefined || !context.lookupReply || sources?.length !== 1 ||
         (typeof sourceId !== "string" && typeof sourceId !== "number") || String(sourceId) !== String(context.reply_id)) {
-      return sharedCommand ? undefined : "未找到消息源，请引用要查看的一张图片。";
+      return sharedCommand ? undefined : $t("panel-command.text_4cfab4ad85");
     }
-    const missing = sharedCommand ? undefined : "未找到原图。";
+    const missing = sharedCommand ? undefined : $t("panel-command.text_68c18e077a");
     try {
       const record = await originals.find(context, context.reply_id);
       if (!record || session?.aborted) return missing;
@@ -252,7 +255,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     if ((context.message_type !== "group" && context.message_type !== "private") || context.isDelegated ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
       if (command.kind === "original" && command.sharedCommand) return;
-      return "请从登录档案对应的 QQ 会话使用绝区零面板。";
+      return $t("panel-command.text_b669aaeb8f");
     }
     const qq = String(user);
     const resources = zzzResourceDirectory();
@@ -261,7 +264,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     try {
       const role = await profiles.savedRole(qq, profileId, "zzz");
       const region = zzzPanelRegion(role.uid, role.region, role.gameBiz);
-      if (!region) return "绝区零档案的角色与区服信息不一致。";
+      if (!region) return $t("panel-command.text_3c2fdabb7d");
       const identity = { qq, uid: role.uid, region };
       const display: GameRole = { ...role, region };
       const { inlineImageByteLimit } = context;
@@ -272,8 +275,8 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         const local = command.showcase ? [] : await archive.read(identity);
         const rows = local.length ? local : await showcaseArchive.read(identity);
         await sameRole();
-        if (!rows.length) return command.showcase ? "本档案暂无公开展柜记录，请先%更新展柜面板。" :
-          "未找到面板数据，请先%更新面板或%更新展柜面板。";
+        if (!rows.length) return command.showcase ? $t("panel-command.text_fbee8127aa") :
+          $t("panel-command.text_e990c3f994");
         const { png } = await renderZzzProficiency(buildZzzProficiency(rows), display, {
           legacyResources: resources, signal, atlasPortrait, source: local.length ? "local" : "showcase",
           inlineImageByteLimit: context.inlineImageByteLimit,
@@ -287,13 +290,13 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         const publicRows = await showcaseArchive.read(identity).catch(() => []);
         const known = new Set(rows.map(row => row.id));
         rows.push(...publicRows.filter(row => !known.has(row.id)));
-        if (!rows.length) return `UID:${role.uid}无本地面板数据，请先%更新面板。`;
+        if (!rows.length) return $t("panel-command.text_2a779b6c39", { "uid": role.uid });
         const image = await renderZzzPanelList(rows, display, theme).catch((error: unknown) => {
           if (!(error instanceof ZzzInlineImageLimitError || error instanceof ImageSizeLimitError)) throw error;
         });
         await sameRole();
         if (image) return { type: "image" as const, file: image.png };
-        return [`UID ${role.uid} · 绝区零面板列表`, ...rows.map(row => `${row.name_mi18n} · Lv.${row.level}`)].join("\n");
+        return [$t("panel-command.text_16396605da", { "uid": role.uid }), ...rows.map(row => `${row.name_mi18n} · Lv.${row.level}`)].join("\n");
       }
       if (command.kind === "detail" || command.kind === "showcase-detail" || command.kind === "damage") {
         const privateRows = command.kind === "showcase-detail" ? [] : await archive.read(identity);
@@ -306,10 +309,10 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         const { ids } = await targets([command.name], resources, rows);
         const row = rows.find(avatar => avatar.id === ids[0]);
         await sameRole();
-        if (!ids.length) return `角色${command.name}不存在，请确保角色名称/别称存在。`;
+        if (!ids.length) return $t("panel-command.text_d080e2be29", { "name": command.name });
         if (!row) return command.kind === "showcase-detail"
-          ? `暂无角色${command.name}的公开展柜数据，请先%更新展柜面板。`
-          : `暂无角色${command.name}面板数据，请先%更新面板。`;
+          ? $t("panel-command.text_3b7a008e6f", { "name": command.name })
+          : $t("panel-command.text_58d3b20941", { "name": command.name });
         const damage = command.kind === "damage" ? await readDamage(row, resources, command.skill) : undefined;
         const damageSummary = command.kind === "damage" ? undefined :
           await readDamage.summary(row, resources).catch(() => undefined);
@@ -330,11 +333,11 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
 
       async function refreshShowcase(verify: () => Promise<void>) {
         const tables = await loadEnkaPanelTables(resources);
-        if (!tables) return "绝区零公开展柜所需的本地游戏资料不可用。";
+        if (!tables) return $t("panel-command.text_bf3e1ea9a3");
         const requestedAt = Date.now();
         const result = await requestShowcase(identity, signal, async () => {
           await verify();
-          await context.reply("正在查询第三方 Enka 公开展柜。此请求只发送当前档案的游戏 UID。");
+          await context.reply($t("panel-command.text_3e4059b671"));
           await verify();
         });
         const rows = result.rows.flatMap(data => {
@@ -342,17 +345,17 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
           return row ? [row] : [];
         });
         if (rows.length !== result.rows.length) {
-          return "本地游戏资料无法核验本次公开展柜的全部角色或装备。";
+          return $t("panel-command.text_f490976de2");
         }
         const saved = await showcaseArchive.replace(identity, rows, requestedAt, verify);
-        if (!saved.length) return "该 UID 的公开展柜暂无展示角色。";
+        if (!saved.length) return $t("panel-command.text_15a84fcfc4");
         const updatedIds = new Set(saved.map(row => row.id));
-        const publicPlayer = { ...display, nickname: result.nickname || "绳匠", level: result.level, avatar: undefined };
+        const publicPlayer = { ...display, nickname: result.nickname || $t("panel-command.text_4efe2edb6d"), level: result.level, avatar: undefined };
         const image = await renderZzzPanelList(saved, publicPlayer, {
           legacyResources: resources, signal, atlasPortrait, updatedIds, showcase: true, inlineImageByteLimit,
         }).catch(() => undefined);
         await verify();
-        if (!image) return `Enka 公开展柜已保存 ${saved.length} 个角色。`;
+        if (!image) return $t("panel-command.text_465b7453fa", { "length": saved.length });
         return { type: "image" as const, file: image.png };
       }
 
@@ -364,36 +367,36 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         if (hasCookie || hasStoken) throw error;
       });
       if (!source) {
-        if (command.names.length) return "指定角色更新需要登录档案。也可以用%更新展柜面板读取公开展示角色。";
+        if (command.names.length) return $t("panel-command.text_32422e3a61");
         return await refreshShowcase(async () => {
           await sameRole();
           const { hasCookie, hasStoken } = await profiles.describe(qq, profileId);
-          if (hasCookie || hasStoken) throw new ProfileError("changed", "绝区零档案登录状态已变化。");
+          if (hasCookie || hasStoken) throw new ProfileError("changed", $t("panel-command.text_df7439bc97"));
         });
       }
-      if (region !== "prod_gf_cn" && region !== "prod_qd_cn") return "米游社面板更新目前支持国服绝区零角色。";
+      if (region !== "prod_gf_cn" && region !== "prod_qd_cn") return $t("panel-command.text_52e48d2d22");
       const key = `${region}:${role.uid}`;
-      if (running.has(key)) return "该角色的绝区零面板正在更新。";
+      if (running.has(key)) return $t("panel-command.text_e24d8a9b63");
       running.add(key);
       try {
         const { roleInterval } = parseZzzPanelConfig(await readZzzPanelConfigDocument(resources));
         const selected = command.names.length ? await targets(command.names, resources) : undefined;
-        if (selected?.missing.length) return `角色${selected.missing.map(name => `【${name}】`).join("")}不存在，请确保角色名称/别称存在。`;
-        await context.reply(command.names.length ? `正在更新${command.names.join("、")}面板。` : "正在更新面板列表。");
+        if (selected?.missing.length) return $t("panel-command.text_00b8cd9c3d", { "value1": selected.missing.map(name => `【${name}】`).join("") });
+        await context.reply(command.names.length ? $t("panel-command.text_a24961be0f", { "value1": command.names.join("、") }) : $t("panel-command.text_5bbc3899a5"));
         const result = await client.fetchZzzPanel(source, { ids: selected?.ids, signal, roleInterval });
-        if (result.uid !== role.uid || result.region !== region) throw new ProfileError("changed", "绝区零档案角色已变化。");
-        if (!result.avatars.length) return "未能获取角色的面板数据，请确认已拥有对应角色。";
+        if (result.uid !== role.uid || result.region !== region) throw new ProfileError("changed", $t("panel-command.text_9cf98a9cde"));
+        if (!result.avatars.length) return $t("panel-command.text_2f2fc38be8");
         const verify = async () => {
           await sameRole();
           const current = await profiles.requestContext(qq, profileId, "zzz", role.uid);
-          if (current.revision !== result.revision) throw new ProfileError("changed", "绝区零档案已变化。");
+          if (current.revision !== result.revision) throw new ProfileError("changed", $t("panel-command.text_a53ef5b37a"));
           signal.throwIfAborted();
         };
         const rows = await archive.merge(identity, result.avatars, verify);
         const updatedIds = new Set(result.avatars.map(row => row.id));
         const image = await renderZzzPanelList(rows, display, { ...theme, updatedIds }).catch(() => undefined);
         await verify();
-        if (!image) return `绝区零面板已更新 ${updatedIds.size} 个角色。`;
+        if (!image) return $t("panel-command.text_7adbf8ad9f", { "size": updatedIds.size });
         return { type: "image" as const, file: image.png };
       } finally {
         running.delete(key);
@@ -403,20 +406,20 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       if (error instanceof ZzzShowcaseError) return error.message;
       if (error instanceof ZzzDamageUnavailable) return error.message;
       if (error instanceof ProfileError) {
-        if (error.code === "changed") return "绝区零档案角色已变化，请重新操作。";
-        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
-        if (error.code === "role-missing") return `档案 ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "changed") return $t("panel-command.text_48851f4ae3");
+        if (error.code === "missing" || error.code === "login-required") return $t("panel-command.text_76720712c8", { "profileId": profileId });
+        if (error.code === "role-missing") return $t("panel-command.text_4ea60872c8", { "profileId": profileId });
       }
       if (error instanceof GameRecordRequestError || error instanceof HoyoRequestError && ["refresh", "invalid-input"].includes(error.code)) {
         return error.message;
       }
-      if (error instanceof HoyoRequestError && error.code === "profile-changed") return "绝区零档案角色已变化，请重新操作。";
-      if (command.kind === "showcase-update") return "绝区零公开展柜暂时无法更新。";
+      if (error instanceof HoyoRequestError && error.code === "profile-changed") return $t("panel-command.text_48851f4ae3");
+      if (command.kind === "showcase-update") return $t("panel-command.text_6bd2843285");
       if (command.kind === "proficiency") {
-        if (error instanceof ImageSizeLimitError) return "绝区零练度统计超过当前会话的图片大小上限。";
-        return "绝区零练度统计暂时无法查询。";
+        if (error instanceof ImageSizeLimitError) return $t("panel-command.text_b100340b6a");
+        return $t("panel-command.text_133be35d67");
       }
-      return command.kind === "update" ? "绝区零面板暂时无法更新。" : "绝区零面板暂时无法查询。";
+      return command.kind === "update" ? $t("panel-command.text_0072539b31") : $t("panel-command.text_315a13bdae");
     }
   };
   return Object.assign(handle, {

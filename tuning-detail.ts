@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { ZzzTuningSnapshot } from "@lotus-yunzai/hoyo-client";
 
 type Pool = ZzzTuningSnapshot["pools"][number];
@@ -14,10 +17,10 @@ const poolKinds = {
 } as const satisfies Record<Pool["type"], { limited: boolean; lowerCeiling: boolean; levels: readonly number[] }>;
 
 const inventoryLabels = [
-  ["polychrome", "菲林"], ["monochrome", "菲林底片"], ["encryptedMasterTape", "加密母带"],
-  ["masterTape", "原装母带"], ["boopon", "邦布券"],
+  ["polychrome", $t("tuning-detail.text_241bb2544c")], ["monochrome", $t("tuning-detail.text_5bcc7f70c8")], ["encryptedMasterTape", $t("tuning-detail.text_e637c84359")],
+  ["masterTape", $t("tuning-detail.text_afb3a703d5")], ["boopon", $t("tuning-detail.text_364a5e6ba2")],
 ] as const satisfies readonly [keyof Inventory, string][];
-const luckTags = ["非到极致", "运气不好", "平稳保底", "小欧一把", "欧狗在此"] as const;
+const luckTags = [$t("tuning-detail.text_8d4011aa6a"), $t("tuning-detail.text_449e4419c0"), $t("tuning-detail.text_1038ca6f98"), $t("tuning-detail.text_3b0c768385"), $t("tuning-detail.text_e3ead1a16b")] as const;
 const luckEmojis = [4, 1, 16, 12, 6] as const;
 const timeFormat = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai", dateStyle: "short", timeStyle: "medium" });
 
@@ -113,7 +116,7 @@ function renderPool(pool: Pool, resolveIcon: ZzzTuningDetailOptions["resolveIcon
   });
   const dates = list.flatMap(({ date }) => date ? [date] : []);
   return {
-    type, name, timeRange: dates.length ? `${dates[0]} ～ ${dates.at(-1)}（S级）` : totalCount ? "暂无 S 级记录" : "还没有抽卡",
+    type, name, timeRange: dates.length ? $t("tuning-detail.text_7a5b6bef58", { "value1": dates[0], "value2": dates.at(-1) }) : totalCount ? $t("tuning-detail.text_5db4e1eabf") : $t("tuning-detail.text_33010258e7"),
     lastFive: pool.pity ?? "-", fiveStars, upCount, totalCount, avgFive: avgFive?.toFixed(1) ?? "-",
     avgUp: avgUp?.toFixed(1) ?? "-", avgUpEstimated: officialAvgUp === undefined && calculatedAvgUp !== undefined,
     noWai, noWaiEstimated, level, tag: luckTags[level]!, emoji: luckEmojis[level]!, list,
@@ -125,7 +128,7 @@ export function buildZzzTuningDetail({ stats, player, resolveIcon }: ZzzTuningDe
   const types = Object.keys(poolKinds) as Pool["type"][];
   const data = types.map((type) => {
     const pool = byType.get(type);
-    if (!pool) throw new TypeError("绝区零调频详情缺少频段。");
+    if (!pool) throw new TypeError($t("tuning-detail.text_da24b5ced4"));
     return renderPool(pool, resolveIcon);
   });
   return {
@@ -146,5 +149,5 @@ export function buildZzzTuningInventoryReply({ uid, profileId, live }: {
   });
   if (!fields.length) return;
   const rows = [fields.slice(0, 2), fields.slice(2)].filter((line) => line.length).map((line) => line.join(" · "));
-  return [`档案 ${profileId}（UID: ${uid}）`, "当前库存：", ...rows].join("\n");
+  return [$t("tuning-detail.text_0c56f6bb3a", { "profileId": profileId, "uid": uid }), $t("tuning-detail.text_ee3c447086"), ...rows].join("\n");
 }

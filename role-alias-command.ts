@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { fileURLToPath } from "node:url";
 import { createAtlasRuntimeCatalog, findTraditionalEntries } from "@lotus-yunzai/atlas/catalog";
@@ -29,13 +32,13 @@ export function createZzzRoleAliasCommands(signal: AbortSignal) {
   const catalogue = createAtlasRuntimeCatalog(atlasRoot, Bun.env.LOTUS_ATLAS_DATA_DIR);
   return async (context: ChallengeRankContext, command: NonNullable<ReturnType<typeof zzzRoleAliasCommand>>) => {
     if (signal.aborted || context.isDelegated) return;
-    if (command.kind !== "list" && !ownsZzzManagement(context, signal)) return "仅限主人设置。";
+    if (command.kind !== "list" && !ownsZzzManagement(context, signal)) return $t("role-alias-command.text_e3c1df5c60");
     const scope = rankGroup(context);
     const redis = globalThis.redis;
-    if (command.kind !== "list" && !redis) return "角色别名设置暂时不可用。";
+    if (command.kind !== "list" && !redis) return $t("role-alias-command.text_1b49d362fa");
 
     try {
-      if (command.kind !== "list" && scope && !await rankMembership(context, scope.actor)) return "暂无法核对当前群成员。";
+      if (command.kind !== "list" && scope && !await rankMembership(context, scope.actor)) return $t("role-alias-command.text_b9eeade8a7");
       const [snapshot, registry] = await Promise.all([
         catalogue.read(), readZzzAliasRegistry(zzzResourceDirectory(), redis),
       ]);
@@ -48,32 +51,32 @@ export function createZzzRoleAliasCommands(signal: AbortSignal) {
       }
       if (command.kind === "list") {
         const role = roleFor(command.role);
-        if (!role) return "未找到对应代理人。";
+        if (!role) return $t("role-alias-command.text_ebcb4d619b");
         const list = registry.groups[role.name] ?? [];
-        return list.length ? `角色 ${role.name} 共 ${list.length} 个别名：\n${list.join("、")}` : `角色 ${role.name} 暂无别名。`;
+        return list.length ? $t("role-alias-command.text_197881ba6a", { "name": role.name, "length": list.length, "value3": list.join("、") }) : $t("role-alias-command.text_277e11e2e9", { "name": role.name });
       }
 
-      if (!registry.overrides || !redis) return "角色别名设置暂时不可用。";
+      if (!registry.overrides || !redis) return $t("role-alias-command.text_1b49d362fa");
       const key = zzzAliasKey(command.alias);
-      if (!key) return "请输入 1 到 48 个文字、数字或常用连接符组成的角色别名。";
+      if (!key) return $t("role-alias-command.text_71ef71bf7e");
       const indexed = findTraditionalEntries(snapshot, command.alias, undefined, "name").some(({ score }) => score >= 2.5);
       const configured = registry.aliases.get(key);
       if (command.kind === "remove") {
-        if (registry.canonical.has(key) || indexed) return "该名称来自角色本名或图鉴索引，无法删除。";
-        if (configured?.length !== 1) return "未找到唯一可删除的角色别名。";
-        if (!ownsZzzManagement(context, signal)) return "仅限主人设置。";
+        if (registry.canonical.has(key) || indexed) return $t("role-alias-command.text_5f45f664eb");
+        if (configured?.length !== 1) return $t("role-alias-command.text_1877d3b583");
+        if (!ownsZzzManagement(context, signal)) return $t("role-alias-command.text_e3c1df5c60");
         return await updateZzzRoleAlias(redis, key, registry.overrides[key]) ?
-          `角色 ${configured[0]!.role} 的别名 ${command.alias} 已删除。` : "别名已变化，请重新查询。";
+          $t("role-alias-command.text_721f893eab", { "role": configured[0]!.role, "alias": command.alias }) : $t("role-alias-command.text_0a7701427b");
       }
 
       const role = roleFor(command.role);
-      if (!role) return "未找到唯一对应的绝区零代理人。";
-      if (registry.canonical.has(key) || indexed || configured?.length) return `别名 ${command.alias} 已存在。`;
-      if (!ownsZzzManagement(context, signal)) return "仅限主人设置。";
+      if (!role) return $t("role-alias-command.text_6db10f578f");
+      if (registry.canonical.has(key) || indexed || configured?.length) return $t("role-alias-command.text_2a09470b5e", { "alias": command.alias });
+      if (!ownsZzzManagement(context, signal)) return $t("role-alias-command.text_e3c1df5c60");
       return await updateZzzRoleAlias(redis, key, registry.overrides[key], { role: role.name, label: command.alias, id: role.id }) ?
-        `角色 ${role.name} 已添加别名 ${command.alias}。` : "别名已变化，请重新查询。";
+        $t("role-alias-command.text_6144c59d4c", { "name": role.name, "alias": command.alias }) : $t("role-alias-command.text_0a7701427b");
     } catch {
-      return "角色别名暂时不可用。";
+      return $t("role-alias-command.text_9cdadc18d3");
     }
   };
 }

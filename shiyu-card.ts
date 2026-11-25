@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import type { ZzzShiyuPortrait, ZzzShiyuSnapshot, ZzzShiyuTeam } from "@lotus-yunzai/hoyo-client";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
@@ -6,8 +9,8 @@ import { contain, drawPortrait, fillRound, frame, loadChallengePortrait, rankBan
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 
 const width = 840;
-const names = ["", "一", "二", "三", "四", "五"] as const;
-const numberWords = ["一", "二", "三"] as const;
+const names = ["", $t("shiyu-card.text_51a75f4634"), $t("shiyu-card.text_084b42f6e9"), $t("shiyu-card.text_a4c3313deb"), $t("shiyu-card.text_754a9d5828"), $t("shiyu-card.text_c9b87f516a")] as const;
+const numberWords = [$t("shiyu-card.text_51a75f4634"), $t("shiyu-card.text_084b42f6e9"), $t("shiyu-card.text_a4c3313deb")] as const;
 type Layer = ZzzShiyuSnapshot["layers"][number];
 type Art = ZzzChallengeArt & { readonly monsters: ReadonlyMap<string, Image | undefined> };
 
@@ -38,7 +41,7 @@ function scoreText(context: Context, art: Art, score: number | undefined, cap: 5
 function teamLabel(context: Context, art: Art, teamIndex: number, x: number, y: number) {
   const heading = art.local.get(`common/images/team/0${teamIndex + 1}.png`);
   if (heading) contain(context, heading, x, y, 91, 36);
-  else label(context, `队伍${numberWords[teamIndex]}`, x, y + 18, 22, { color: "#a4a1a5" });
+  else label(context, $t("shiyu-card.text_29577cdb93", { "value1": numberWords[teamIndex] }), x, y + 18, 22, { color: "#a4a1a5" });
 }
 
 function drawTeam(context: Context, art: Art, team: ZzzShiyuTeam, index: number, y: number, featured: boolean, rowHeight: number) {
@@ -68,8 +71,8 @@ function drawTeam(context: Context, art: Art, team: ZzzShiyuTeam, index: number,
   teamLabel(context, art, index, 313, y + 36);
   ratingIcon(context, art, team.rating, 653, y + 12, 119);
   scoreText(context, art, team.score, 50000, 312, y + 111, 37);
-  label(context, `通关时间：${team.challengeTime ?? "—"}`, 312, y + 153, 19, { color: "#979797", maxWidth: 424 });
-  const buff = team.buff ? `增益：${team.buff}` : "增益：—";
+  label(context, $t("shiyu-card.text_d23d0c445b", { "value1": team.challengeTime ?? "—" }), 312, y + 153, 19, { color: "#979797", maxWidth: 424 });
+  const buff = team.buff ? $t("shiyu-card.text_e75b3723fe", { "buff": team.buff }) : $t("shiyu-card.text_d1ead74edd");
   label(context, buff, 312, y + 183, 19, { color: "#ccc", maxWidth: 424 });
   team.avatars.forEach((entry, slot) => drawPortrait(context, art, entry, 313 + slot * 120, y + 214, 96));
   drawPortrait(context, art, team.buddy, 673, y + 242, 68, true);
@@ -78,7 +81,7 @@ function drawTeam(context: Context, art: Art, team: ZzzShiyuTeam, index: number,
 function drawLayer(context: Context, art: Art, layer: Layer, snapshot: ZzzShiyuSnapshot, y: number, height: number) {
   const featured = layer.number === 5;
   fillRound(context, featured ? "#0009" : "#0005", 25, y, 790, height, 24, "#39373b");
-  label(context, `剧变节点第${names[layer.number]}防线`, featured ? 75 : 63, y + (featured ? 72 : 62), 31, { color: "#aaa" });
+  label(context, $t("shiyu-card.text_9f28482a09", { "value1": names[layer.number] }), featured ? 75 : 63, y + (featured ? 72 : 62), 31, { color: "#aaa" });
   if (featured) {
     const summary = snapshot.overall;
     ratingIcon(context, art, summary?.rating ?? layer.rating, 595, y + 26, 168);
@@ -91,13 +94,13 @@ function drawLayer(context: Context, art: Art, layer: Layer, snapshot: ZzzShiyuS
       label(context, `${(summary.rankBasisPoints / 100).toFixed(2)}%`, rankX + 56, y + 158, 24, { color: "#222", align: "center" });
     }
     const challengeTime = summary?.challengeTime ?? layer.challengeTime;
-    if (challengeTime) label(context, `通关时间：${challengeTime}`, 75, y + 234, 21.6, { color: "#979797" });
-    if (summary?.battleTime !== undefined) label(context, `总通关时长：${duration(summary.battleTime)}`, 765, y + 234, 21.6, { color: "#979797", align: "right" });
+    if (challengeTime) label(context, $t("shiyu-card.text_36a0838b7a", { "challengeTime": challengeTime }), 75, y + 234, 21.6, { color: "#979797" });
+    if (summary?.battleTime !== undefined) label(context, $t("shiyu-card.text_8222f5440b", { "value1": duration(summary.battleTime) }), 765, y + 234, 21.6, { color: "#979797", align: "right" });
     layer.teams.forEach((team, i) => drawTeam(context, art, team, i, y + 272 + i * 358.4, true, 351.2));
     return;
   }
   ratingIcon(context, art, layer.rating, 675, y + 3, 120);
-  if (layer.challengeTime) label(context, `通关时间：${layer.challengeTime}`, 63, y + 112, 21.6, { color: "#979797" });
+  if (layer.challengeTime) label(context, $t("shiyu-card.text_36a0838b7a", { "challengeTime": layer.challengeTime }), 63, y + 112, 21.6, { color: "#979797" });
   layer.teams.forEach((team, i) => drawTeam(context, art, team, i, y + 149.6, false, 162.2));
 }
 
@@ -159,8 +162,8 @@ export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole,
     drawZzzCardPlayer(context, role, snapshot.region, player);
     context.restore();
     const { period } = snapshot;
-    const cycle = period ? `${period.start} - ${period.end}` : "暂无记录";
-    label(context, `统计周期 ${cycle}`, 43.2, 218, 19.2, { color: "#979797", maxWidth: 752 });
+    const cycle = period ? `${period.start} - ${period.end}` : $t("shiyu-card.text_46ca86da52");
+    label(context, $t("shiyu-card.text_bb1aebf777", { "cycle": cycle }), 43.2, 218, 19.2, { color: "#979797", maxWidth: 752 });
     let y = 249;
     for (const layer of snapshot.layers) {
       const sectionHeight = layerHeight(layer);
@@ -168,8 +171,8 @@ export async function renderZzzShiyu(snapshot: ZzzShiyuSnapshot, role: GameRole,
       y += sectionHeight + 24;
     }
     frame(context, art.local.get("abyss/images/BgFrame01.png"), 24, y, 792, 98);
-    const caption = options.rankVisibility === undefined ? (snapshot.scheduleType === 2 ? "式舆防卫战 · 上期个人战绩" : "式舆防卫战 · 本期个人战绩") :
-      `本群式舆防卫战排名：${options.rankVisibility ? "显示" : "隐藏"}，可用 %显示深渊排名 或 %隐藏深渊排名 切换`;
+    const caption = options.rankVisibility === undefined ? (snapshot.scheduleType === 2 ? $t("shiyu-card.text_144394dc83") : $t("shiyu-card.text_1075497db9")) :
+      $t("shiyu-card.text_e6bc2686a5", { "value1": options.rankVisibility ? $t("shiyu-card.text_4e1449e7d5") : $t("shiyu-card.text_145219e726") });
     label(context, caption,
       420, y + 50, 19.2, { align: "center", weight: 700 });
     label(context, zzzCardFooter, 420, height - 35, 17, { color: "#fff", align: "center" });

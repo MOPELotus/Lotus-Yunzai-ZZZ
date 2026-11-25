@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { brandTextColor } from "@lotus-yunzai/skia/brand-color";
 import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
 import { constants } from "node:fs";
@@ -8,7 +11,7 @@ import { FontLibrary, loadImage, type CanvasGradient, type CanvasRenderingContex
 import { fetchZzzOfficialArtwork, fetchZzzQqAvatar } from "./tuning-artwork.ts";
 
 const font = '"LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
-export const zzzCardFooter = "Lotus-Yunzai · ZZZ";
+export const zzzCardFooter = $t("card-theme.text_0ddf78c06d");
 export const zzzScoreColors = { C: "#5ed559", B: "#5ebdf9", A: "#d256ff", S: "#ffdabe", SS: "#ffe174",
   SSS: "#ffa33b", ACE: "#ff5656", MAX: "#ff5656" } as const;
 
@@ -151,9 +154,9 @@ export function drawZzzCardPlayer(context: Context, role: GameRole, displayRegio
   context.clip();
   box(context, "#292a35", 72, 40.8, 96, 96);
   if (avatar) cover(context, avatar, 72, 40.8, 96, 96);
-  else label(context, "绳", 120, 88.8, 36, { weight: 800, align: "center" });
+  else label(context, $t("card-theme.text_231e8863ee"), 120, 88.8, 36, { weight: 800, align: "center" });
   context.restore();
-  const nickname = role.nickname || "绳匠";
+  const nickname = role.nickname || $t("card-theme.text_4efe2edb6d");
   const nicknameWidth = measureZzzCardLabel(context, nickname, 29, 700);
   const regionWidth = measureZzzCardLabel(context, region, 22) + 18;
   const levelSpace = role.level === undefined ? 0 : 83;

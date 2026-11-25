@@ -1,0 +1,2239 @@
+{
+  "language": "zh-CN",
+  "name": "简体中文",
+  "namespace": "zzz",
+  "description": "绝区零",
+  "sections": {
+    "card-theme": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/card-theme.ts"
+    },
+    "challenge-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/challenge-card.ts"
+    },
+    "challenge-rank": {
+      "description": "绝区零",
+      "source": "plugins/zzz/challenge-rank.ts"
+    },
+    "challenge-rank-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/challenge-rank-card.ts"
+    },
+    "challenge-rank-model": {
+      "description": "绝区零",
+      "source": "plugins/zzz/challenge-rank-model.ts"
+    },
+    "challenge-rank-store": {
+      "description": "绝区零",
+      "source": "plugins/zzz/challenge-rank-store.ts"
+    },
+    "challenge-reminder": {
+      "description": "绝区零",
+      "source": "plugins/zzz/challenge-reminder.ts"
+    },
+    "challenge-reminder-runtime": {
+      "description": "绝区零：运行环境",
+      "source": "plugins/zzz/challenge-reminder-runtime.ts"
+    },
+    "challenge-reminder-store": {
+      "description": "绝区零",
+      "source": "plugins/zzz/challenge-reminder-store.ts"
+    },
+    "cinema": {
+      "description": "绝区零",
+      "source": "plugins/zzz/cinema.ts"
+    },
+    "climbing-tower-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/climbing-tower-card.ts"
+    },
+    "climbing-tower-rank-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/climbing-tower-rank-card.ts"
+    },
+    "current-pool": {
+      "description": "绝区零",
+      "source": "plugins/zzz/current-pool.ts"
+    },
+    "deadly-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/deadly-card.ts"
+    },
+    "enka-panel-data": {
+      "description": "绝区零：面板",
+      "source": "plugins/zzz/enka-panel-data.ts"
+    },
+    "enka-showcase": {
+      "description": "绝区零：角色展柜",
+      "source": "plugins/zzz/enka-showcase.ts"
+    },
+    "exploration-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/exploration-card.ts"
+    },
+    "gacha-handback": {
+      "description": "绝区零：抽卡记录",
+      "source": "plugins/zzz/gacha-handback.ts"
+    },
+    "gacha-legacy": {
+      "description": "绝区零：抽卡记录",
+      "source": "plugins/zzz/gacha-legacy.ts"
+    },
+    "gacha-legacy-detail": {
+      "description": "绝区零：抽卡记录",
+      "source": "plugins/zzz/gacha-legacy-detail.ts"
+    },
+    "gacha-link-history": {
+      "description": "绝区零：抽卡记录",
+      "source": "plugins/zzz/gacha-link-history.ts"
+    },
+    "gacha-link-session": {
+      "description": "绝区零：抽卡记录 · 会话",
+      "source": "plugins/zzz/gacha-link-session.ts"
+    },
+    "game-record-card": {
+      "description": "绝区零：游戏 · 图片卡片",
+      "source": "plugins/zzz/game-record-card.ts"
+    },
+    "hollow-zero-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/hollow-zero-card.ts"
+    },
+    "holo-boss-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/holo-boss-card.ts"
+    },
+    "holo-boss-rank-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/holo-boss-rank-card.ts"
+    },
+    "index": {
+      "description": "绝区零",
+      "source": "plugins/zzz/index.ts"
+    },
+    "monthly-archive": {
+      "description": "绝区零：月历",
+      "source": "plugins/zzz/monthly-archive.ts"
+    },
+    "monthly-card": {
+      "description": "绝区零：月历 · 图片卡片",
+      "source": "plugins/zzz/monthly-card.ts"
+    },
+    "monthly-command": {
+      "description": "绝区零：月历 · 命令",
+      "source": "plugins/zzz/monthly-command.ts"
+    },
+    "monthly-handback": {
+      "description": "绝区零：月历",
+      "source": "plugins/zzz/monthly-handback.ts"
+    },
+    "monthly-model": {
+      "description": "绝区零：月历",
+      "source": "plugins/zzz/monthly-model.ts"
+    },
+    "owned-buddy-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/owned-buddy-card.ts"
+    },
+    "panel-command": {
+      "description": "绝区零：面板 · 命令",
+      "source": "plugins/zzz/panel-command.ts"
+    },
+    "panel-damage-card": {
+      "description": "绝区零：面板 · 图片卡片",
+      "source": "plugins/zzz/panel-damage-card.ts"
+    },
+    "panel-detail": {
+      "description": "绝区零：面板",
+      "source": "plugins/zzz/panel-detail.ts"
+    },
+    "panel-detail-card": {
+      "description": "绝区零：面板 · 图片卡片",
+      "source": "plugins/zzz/panel-detail-card.ts"
+    },
+    "panel-interval-command": {
+      "description": "绝区零：面板 · 命令",
+      "source": "plugins/zzz/panel-interval-command.ts"
+    },
+    "panel-list-card": {
+      "description": "绝区零：面板 · 图片卡片",
+      "source": "plugins/zzz/panel-list-card.ts"
+    },
+    "panel-rank": {
+      "description": "绝区零：面板",
+      "source": "plugins/zzz/panel-rank.ts"
+    },
+    "panel-rank-card": {
+      "description": "绝区零：面板 · 图片卡片",
+      "source": "plugins/zzz/panel-rank-card.ts"
+    },
+    "panel-rank-identity": {
+      "description": "绝区零：面板",
+      "source": "plugins/zzz/panel-rank-identity.ts"
+    },
+    "panel-score": {
+      "description": "绝区零：面板",
+      "source": "plugins/zzz/panel-score.ts"
+    },
+    "panel-score-data": {
+      "description": "绝区零：面板",
+      "source": "plugins/zzz/panel-score-data.ts"
+    },
+    "panel-storage": {
+      "description": "绝区零：面板",
+      "source": "plugins/zzz/panel-storage.ts"
+    },
+    "pool-history": {
+      "description": "绝区零",
+      "source": "plugins/zzz/pool-history.ts"
+    },
+    "proficiency-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/proficiency-card.ts"
+    },
+    "recall-settings": {
+      "description": "绝区零：设置",
+      "source": "plugins/zzz/recall-settings.ts"
+    },
+    "role-alias-command": {
+      "description": "绝区零：命令",
+      "source": "plugins/zzz/role-alias-command.ts"
+    },
+    "role-gallery": {
+      "description": "绝区零：图库",
+      "source": "plugins/zzz/role-gallery.ts"
+    },
+    "shiyu-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/shiyu-card.ts"
+    },
+    "skills-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/skills-card.ts"
+    },
+    "skills-command": {
+      "description": "绝区零：命令",
+      "source": "plugins/zzz/skills-command.ts"
+    },
+    "skills-data": {
+      "description": "绝区零",
+      "source": "plugins/zzz/skills-data.ts"
+    },
+    "tuning-detail": {
+      "description": "绝区零",
+      "source": "plugins/zzz/tuning-detail.ts"
+    },
+    "tuning-detail-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/tuning-detail-card.ts"
+    },
+    "tuning-history": {
+      "description": "绝区零",
+      "source": "plugins/zzz/tuning-history.ts"
+    },
+    "tuning-inventory-card": {
+      "description": "绝区零：清单 · 图片卡片",
+      "source": "plugins/zzz/tuning-inventory-card.ts"
+    },
+    "tuning-inventory-command": {
+      "description": "绝区零：清单 · 命令",
+      "source": "plugins/zzz/tuning-inventory-command.ts"
+    },
+    "tuning-profile": {
+      "description": "绝区零：档案",
+      "source": "plugins/zzz/tuning-profile.ts"
+    },
+    "tuning-result-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/tuning-result-card.ts"
+    },
+    "tuning-sync": {
+      "description": "绝区零",
+      "source": "plugins/zzz/tuning-sync.ts"
+    },
+    "void-front-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/void-front-card.ts"
+    },
+    "zenkov-card": {
+      "description": "绝区零：图片卡片",
+      "source": "plugins/zzz/zenkov-card.ts"
+    }
+  },
+  "messages": {
+    "card-theme.text_231e8863ee": "绳",
+    "card-theme.text_4efe2edb6d": "绳匠",
+    "challenge-card.text_900039a781": "图片超过当前会话大小上限，已改为文字。",
+    "challenge-rank-card.text_0cc6b0da25": "评级",
+    "challenge-rank-card.text_18c6ed8a22": "总得分",
+    "challenge-rank-card.text_3168437267": "• 使用 %显示临界排名 或 %隐藏临界排名 设置本群可见性",
+    "challenge-rank-card.text_458c614669": "同分同评级",
+    "challenge-rank-card.text_58cae7ec87": "首领",
+    "challenge-rank-card.text_681957118b": "• 式舆防卫战排名仅统计第五防线",
+    "challenge-rank-card.text_6f3b1787d6": " 以登记本期战绩",
+    "challenge-rank-card.text_80aa1820d6": "{tie}时，最后通关时间较早者排前",
+    "challenge-rank-card.text_85b772fa7e": "{value1}排名",
+    "challenge-rank-card.text_9bab211601": "总分持平时，最终关及普通关的最晚通关时间较早者排前",
+    "challenge-rank-card.text_9c55a439d7": "星级",
+    "challenge-rank-card.text_a3c0f281f8": "• 请在本群查询 ",
+    "challenge-rank-card.text_d7d59b2277": "同分",
+    "challenge-rank-card.text_f68f7ec0a7": "最终关",
+    "challenge-rank-card.text_fbd3443696": "同星同分",
+    "challenge-rank-card.text_ff534801b8": "关卡",
+    "challenge-rank-model.text_1551c7904c": "(?:爬塔 *S4|鏖战试炼[:：]?狂澜)",
+    "challenge-rank-model.text_16a75e0027": "拟真鏖战试炼",
+    "challenge-rank-model.text_17c2f9116e": "(?:拟境湮灭战|拟境|湮灭战|湮灭)",
+    "challenge-rank-model.text_29e80a0630": "拟境湮灭战",
+    "challenge-rank-model.text_37f15e8ae8": "(?:式舆防卫战|式舆|深渊|防卫战|防卫)",
+    "challenge-rank-model.text_3bd7c85c4e": "(?:绝境|{deadly}绝境|绝境{value2})",
+    "challenge-rank-model.text_4b7b8e83d9": "危局强袭战",
+    "challenge-rank-model.text_4d6c9eaeb3": "(?:爬塔 *S1|拟真鏖战试炼)",
+    "challenge-rank-model.text_7a30bc3a6a": "鏖战试炼：荣耀",
+    "challenge-rank-model.text_86bf7c9458": "临界推演",
+    "challenge-rank-model.text_89627cb961": "(?:爬塔 *S3|鏖战试炼[:：]?荣耀)",
+    "challenge-rank-model.text_98f7195705": "鏖战试炼：末路",
+    "challenge-rank-model.text_b180896959": "鏖战试炼：狂澜",
+    "challenge-rank-model.text_d200104171": "(?:临界推演|临界|推演)",
+    "challenge-rank-model.text_d516880d50": "(?:爬塔 *S2|鏖战试炼[:：]?末路)",
+    "challenge-rank-model.text_f718dc4321": "式舆防卫战",
+    "challenge-rank-model.text_fc96c707b2": "(?:危局强袭战|危局|强袭战|强袭)",
+    "challenge-rank-model.text_fd7c4e8e42": "危局强袭战绝境",
+    "challenge-rank-store.text_01ae64e0b4": "群榜列表无效",
+    "challenge-rank-store.text_13fca932da": "群榜代次无效",
+    "challenge-rank-store.text_40c99b87ba": "群榜开关无效",
+    "challenge-rank-store.text_4efe2edb6d": "绳匠",
+    "challenge-rank-store.text_6c29616e67": "群榜显示数量无效",
+    "challenge-rank-store.text_93881a3306": "群榜总开关无效",
+    "challenge-rank-store.text_9fdba70e24": "群榜群号无效",
+    "challenge-rank-store.text_b7ec08a067": "群榜配置无效",
+    "challenge-rank.text_0bd2d2d617": "绝区零群榜设置暂时不可用。",
+    "challenge-rank.text_13c5673406": "当前群{name}排名功能已关闭！",
+    "challenge-rank.text_145219e726": "隐藏",
+    "challenge-rank.text_164398a2cd": "群排名的成员或可见状态已变化，请重新查询。",
+    "challenge-rank.text_1b5edd625f": "已清空本群式舆防卫战排行榜。群成员查询本期战绩后可重新登记。",
+    "challenge-rank.text_2457e1bd85": "仅限主人操作。",
+    "challenge-rank.text_2bdf276b7b": "没有{name}排名，请先 %显示{include}排名，并在本群用 %{value3} 查询本期战绩。",
+    "challenge-rank.text_2c73012572": "深渊",
+    "challenge-rank.text_3b1a607871": "请在群聊中查询排名！",
+    "challenge-rank.text_3b5f19a85b": "没有爬塔S{season}排名，请先 %显示爬塔S{value2}排名，并在本群用 %爬塔 查询战绩。",
+    "challenge-rank.text_4933ee76a2": "{member} · {bonus} 星 · {value3} · 无伤 {undamaged}",
+    "challenge-rank.text_4e1449e7d5": "显示",
+    "challenge-rank.text_5334b00788": "%爬塔S2排名（鏖战试炼：末路）",
+    "challenge-rank.text_55f0733049": "%爬塔S4排名（鏖战试炼：狂澜）",
+    "challenge-rank.text_5fe46e6ded": "临界",
+    "challenge-rank.text_60ff550fcf": "{score} 分",
+    "challenge-rank.text_682f347ed7": "群榜操作未确认，请稍后查询。",
+    "challenge-rank.text_6e7b4ff3ac": "未绑定国服绝区零 UID，请先绑定。",
+    "challenge-rank.text_75328387da": "{name}排名",
+    "challenge-rank.text_7fc38da62a": "无伤 {noDamage}",
+    "challenge-rank.text_7ff656ddba": "请先登录并选择已认证的国服绝区零角色，再设置{value1}排名。",
+    "challenge-rank.text_8d7a032aee": "绝区零群排名暂时不可用。",
+    "challenge-rank.text_90d20e4089": "拟境",
+    "challenge-rank.text_9fcf352858": "%爬塔S1排名（拟真鏖战试炼）",
+    "challenge-rank.text_b09172acbf": "绝区零 UID {uid}，{value2}排名已设为{value3}。",
+    "challenge-rank.text_c2cf2b0e72": "当前可查的爬塔排名：",
+    "challenge-rank.text_cbab07d3b4": "%爬塔S3排名（鏖战试炼：荣耀）",
+    "challenge-rank.text_d1c41e0dde": "{layer} 层",
+    "challenge-rank.text_d5636be4da": "危局",
+    "challenge-rank.text_dc4e925566": "请在群聊中使用该命令！",
+    "challenge-rank.text_dc7cf27750": "已开启绝区零群榜总开关。此设置影响所有群，黑名单中的群仍不可使用。",
+    "challenge-rank.text_e3c1df5c60": "仅限主人设置。",
+    "challenge-rank.text_f686a21af5": "已关闭绝区零群榜总开关。此设置影响所有群，白名单中的群仍可使用。",
+    "challenge-rank.text_f9fd277d3d": "暂无法核对当前群成员，请稍后重试。",
+    "challenge-rank.text_fc5abe2522": "使用 %显示爬塔S1排名 或 %隐藏爬塔S1排名 设置该季，季号可换。",
+    "challenge-reminder-runtime.text_6e20127c91": "【式舆/危局挑战提醒】\n{text}",
+    "challenge-reminder-store.text_084b42f6e9": "二",
+    "challenge-reminder-store.text_13f9d6888b": "{value1}{hour}时{value3}",
+    "challenge-reminder-store.text_51a75f4634": "一",
+    "challenge-reminder-store.text_5d1e44655f": "小时必须在 0 到 23 之间。",
+    "challenge-reminder-store.text_5f4f05e766": "分钟必须为整十分钟。",
+    "challenge-reminder-store.text_603abac298": "{minute}分",
+    "challenge-reminder-store.text_754a9d5828": "四",
+    "challenge-reminder-store.text_85217f7aff": "日",
+    "challenge-reminder-store.text_a4c3313deb": "三",
+    "challenge-reminder-store.text_c9b87f516a": "五",
+    "challenge-reminder-store.text_d319a0b906": "绝区零挑战提醒设置发生并发修改。",
+    "challenge-reminder-store.text_da92781cde": "时间格式错误，请使用每日20时或每周五20时30分。",
+    "challenge-reminder-store.text_de07b53838": "六",
+    "challenge-reminder-store.text_eb2a18a553": "每日20时",
+    "challenge-reminder.text_001e45cbfe": "统计周期：{value1} - {value2}",
+    "challenge-reminder.text_01d829ecc1": "{time}\n当前提醒功能已{value2}",
+    "challenge-reminder.text_0340379e5a": "仅限主人设置",
+    "challenge-reminder.text_03b6b35594": "本期式舆防卫战使用旧版深渊战绩格式。",
+    "challenge-reminder.text_0992e2443a": "防卫战",
+    "challenge-reminder.text_0a50984465": "无法确认当前提醒机器人。",
+    "challenge-reminder.text_0a989797d0": "提醒时间: {remindTime}，{abyss}，{deadly}",
+    "challenge-reminder.text_0b6fd937eb": "挑战提醒设置暂时不可用。",
+    "challenge-reminder.text_26fbdacd22": "当前全局提醒时间: {remindTime}",
+    "challenge-reminder.text_2b69096fc4": "第五层评价: {value1}{value2}",
+    "challenge-reminder.text_2d42c8a136": "当前未启用防卫战/危局挑战提醒功能",
+    "challenge-reminder.text_307bd805d6": "S层数<{value1}层{value2}",
+    "challenge-reminder.text_318d89c6f9": "全局防卫战/危局挑战提醒功能已启用，请勿重复操作",
+    "challenge-reminder.text_3572dddd0b": "请使用本人 QQ 会话。",
+    "challenge-reminder.text_3a13d8e8df": "当前个人提醒时间: {remindTime}",
+    "challenge-reminder.text_3a49cc2d72": "{value1}{value2}挑战提醒",
+    "challenge-reminder.text_3d922fd4f8": "式舆防卫战不提醒",
+    "challenge-reminder.text_3fd47edce4": "关闭",
+    "challenge-reminder.text_419bf8bc14": "全局默认",
+    "challenge-reminder.text_4316355d17": "请添加好友后重试",
+    "challenge-reminder.text_44a4b3c65d": "全局防卫战/危局挑战提醒功能已{value1}",
+    "challenge-reminder.text_484d556139": "无",
+    "challenge-reminder.text_4a1667a71f": "提醒功能尚未开启",
+    "challenge-reminder.text_4b7b8e83d9": "危局强袭战",
+    "challenge-reminder.text_4c8c592412": "请先登录并选择已认证的国服绝区零角色。",
+    "challenge-reminder.text_5083419aa5": "危局强袭战星数: {value1}/9{value2}",
+    "challenge-reminder.text_5cf51970d0": "个人提醒时间未设置，默认使用全局时间: {remindTime}",
+    "challenge-reminder.text_604a89f0f3": "绝区零档案已变化，请重试。",
+    "challenge-reminder.text_666d9ed291": "正在查询，请稍候...",
+    "challenge-reminder.text_6721358145": "开启\n{value1}",
+    "challenge-reminder.text_6744b4c6a9": "已关闭",
+    "challenge-reminder.text_69ea8e3e98": "全局提醒时间已更新为: {time}",
+    "challenge-reminder.text_6ebd073589": "阈值已设为: {threshold}时提醒",
+    "challenge-reminder.text_751c29b5c7": "或第五层<S+评价",
+    "challenge-reminder.text_7df5c456c7": "禁用",
+    "challenge-reminder.text_86182928fc": "刷新剩余: {value1}天{value2}小时",
+    "challenge-reminder.text_89dcf7dc6c": "绝区零档案已变化，请重新查询挑战状态。",
+    "challenge-reminder.text_8fd6f36099": "请先选择已认证的国服绝区零角色，再开启挑战提醒。",
+    "challenge-reminder.text_99b13fad14": "挑战状态暂支持国服绝区零角色。",
+    "challenge-reminder.text_9ab4bcdd35": "个人提醒时间尚未设置",
+    "challenge-reminder.text_a69107d493": "全局防卫战/危局挑战提醒功能已禁用，请勿重复操作",
+    "challenge-reminder.text_a957087b16": "查询失败，请稍后再试。",
+    "challenge-reminder.text_b0db9143c5": "您的个人提醒时间已设置为: {time}",
+    "challenge-reminder.text_b3aeba5478": "提醒已开启，请勿重复操作",
+    "challenge-reminder.text_c13b40d772": "提醒功能已{value1}",
+    "challenge-reminder.text_c1d6fc7537": "防卫战S评级<{value1}层{value2}进行提醒",
+    "challenge-reminder.text_ca0faafcf5": "{value1}阈值必须在0到{max}之间，设置为0时不提醒。",
+    "challenge-reminder.text_d5636be4da": "危局",
+    "challenge-reminder.text_d8f44fcb83": "危局强袭战不提醒",
+    "challenge-reminder.text_d94391dc68": "开启，{value1}",
+    "challenge-reminder.text_e06b50e03d": "<{value}星",
+    "challenge-reminder.text_e48e8362c8": "式舆防卫战S评级: {value1}/5{value2}",
+    "challenge-reminder.text_eca3d5a10b": "个人提醒时间已重置为全局默认时间",
+    "challenge-reminder.text_f4f0ead111": "启用",
+    "challenge-reminder.text_f5c193154e": "危局<{deadlyStars}星进行提醒",
+    "challenge-reminder.text_f718dc4321": "式舆防卫战",
+    "challenge-reminder.text_fd669be8ec": "{name}查询失败，请稍后再试。",
+    "cinema.text_1a921c3bf2": "未找到{query}的意象影画资料。",
+    "cinema.text_833d247560": "数据来源于 Nanoka",
+    "cinema.text_a75604690b": "{name}的六档意象影画资料不完整。",
+    "cinema.text_cf5e650758": "{name}意象影画",
+    "cinema.text_dee26ae7e7": "绝区零意象影画暂时无法查看。",
+    "cinema.text_f8ed93a1f1": "意象影画",
+    "climbing-tower-card.text_0db3db4421": "未登记",
+    "climbing-tower-card.text_145219e726": "隐藏",
+    "climbing-tower-card.text_16a75e0027": "拟真鏖战试炼",
+    "climbing-tower-card.text_231e8863ee": "绳",
+    "climbing-tower-card.text_365a333c94": "，以参与对",
+    "climbing-tower-card.text_4e1449e7d5": "显示",
+    "climbing-tower-card.text_4efe2edb6d": "绳匠",
+    "climbing-tower-card.text_5aea7d747f": "代理人",
+    "climbing-tower-card.text_6570a98f28": "排名",
+    "climbing-tower-card.text_6e35682bee": "层数",
+    "climbing-tower-card.text_6fb4ff4797": "应群的拟真鏖战试炼排名",
+    "climbing-tower-card.text_7a30bc3a6a": "鏖战试炼：荣耀",
+    "climbing-tower-card.text_7c0ac18ce6": "无伤通关",
+    "climbing-tower-card.text_89e35e662a": "分数",
+    "climbing-tower-card.text_98f7195705": "鏖战试炼：末路",
+    "climbing-tower-card.text_a37017e9f7": "发送 %爬塔排名 查看各季命令",
+    "climbing-tower-card.text_ab6a049061": "• 本群爬塔排名 · {value1}",
+    "climbing-tower-card.text_b180896959": "鏖战试炼：狂澜",
+    "climbing-tower-card.text_b96df69e42": "%拟真鏖战试炼",
+    "climbing-tower-card.text_e7135a7feb": "请在群内查询",
+    "climbing-tower-rank-card.text_088ce2292f": "先比较总得分、爬塔层数，再比较无伤通关数",
+    "climbing-tower-rank-card.text_18c6ed8a22": "总得分",
+    "climbing-tower-rank-card.text_37607cf0b4": "无伤通关数",
+    "climbing-tower-rank-card.text_42f40f9c32": "（爬塔 S{season}）排名",
+    "climbing-tower-rank-card.text_567826bb8d": "{title}排名",
+    "climbing-tower-rank-card.text_6a72657a9f": "层数相同，再比较无伤通关数",
+    "climbing-tower-rank-card.text_6e35682bee": "层数",
+    "climbing-tower-rank-card.text_70b43c4dfc": "按爬塔层数排名",
+    "climbing-tower-rank-card.text_7c0ac18ce6": "无伤通关",
+    "climbing-tower-rank-card.text_911a055379": "，以参与对应群的{title}",
+    "climbing-tower-rank-card.text_b96df69e42": "%拟真鏖战试炼",
+    "climbing-tower-rank-card.text_b9c1bd3569": "请在群内查询 ",
+    "climbing-tower-rank-card.text_cb2a958115": "本群可见性 %显示爬塔S{season}排名 / %隐藏爬塔S{value2}排名 · {order}",
+    "climbing-tower-rank-card.text_f5f7a2cf1c": "爬塔层数",
+    "current-pool.text_0c1f27fe9f": "国服公告数据不可用",
+    "current-pool.text_324ae3a632": "\nA级名单以游戏内调频界面为准。",
+    "current-pool.text_873cc78f24": "国服公告格式异常",
+    "current-pool.text_bf438486f8": "暂无法从国服官方公告核验当前限时频段。",
+    "current-pool.text_c0bfc10917": "国服公告数据过大",
+    "current-pool.text_c47b54e84e": "角色",
+    "current-pool.text_ca82da30bc": "=== 📅 绝区零本期卡池 ===\n{title}\n时间：{time}（国服）\n剩余约 {remaining} 天\n",
+    "current-pool.text_d1c77ada3a": "\n【 {value1}调频 】\n",
+    "deadly-card.text_0536381adc": "危局强袭战 · 上期个人战绩",
+    "deadly-card.text_145219e726": "隐藏",
+    "deadly-card.text_26bc3e21d1": "通关时刻：{value1}",
+    "deadly-card.text_46ca86da52": "暂无记录",
+    "deadly-card.text_4e1449e7d5": "显示",
+    "deadly-card.text_4efe2edb6d": "绳匠",
+    "deadly-card.text_58cae7ec87": "首领",
+    "deadly-card.text_6322133b5c": "本群危局强袭战排名：{value1}，可用 %显示危局排名 或 %隐藏危局排名 切换",
+    "deadly-card.text_76d70b2006": "增益",
+    "deadly-card.text_8a29bd00e1": "危局强袭战 · 本期个人战绩",
+    "deadly-card.text_ce19bf91b2": "*总得分与排名先更新，挑战详情约延迟 2 小时",
+    "deadly-card.text_e9438ab79d": "统计周期 {value1}",
+    "enka-panel-data.text_0c52a4b50a": "穿透率",
+    "enka-panel-data.text_136a704012": "风属性伤害加成",
+    "enka-panel-data.text_15bccc3951": "暴击伤害",
+    "enka-panel-data.text_1a256e6376": "生命值",
+    "enka-panel-data.text_1a7dc21762": "冲击力",
+    "enka-panel-data.text_1b3575c579": "穿透值",
+    "enka-panel-data.text_1cb579e6ba": "防御力",
+    "enka-panel-data.text_2d1c2a6cae": "能量自动回复",
+    "enka-panel-data.text_309f1a6580": "贯穿力",
+    "enka-panel-data.text_70d32cc721": "电属性伤害加成",
+    "enka-panel-data.text_7bbb5794e0": "闪能自动累积",
+    "enka-panel-data.text_8e28d6947b": "以太伤害加成",
+    "enka-panel-data.text_9b60ac7c20": "物理属性伤害加成",
+    "enka-panel-data.text_b84ee11f4f": "攻击力",
+    "enka-panel-data.text_be775a4fea": "冰属性伤害加成",
+    "enka-panel-data.text_d29c3efc8f": "异常掌控",
+    "enka-panel-data.text_d4b0baf955": "暴击率",
+    "enka-panel-data.text_e7b27fa0b1": "异常精通",
+    "enka-panel-data.text_f2a30c8170": "火属性伤害加成",
+    "enka-showcase.text_06f24307d0": "此 UID 的公开展柜正在更新",
+    "enka-showcase.text_17291852bd": "找不到该 UID 的公开展柜，请确认游戏内已开启角色展示。",
+    "enka-showcase.text_1d0d9f6dd6": "Enka 公开展柜请求间隔未到",
+    "enka-showcase.text_3db89bc862": "Enka 公开展柜回复的区服与当前档案不一致。",
+    "enka-showcase.text_615ddecb3d": "Enka 公开展柜回复的 UID 与当前档案不一致。",
+    "enka-showcase.text_821b4f856d": "当前档案的绝区零 UID 无效。",
+    "enka-showcase.text_901c55c75a": "Enka 公开展柜暂时不可用。",
+    "enka-showcase.text_ad7fcbfa9b": "{reason}，请在 {value2} 秒后再试。",
+    "enka-showcase.text_ae70a2f1bd": "Enka 公开展柜返回的数据无法核验。",
+    "enka-showcase.text_b7fed71fc6": "Enka 公开展柜限流中",
+    "enka-showcase.text_bbdf77604a": "Enka 公开展柜请求正在进行",
+    "enka-showcase.text_ea533400c8": "Enka 展柜数据仍在缓存期",
+    "exploration-card.text_05a2a8504c": "下一页 {command} 页 {value2}",
+    "exploration-card.text_3382870bc4": "区域",
+    "exploration-card.text_41ab2e0ecb": "地图",
+    "exploration-card.text_53f6a935c5": "区域收集 · {page} / {pageCount}",
+    "exploration-card.text_8f85779c47": "区域收集",
+    "exploration-card.text_d065195833": "（续）",
+    "gacha-handback.text_75c9db3c80": "旧逐抽路径须为副本内的实际目录。",
+    "gacha-handback.text_812739b754": "同一逐抽编号被归入不同频段。",
+    "gacha-handback.text_9550003f1e": "指定 QQ、UID 和区服没有新版绝区零链接逐抽档案。",
+    "gacha-handback.text_f8a84bdbb7": "同一逐抽编号的内容不一致，请核对频段、时间和源档案后重新导出。",
+    "gacha-legacy-detail.text_1038ca6f98": "平稳保底",
+    "gacha-legacy-detail.text_33010258e7": "还没有抽卡",
+    "gacha-legacy-detail.text_3b0c768385": "小欧一把",
+    "gacha-legacy-detail.text_449e4419c0": "运气不好",
+    "gacha-legacy-detail.text_8d055493e7": "档案内未出S级",
+    "gacha-legacy-detail.text_8d4011aa6a": "非到极致",
+    "gacha-legacy-detail.text_b60895e8b7": "暂无抽卡记录",
+    "gacha-legacy-detail.text_d53bc23ead": "绝区零旧逐抽档案缺少频段。",
+    "gacha-legacy-detail.text_e3ead1a16b": "欧狗在此",
+    "gacha-legacy.text_011ff1d948": "物品类型",
+    "gacha-legacy.text_0ece15300d": "物品稀有度",
+    "gacha-legacy.text_1de967ae18": "记录编号",
+    "gacha-legacy.text_28369d1f89": "QQ 或 UID",
+    "gacha-legacy.text_3fc0e85fe6": "物品编号",
+    "gacha-legacy.text_42ee2863b6": "根目录",
+    "gacha-legacy.text_5f9f8d078d": "频段记录",
+    "gacha-legacy.text_6980b24770": "记录 UID",
+    "gacha-legacy.text_6d0aaaab3a": "普通 JSON 文件",
+    "gacha-legacy.text_6d32211268": "活动编号",
+    "gacha-legacy.text_84a3b03a07": "绝区零旧逐抽档案正在变化，请稍后重试。",
+    "gacha-legacy.text_93277307d6": "重复记录内容",
+    "gacha-legacy.text_a4aa2681c2": "真实频段编号",
+    "gacha-legacy.text_b411fd04a9": "物品名称",
+    "gacha-legacy.text_b9bf691643": "文件大小",
+    "gacha-legacy.text_bed1afdc30": "记录语言",
+    "gacha-legacy.text_c0a01888f2": "绝区零旧逐抽档案的{field}无效。",
+    "gacha-legacy.text_c4880d0af6": "QQ 目录",
+    "gacha-legacy.text_c48d6e6c40": "物品数量",
+    "gacha-legacy.text_d4b94d7552": "记录频段编号",
+    "gacha-legacy.text_dec6e0c221": "无法读取绝区零旧逐抽档案。",
+    "gacha-legacy.text_df9dfe0456": "抽卡时间",
+    "gacha-legacy.text_dfadb48c2b": "重复记录所属频段",
+    "gacha-legacy.text_f2067e3394": "频段结构",
+    "gacha-legacy.text_fc6e12a2c3": "记录结构",
+    "gacha-link-history.text_0efabf5e0a": "重复记录内容冲突",
+    "gacha-link-history.text_107f8820ac": "绝区零链接逐抽档案",
+    "gacha-link-history.text_38056cf30c": "格式无效",
+    "gacha-link-history.text_3ba8af1f95": "与当前 UID 或地区不一致",
+    "gacha-link-history.text_4bf261e735": "时区无效",
+    "gacha-link-history.text_4c597ba063": "记录所属频段冲突",
+    "gacha-link-history.text_535993d9a9": "频段无效",
+    "gacha-link-history.text_7183cff838": "与旧逐抽 UID 不一致",
+    "gacha-link-history.text_7f73025aae": "时区或服务区改变",
+    "gacha-link-history.text_8a08f1c4b1": "记录无效",
+    "gacha-link-history.text_b664220167": "版本或所有者无效",
+    "gacha-link-session.text_04a02a3f55": "请私聊发送 {alias}，再按提示录入。",
+    "gacha-link-session.text_09b1c8b938": "录入已超时，请重新发送 %抽卡链接。",
+    "gacha-link-session.text_18e77de7a6": "该档案的抽卡链接正在处理。",
+    "gacha-link-session.text_25409baeb5": "绝区零抽卡服务要求验证，请在官方客户端处理后再试。",
+    "gacha-link-session.text_490548e6bc": "正在更新绝区零逐抽记录。",
+    "gacha-link-session.text_4ea60872c8": "档案 {profileId} 没有同步绝区零 UID。",
+    "gacha-link-session.text_69625c0aab": "已取消绝区零抽卡链接录入。",
+    "gacha-link-session.text_734d34b4a0": "绝区零抽卡记录访问频繁，请稍后再试。",
+    "gacha-link-session.text_76720712c8": "请先登录档案 {profileId}。",
+    "gacha-link-session.text_84933c56ba": "绝区零抽卡链接已过期，请重新获取后录入。",
+    "gacha-link-session.text_9cf98a9cde": "绝区零档案角色已变化。",
+    "gacha-link-session.text_a6f714ae2a": "绝区零档案角色已变化，请重新录入。",
+    "gacha-link-session.text_c06b58c722": "官方链接暂无可核验的逐抽记录，旧档案已保留。",
+    "gacha-link-session.text_c28a0d76bd": "请发送完整的绝区零官方抽卡链接。发送「取消」即可结束，输入在两分钟内有效。",
+    "gacha-link-session.text_e14ef27403": "绝区零抽卡链接录入失败，旧档案已保留。",
+    "gacha-link-session.text_f2b2daacb1": "请先私聊发送 %抽卡链接。",
+    "game-record-card.text_09680c3fbe": "以",
+    "game-record-card.text_16eda9b1c1": "霜",
+    "game-record-card.text_1763e47d08": "电",
+    "game-record-card.text_1cc19d290f": "影",
+    "game-record-card.text_1ec07accea": "刃",
+    "game-record-card.text_23c9ef5316": "获得代理人",
+    "game-record-card.text_326653ee81": "物",
+    "game-record-card.text_42abb81858": "命",
+    "game-record-card.text_65cf64d002": "暂无邦布",
+    "game-record-card.text_829827347a": "活跃天数",
+    "game-record-card.text_90c78a10b4": "绝区零个人战绩",
+    "game-record-card.text_9bd65a2970": "暂无代理人",
+    "game-record-card.text_af692b415f": "代理人信息",
+    "game-record-card.text_b810265f82": "邦布信息",
+    "game-record-card.text_be65bd5518": "风",
+    "game-record-card.text_ce1b850700": "冰",
+    "game-record-card.text_d4813d01f4": "等级{level}",
+    "game-record-card.text_d4cfe8c82c": "火",
+    "game-record-card.text_d526fa6412": "流",
+    "game-record-card.text_ee0752c107": "获得邦布",
+    "game-record-card.text_f718dc4321": "式舆防卫战",
+    "game-record-card.text_fe47861776": "墨",
+    "hollow-zero-card.text_020043149d": "最短耗时",
+    "hollow-zero-card.text_0999acf598": "哨站课题",
+    "hollow-zero-card.text_127d116c3e": "探索耗时",
+    "hollow-zero-card.text_1fc7e0527b": "空洞异闻",
+    "hollow-zero-card.text_24ec01f42b": "刀耕火焚",
+    "hollow-zero-card.text_266427d0b7": "武备图鉴",
+    "hollow-zero-card.text_296e43e755": "已通关最高难度",
+    "hollow-zero-card.text_2c11232e16": "战术棱镜方案",
+    "hollow-zero-card.text_3cbda1f9dc": "异域模块",
+    "hollow-zero-card.text_46c327c914": "矩阵行动",
+    "hollow-zero-card.text_4fc1daa882": "探索任务",
+    "hollow-zero-card.text_5aea7d747f": "代理人",
+    "hollow-zero-card.text_63904a0cad": "特别行动",
+    "hollow-zero-card.text_662048e98b": "作战机略",
+    "hollow-zero-card.text_67993a8cad": "特殊区域记录",
+    "hollow-zero-card.text_76e4d3ade7": "通关最高难度次数",
+    "hollow-zero-card.text_7b38d6db69": "通关最高难度最短耗时",
+    "hollow-zero-card.text_7e4f5dd200": "零号碎片",
+    "hollow-zero-card.text_9fe5d5a19e": "收集数据",
+    "hollow-zero-card.text_aa46a7c35b": "邦布",
+    "hollow-zero-card.text_ab5cd65cb6": "探究勋证",
+    "hollow-zero-card.text_adb3e21f4f": "执照等级",
+    "hollow-zero-card.text_b062420b77": "战术档案",
+    "hollow-zero-card.text_b8feeec1ee": "对「尼尼微」造成伤害",
+    "hollow-zero-card.text_c2f77bfcc7": "特遣调查",
+    "hollow-zero-card.text_c438f4deb2": "{value1} · 以太活性 {value2}",
+    "hollow-zero-card.text_c4d2b6ba33": "鸣徽图鉴",
+    "hollow-zero-card.text_d626448021": "通关阵容",
+    "hollow-zero-card.text_d974ddea26": "悬赏委托进度",
+    "hollow-zero-card.text_e865364b94": "零号空洞：枯萎苗圃",
+    "hollow-zero-card.text_fc57224a51": "零号空洞：迷失之地",
+    "holo-boss-card.text_145219e726": "隐藏",
+    "holo-boss-card.text_2823616a99": "上期",
+    "holo-boss-card.text_29e80a0630": "拟境湮灭战",
+    "holo-boss-card.text_474da3018a": "本期",
+    "holo-boss-card.text_4e1449e7d5": "显示",
+    "holo-boss-card.text_513ea8bd82": "，以参与对应群的拟境湮灭战排名",
+    "holo-boss-card.text_58cae7ec87": "首领",
+    "holo-boss-card.text_805000a007": "%显示拟境排名 / %隐藏拟境排名",
+    "holo-boss-card.text_9d9656981b": "*总得分&排名和挑战详情并非同时刷新，挑战详情存在2小时左右延迟",
+    "holo-boss-card.text_d4896d0ba5": "• 本群拟境排名已{status}",
+    "holo-boss-card.text_e7135a7feb": "请在群内查询",
+    "holo-boss-card.text_e9438ab79d": "统计周期 {value1}",
+    "holo-boss-card.text_fe92926c65": "%拟境湮灭战",
+    "holo-boss-rank-card.text_00a57f0862": "无伤",
+    "holo-boss-rank-card.text_04c46e828b": "%显示拟境排名",
+    "holo-boss-rank-card.text_3e4d06cde4": "总用时",
+    "holo-boss-rank-card.text_4114e6a39a": "•  请在群内使用 ",
+    "holo-boss-rank-card.text_58cae7ec87": "首领",
+    "holo-boss-rank-card.text_605e8bdee9": "•  排名依据：1. 星数（更多优先）  2. 三间用时总和（更少优先）  3. 无伤间数（更多优先）  4. 战绩记录时间（更早优先）",
+    "holo-boss-rank-card.text_6e92252d5b": "%隐藏拟境排名",
+    "holo-boss-rank-card.text_7c68e212d7": " · 无伤",
+    "holo-boss-rank-card.text_9c55a439d7": "星级",
+    "holo-boss-rank-card.text_b1cced053a": " 可关闭本群展示。",
+    "holo-boss-rank-card.text_b8fafc93e2": " 登记本期战绩。使用 ",
+    "holo-boss-rank-card.text_da8aa7c647": " 并查询 ",
+    "holo-boss-rank-card.text_fe92926c65": "%拟境湮灭战",
+    "index.text_028f2c565d": "{period}暂无{name}战绩。",
+    "index.text_04cb51c45a": "绝区零国际服战绩请从本人私聊查询。",
+    "index.text_066ab2246e": "请从登录档案对应的 QQ 会话查询绝区零战绩。",
+    "index.text_06bcc1352b": "请在当前机器人的好友私聊中获取绝区零抽卡链接。",
+    "index.text_0b45b96b8f": "该档案正在获取绝区零抽卡链接。",
+    "index.text_0c53b24fef": "第 {number} 防线 · {length} 队{value3}",
+    "index.text_10d85181ae": "%迷宫战绩{value1}",
+    "index.text_115410d9ce": "%母带 / #绝区零存货 直接查看本人实时调频库存。",
+    "index.text_16a75e0027": "拟真鏖战试炼",
+    "index.text_1abb50bdb0": "迷宫诡域战绩共 {pageCount} 页。发送 {command} 页 {value3} 查看末页。",
+    "index.text_1ad19c8a98": "{name} · 本次录入 {value2} 条，合并旧档共 {value3} 条",
+    "index.text_20072b851c": "请从登录档案对应的 QQ 会话查询{name}。",
+    "index.text_22ca39a135": "绝境 · {value1} · {value2}",
+    "index.text_267a24063f": "邦布持有查询支持国服绝区零档案。",
+    "index.text_2823616a99": "上期",
+    "index.text_29e80a0630": "拟境湮灭战",
+    "index.text_2d43673910": "区域收集 · 共 {length} 页",
+    "index.text_2d7ab0ec89": "请从自己的已连接 QQ 会话查询绝区零邦布。",
+    "index.text_318d0fed8b": "绝区零档案已变化，请重新查询{subject}。",
+    "index.text_32cdf01bcc": "发送 {command} 查看。",
+    "index.text_3c53446b0f": "绝区零抽卡链接获取失败，请稍后重试。",
+    "index.text_3dd62228d2": "档案编号须在 1 到 255 之间。",
+    "index.text_422aa73408": "总分 {value1}",
+    "index.text_450b8c5716": "暂无{name}数据",
+    "index.text_474da3018a": "本期",
+    "index.text_47f3e3964b": "请先在 档案 {profileId} 绑定已核验的 HoYoLAB 账号。",
+    "index.text_48afbcd626": "正在更新绝区零抽卡记录（档案 {profileId}）。",
+    "index.text_4b7b8e83d9": "危局强袭战",
+    "index.text_4e10d31e79": "试炼 · {value1} · {value2}",
+    "index.text_4ea60872c8": "档案 {profileId} 没有同步绝区零 UID。",
+    "index.text_4efe2edb6d": "绳匠",
+    "index.text_4fbd96a211": "总用时 {value1} · 总星数 {value2} · 无伤 {undamaged}",
+    "index.text_58cae7ec87": "首领",
+    "index.text_59faa7ffd6": "{value1} · {value2} · {value3} 星{value4}",
+    "index.text_5f636b7036": "[gacha] 抽卡记录",
+    "index.text_5f697c7948": "绝区零抽卡记录暂时无法查看。",
+    "index.text_62a355e2fd": "发送 %迷宫战绩{value1} 页 {page} 查看指定战绩页。",
+    "index.text_69c07d5803": "迷宫诡域战绩 · {length} 页{value2}",
+    "index.text_71a331d410": "绝区零档案已变化，请重新查询{name}。",
+    "index.text_76720712c8": "请先登录档案 {profileId}。",
+    "index.text_76b18000b5": "%获取抽卡链接 私聊获取当前国服档案的官方抽卡链接。",
+    "index.text_776f6c2221": "绝区零档案角色已变化，请重新获取。",
+    "index.text_77cd087915": "该角色还没有绝区零旧调频记录。",
+    "index.text_7c68e212d7": " · 无伤",
+    "index.text_7ef2a6dcd2": "绝区零抽卡链接获取频繁，请稍后再试。",
+    "index.text_800df7007a": "%抽卡链接 私聊录入有效的绝区零官方抽卡链接。",
+    "index.text_8260a16f37": "请私聊获取绝区零抽卡链接。",
+    "index.text_841c31ef32": "危局强袭战 · {period}",
+    "index.text_85d6c7a419": "暂无迷宫诡域详细战绩数据",
+    "index.text_86b48550a7": "图片超过当前会话大小上限，已改为文字。\n{text}",
+    "index.text_86bf7c9458": "临界推演",
+    "index.text_874cda5a44": "命令末尾可加档案编号，例如 %抽卡记录2。",
+    "index.text_87a81e8170": "%逐抽记录{value1}",
+    "index.text_8c44ab8e13": "当前可供查询的零号空洞数据有：\n- %枯萎苗圃\n- %迷失之地",
+    "index.text_8efe873b92": "绝区零抽卡记录",
+    "index.text_8ff173785b": "绝区零抽卡链接录入完成。",
+    "index.text_91fdc991b5": "{period}{name}使用旧版深渊战绩格式。",
+    "index.text_94f5c06650": "试炼总分 {totalScore}",
+    "index.text_9512bae9c6": "国际服绑定档案可查看已有的旧调频记录。",
+    "index.text_9cf98a9cde": "绝区零档案角色已变化。",
+    "index.text_9d19833de3": "绝区零档案已变化，请重新查询迷宫诡域。",
+    "index.text_9df23feb26": "暂无迷宫诡域数据",
+    "index.text_a3f0d28183": "访问过于频繁，请稍后再试。",
+    "index.text_a72f794b97": "{name}暂时无法查询。",
+    "index.text_aa46a7c35b": "邦布",
+    "index.text_acbd9b9ebe": "绝区零{subject}暂时无法查询。",
+    "index.text_adffe5f7e7": "迷宫诡域暂时无法查询。",
+    "index.text_ae44912b69": "绝区零档案已变化，请重新查询区域收集。",
+    "index.text_ae4d566def": "绝区零抽卡记录更新完成。",
+    "index.text_af07d075a4": "请从登录档案对应的 QQ 会话使用绝区零抽卡记录。",
+    "index.text_bc6853ff0f": "%更新抽卡记录 同步国服米游社的六个频段。",
+    "index.text_bd41c791c2": "暂无探索详情数据",
+    "index.text_c26b33d678": "图片超过当前会话大小上限，已改为文字。\n{value1}",
+    "index.text_c5fb434ef4": "该角色还没有绝区零逐抽记录。",
+    "index.text_c6e8269745": "区域收集共 {pageCount} 页。发送 {command} 页 {value3} 查看末页。",
+    "index.text_c6eac1ddc3": "试炼总星级 {totalStars}",
+    "index.text_cccc574501": "%抽卡记录 查看调频记录，当前登录可用时另发实时库存。",
+    "index.text_d90ec91ae9": "式舆防卫战 · {period}",
+    "index.text_da0a78540b": "该档案的绝区零抽卡记录正在更新。",
+    "index.text_df04936c91": "请从登录档案对应的 QQ 会话查询迷宫诡域。",
+    "index.text_e1cc153c64": "%区域收集{value1}",
+    "index.text_eaf852bf97": "绝区零区域收集暂时无法查询。",
+    "index.text_ed7861cc60": "请从登录档案对应的 QQ 会话查询绝区零区域收集。",
+    "index.text_eed183658b": "只能查询自己选中的绝区零档案。",
+    "index.text_f3a733209a": "暂无爬塔数据",
+    "index.text_f4a9dc8367": "档案 {profileId} 未选中已认证的绝区零 UID。",
+    "index.text_f718dc4321": "式舆防卫战",
+    "index.text_f7ae19fb98": "战绩",
+    "index.text_f8227398b3": "总分 {score}{value2}",
+    "index.text_fb6f6ac9a5": "该角色的绝区零抽卡记录已由另一条请求更新。",
+    "index.text_fbb1f97e09": "%逐抽记录 查看录入的记录和已有旧档案。",
+    "index.text_ff534801b8": "关卡",
+    "index.text_ffa6a35fe8": "绝区零档案角色已变化，请重新查询。",
+    "monthly-archive.text_648de7ec85": "{subject}内容或归属无效。",
+    "monthly-archive.text_d27d1612f0": "绝区零月报档案",
+    "monthly-card.text_05a2a8504c": "下一页 {command} 页 {value2}",
+    "monthly-card.text_241bb2544c": "菲林",
+    "monthly-card.text_2a2ce8ba50": "暂无细分收入",
+    "monthly-card.text_2ab6a8edb1": "收入一览",
+    "monthly-card.text_364a5e6ba2": "邦布券",
+    "monthly-card.text_4ee5c45761": "* 数据统计存在约 2 小时延迟",
+    "monthly-card.text_4f0241f58d": "菲林收入组成",
+    "monthly-card.text_61d4f3bdb6": "绝区零月报 · {value1}",
+    "monthly-card.text_6439bcf7ed": "母带",
+    "monthly-card.text_6ca05b2485": "米游社",
+    "monthly-card.text_ab237dda44": "* {service} 已不可查且从未存档的月份不会显示",
+    "monthly-card.text_b48d227bf4": "每月细则",
+    "monthly-card.text_e31ac7c79b": "* 菲林收入不含充值获得底片后兑换的菲林",
+    "monthly-command.text_343a2a43a7": "绝区零月报统计共 {last} 页。发送 {command} 页 {value3} 查看末页。",
+    "monthly-command.text_3caf242584": "请先登录 profile {profileId}。",
+    "monthly-command.text_43ad6fbdf0": "请从登录档案对应的 QQ 会话查询绝区零月报。",
+    "monthly-command.text_45c8562b2b": "获取月报数据失败，请检查日期是否正确",
+    "monthly-command.text_502c241aee": "发送 {command} 页 {page} 查看指定统计页。",
+    "monthly-command.text_5ead684d63": "请先在 profile {profileId} 绑定已核验的 HoYoLAB 账号。",
+    "monthly-command.text_65d5ab8c31": "profile {profileId} 没有同步绝区零 UID。",
+    "monthly-command.text_71b7a354a9": "月报数据为空",
+    "monthly-command.text_79ec8e7e87": "%月报统计{value1}",
+    "monthly-command.text_a53ef5b37a": "绝区零档案已变化。",
+    "monthly-command.text_aa489d2a4c": "获取月报数据失败",
+    "monthly-command.text_bf784fea2d": "本次未更新，仅显示已存档月报。",
+    "monthly-command.text_bfe4926e57": "绝区零档案已变化，请重新查询月报。",
+    "monthly-command.text_e13424f8a0": "档案没有已同步的绝区零角色。",
+    "monthly-command.text_ed03fece62": "绝区零国际服月报请从本人私聊查询。",
+    "monthly-handback.text_1a30a24b6d": "旧版月报须保留收支数组。",
+    "monthly-handback.text_1c42d08b5c": "月报交还的 QQ 或区服无效。",
+    "monthly-handback.text_3099033829": "月报交还文件超过可导出大小。",
+    "monthly-handback.text_46d0f9d180": "月报交还内容无法回读核验。",
+    "monthly-handback.text_55716801e2": "月报交还副本读取期间已变化。",
+    "monthly-handback.text_55d22a8e8c": "新版月报更新时间无效。",
+    "monthly-handback.text_58c5c6e487": "新版月报存在重复月份。",
+    "monthly-handback.text_58ce5d901b": "月报交还须读取副本内的实际目录。",
+    "monthly-handback.text_5fe173f2bd": "月报货币数量无法由固定旧版安全汇总。",
+    "monthly-handback.text_6fd05f905d": "同月份月报存在无法保序合并的重复货币或收入项。",
+    "monthly-handback.text_7a4b556ac9": "月报交还副本格式无效。",
+    "monthly-handback.text_9a4b88dcf3": "月报交还副本须为大小受限的普通文件。",
+    "monthly-handback.text_9f057d2674": "旧版月报须为 JSON 数组。",
+    "monthly-handback.text_ba6e3a40d7": "指定 QQ、UID 和区服没有新版绝区零月报档案。",
+    "monthly-handback.text_bcbec8819a": "新版月报档案版本、归属或内容无效。",
+    "monthly-handback.text_d68e725f52": "月报缺少固定旧版所需的年月或收支数组，不能安全交还。",
+    "monthly-handback.text_da27a58f4f": "月报副本含无法无损导出的数字。",
+    "monthly-handback.text_ea98780a16": "同月份月报存在不一致的重叠值，请核对源档；未生成交还文件。",
+    "monthly-model.text_1decad6eb8": "成长奖励",
+    "monthly-model.text_25c3a86575": "未知奖励",
+    "monthly-model.text_479d6bc50d": "邮件奖励",
+    "monthly-model.text_89f2284dc4": "其他奖励",
+    "monthly-model.text_8ea44f94b4": "零号空洞奖励",
+    "monthly-model.text_c85dda8b58": "{value1}年{value2}月",
+    "monthly-model.text_ebcbb4b06f": "活动奖励",
+    "monthly-model.text_ede98fcb79": "式舆防卫战奖励",
+    "monthly-model.text_f206a13c33": "日常活跃奖励",
+    "owned-buddy-card.text_142e591ff1": " · {rank}命",
+    "owned-buddy-card.text_18682e4331": "*仅显示已拥有的邦布",
+    "owned-buddy-card.text_58612629b8": "暂无已拥有的邦布",
+    "panel-command.text_0072539b31": "绝区零面板暂时无法更新。",
+    "panel-command.text_00b8cd9c3d": "角色{value1}不存在，请确保角色名称/别称存在。",
+    "panel-command.text_133be35d67": "绝区零练度统计暂时无法查询。",
+    "panel-command.text_15a84fcfc4": "该 UID 的公开展柜暂无展示角色。",
+    "panel-command.text_16396605da": "UID {uid} · 绝区零面板列表",
+    "panel-command.text_186253f940": "展柜更新不支持指定角色，请使用%更新展柜面板",
+    "panel-command.text_2a779b6c39": "UID:{uid}无本地面板数据，请先%更新面板。",
+    "panel-command.text_2f2fc38be8": "未能获取角色的面板数据，请确认已拥有对应角色。",
+    "panel-command.text_315a13bdae": "绝区零面板暂时无法查询。",
+    "panel-command.text_32422e3a61": "指定角色更新需要登录档案。也可以用%更新展柜面板读取公开展示角色。",
+    "panel-command.text_3b7a008e6f": "暂无角色{name}的公开展柜数据，请先%更新展柜面板。",
+    "panel-command.text_3c2fdabb7d": "绝区零档案的角色与区服信息不一致。",
+    "panel-command.text_3e4059b671": "正在查询第三方 Enka 公开展柜。此请求只发送当前档案的游戏 UID。",
+    "panel-command.text_465b7453fa": "Enka 公开展柜已保存 {length} 个角色。",
+    "panel-command.text_48851f4ae3": "绝区零档案角色已变化，请重新操作。",
+    "panel-command.text_4cfab4ad85": "未找到消息源，请引用要查看的一张图片。",
+    "panel-command.text_4ea60872c8": "档案 {profileId} 没有同步绝区零 UID。",
+    "panel-command.text_4efe2edb6d": "绳匠",
+    "panel-command.text_52e48d2d22": "米游社面板更新目前支持国服绝区零角色。",
+    "panel-command.text_58d3b20941": "暂无角色{name}面板数据，请先%更新面板。",
+    "panel-command.text_5bbc3899a5": "正在更新面板列表。",
+    "panel-command.text_68c18e077a": "未找到原图。",
+    "panel-command.text_6bd2843285": "绝区零公开展柜暂时无法更新。",
+    "panel-command.text_76720712c8": "请先登录档案 {profileId}。",
+    "panel-command.text_7adbf8ad9f": "绝区零面板已更新 {size} 个角色。",
+    "panel-command.text_9cf98a9cde": "绝区零档案角色已变化。",
+    "panel-command.text_a24961be0f": "正在更新{value1}面板。",
+    "panel-command.text_a53ef5b37a": "绝区零档案已变化。",
+    "panel-command.text_b100340b6a": "绝区零练度统计超过当前会话的图片大小上限。",
+    "panel-command.text_b669aaeb8f": "请从登录档案对应的 QQ 会话使用绝区零面板。",
+    "panel-command.text_bf3e1ea9a3": "绝区零公开展柜所需的本地游戏资料不可用。",
+    "panel-command.text_d080e2be29": "角色{name}不存在，请确保角色名称/别称存在。",
+    "panel-command.text_df7439bc97": "绝区零档案登录状态已变化。",
+    "panel-command.text_e24d8a9b63": "该角色的绝区零面板正在更新。",
+    "panel-command.text_e4f8605f21": "绝区零面板配置的刷新间隔无效。",
+    "panel-command.text_e990c3f994": "未找到面板数据，请先%更新面板或%更新展柜面板。",
+    "panel-command.text_f490976de2": "本地游戏资料无法核验本次公开展柜的全部角色或装备。",
+    "panel-command.text_fbee8127aa": "本档案暂无公开展柜记录，请先%更新展柜面板。",
+    "panel-damage-card.text_04d6b709de": "增益值",
+    "panel-damage-card.text_08b716f1d7": "基础区",
+    "panel-damage-card.text_0b4e7db6b1": "{skill}暂无原版计算结果。",
+    "panel-damage-card.text_0d2d79214e": "异常精通区",
+    "panel-damage-card.text_14480a16f5": "伤害统计",
+    "panel-damage-card.text_14fa51e9e3": "当前指令 {command}",
+    "panel-damage-card.text_15bccc3951": "暴击伤害",
+    "panel-damage-card.text_1c1f3545ec": "横轴是增加的词条，纵轴是减少的词条，数值为期望伤害变化。",
+    "panel-damage-card.text_1cef28db5c": "乘区数据",
+    "panel-damage-card.text_25ad58433d": "防御区",
+    "panel-damage-card.text_3c0f8f4d00": "副词条差异计算",
+    "panel-damage-card.text_3c348b34e3": "可通过 %{name}伤害加序号切换技能。",
+    "panel-damage-card.text_3d01997a6d": "暴击区",
+    "panel-damage-card.text_3de322bdde": "异常增伤区",
+    "panel-damage-card.text_46679baa0e": "贯穿增伤区",
+    "panel-damage-card.text_4be7d19a68": "抗性区",
+    "panel-damage-card.text_4ddc1d7555": "部分主词条组合在游戏中无法同时获得。",
+    "panel-damage-card.text_53a94dc16c": "一个技能含多段独立伤害时，这里显示其中一段的乘区。",
+    "panel-damage-card.text_53c0159f78": "等级区",
+    "panel-damage-card.text_6dc6a2c598": "%{name}伤害{value2}{value3}",
+    "panel-damage-card.text_77effd41fc": "增伤区",
+    "panel-damage-card.text_8b6a66bff7": "技能类型",
+    "panel-damage-card.text_9891f22d71": "敌人等级 {level}，1 级基础防御力 50，有属性弱点。计算不含失衡易伤区。",
+    "panel-damage-card.text_9e60ca447d": "每次计算替换一个单位副词条。",
+    "panel-damage-card.text_a0b905c369": "主词条差异计算",
+    "panel-damage-card.text_a488e93d69": "来源",
+    "panel-damage-card.text_b8526958b1": "Buff 统计",
+    "panel-damage-card.text_ba0abfbf06": "词条变化",
+    "panel-damage-card.text_d44e9b3d3b": "名称",
+    "panel-damage-card.text_d58672bfb1": "易伤区",
+    "panel-damage-card.text_d5f4617e07": "期望伤害",
+    "panel-damage-card.text_d80d2c5223": " 档案{suffix}",
+    "panel-damage-card.text_e109dbfcd1": "词条计算目标 {name}",
+    "panel-damage-card.text_eb548fd7a1": "增益类型",
+    "panel-detail-card.text_07b2ceaac1": "暂无属性",
+    "panel-detail-card.text_0b4e7db6b1": "{skill}暂无原版计算结果。",
+    "panel-detail-card.text_14480a16f5": "伤害统计",
+    "panel-detail-card.text_15bccc3951": "暴击伤害",
+    "panel-detail-card.text_3b89502eed": "闪避",
+    "panel-detail-card.text_3dcb981cfc": "{value1} 分",
+    "panel-detail-card.text_4a4815f7ec": "绝区零面板超过当前会话的图片大小上限。",
+    "panel-detail-card.text_5304f62a0d": "Enka 公开展柜",
+    "panel-detail-card.text_56c3216543": "等级—",
+    "panel-detail-card.text_6668db70f8": "增益名称",
+    "panel-detail-card.text_6cf8b5c69a": "规则：{rule}",
+    "panel-detail-card.text_74abea9708": "取有弱点、等级{level}、1级基础防御力50的敌方数据，不含失衡易伤区。",
+    "panel-detail-card.text_75abb7f5de": "有益词条数：{useful} 有效词条数：{value2}",
+    "panel-detail-card.text_82e4ecaacc": "%{name}伤害技能1{value2}",
+    "panel-detail-card.text_86de52d178": "属性",
+    "panel-detail-card.text_8701766fa1": "改装 {star}",
+    "panel-detail-card.text_8ae42630ca": "增益数值",
+    "panel-detail-card.text_8b6a66bff7": "技能类型",
+    "panel-detail-card.text_8b79df27ba": "普攻",
+    "panel-detail-card.text_9aa79fc650": "支援",
+    "panel-detail-card.text_a86d757b88": " 档案{profile}",
+    "panel-detail-card.text_a8a88ddbea": "核心",
+    "panel-detail-card.text_c32b61e9bd": "特殊",
+    "panel-detail-card.text_cd63b65ea3": "发送 {skillCommand} 查看指定技能的伤害详情。",
+    "panel-detail-card.text_d4813d01f4": "等级{level}",
+    "panel-detail-card.text_d5f4617e07": "期望伤害",
+    "panel-detail-card.text_e6251be615": "驱动盘信息",
+    "panel-detail-card.text_eb548fd7a1": "增益类型",
+    "panel-detail-card.text_f087564455": "未装备音擎",
+    "panel-detail-card.text_f269f5e2c8": "连携",
+    "panel-detail-card.text_f58e9a5870": "未评分",
+    "panel-detail.text_0c52a4b50a": "穿透率",
+    "panel-detail.text_15bccc3951": "暴击伤害",
+    "panel-detail.text_1a256e6376": "生命值",
+    "panel-detail.text_1a7dc21762": "冲击力",
+    "panel-detail.text_1cb579e6ba": "防御力",
+    "panel-detail.text_2a9d11c3a5": "锐能自动累积",
+    "panel-detail.text_2d1c2a6cae": "能量自动回复",
+    "panel-detail.text_309f1a6580": "贯穿力",
+    "panel-detail.text_7bbb5794e0": "闪能自动累积",
+    "panel-detail.text_b140fde2e6": "锐暴伤害",
+    "panel-detail.text_b84ee11f4f": "攻击力",
+    "panel-detail.text_d29c3efc8f": "异常掌控",
+    "panel-detail.text_d4b0baf955": "暴击率",
+    "panel-detail.text_e7b27fa0b1": "异常精通",
+    "panel-interval-command.text_8bb988250b": "刷新角色间隔须在 100 到 10000 毫秒之间。",
+    "panel-interval-command.text_aa3658a370": "绝区零刷新间隔未保存，请稍后再试。",
+    "panel-interval-command.text_b960d43924": "绝区零刷新角色间隔已设置为 {roleInterval} 毫秒，适用于同一次更新中的连续角色请求。",
+    "panel-interval-command.text_c4a86edeab": "仅限当前机器人的主人设置。",
+    "panel-interval-command.text_cee1266877": "绝区零全量和指定角色的面板更新没有整次冷却。使用 %刷新角色间隔100 设置同一次更新中逐角色请求的间隔（毫秒）。",
+    "panel-interval-command.text_f9fd277d3d": "暂无法核对当前群成员，请稍后重试。",
+    "panel-list-card.text_24fadcc884": "暂无数据，请先刷新面板",
+    "panel-list-card.text_3c8c5939d6": "面板",
+    "panel-list-card.text_62d158342b": "已为您更新 {size} 个角色",
+    "panel-list-card.text_80a0745d27": "公开展柜已保存 {length} 个角色",
+    "panel-list-card.text_ad62774c4b": "共计 {length} 个角色",
+    "panel-rank-card.text_1f8a33dc16": "音擎未装配",
+    "panel-rank-card.text_2cb43eac24": "下一页 {next}",
+    "panel-rank-card.text_3b89502eed": "闪避",
+    "panel-rank-card.text_626d751f37": "Lv.{value1} · {value2}星",
+    "panel-rank-card.text_7450cc5b16": "未记录",
+    "panel-rank-card.text_8b79df27ba": "普攻",
+    "panel-rank-card.text_9700898065": "面板分",
+    "panel-rank-card.text_9aa79fc650": "支援",
+    "panel-rank-card.text_a8a88ddbea": "核心",
+    "panel-rank-card.text_c091ad7c71": "{uid} · {rank}影",
+    "panel-rank-card.text_c32b61e9bd": "特殊",
+    "panel-rank-card.text_e6b3a9f5d6": "加权分",
+    "panel-rank-card.text_f269f5e2c8": "连携",
+    "panel-rank-identity.text_9d3e1eb5d0": "国际服账号档案已变化。",
+    "panel-rank.text_0bcdffed52": "{leader}\n{overview}\n角色面板图片暂时无法发送。",
+    "panel-rank.text_0dbaeff610": "本群暂无已授权的角色面板。发送 %显示角色面板排名 可加入。",
+    "panel-rank.text_1fa16ed1f2": "请先在私聊绑定已核验的国际服 Cookie，再在 HoYoLAB 选择要展示的绝区零角色。",
+    "panel-rank.text_2cb43eac24": "下一页 {next}",
+    "panel-rank.text_3b488823cb": "国际服角色面板排名（UID {uid}）",
+    "panel-rank.text_3f2718ee46": "本地游戏资料暂无法核验该代理人。",
+    "panel-rank.text_4baf68b300": "本群已显示该档案的{label}。查榜时仅将游戏 UID 发给 Enka 请求公开展柜。发送 %隐藏{value2}角色面板排名{profileId} 可撤回。",
+    "panel-rank.text_54f686811a": "本群已隐藏该档案的国际服角色面板排名。",
+    "panel-rank.text_58dcbef92f": "榜单成员、档案或可见状态已变化。",
+    "panel-rank.text_63ace66ab0": "Enka 公开展柜：{value1} 个 UID 入榜，{missing} 个未公开展示该角色，{failed} 个刷新未确认。",
+    "panel-rank.text_65394218f3": "{example} 页{value2}",
+    "panel-rank.text_6570a98f28": "排名",
+    "panel-rank.text_6c424aa2fc": "{overview}\n本次没有确认可入榜的角色面板。",
+    "panel-rank.text_7183b53f9b": "本地游戏资料无法核验所查角色的公开展柜。",
+    "panel-rank.text_79ddd1a4ad": "有多个同名代理人，请输入完整名称。",
+    "panel-rank.text_866216e6ce": "当前群角色面板排名功能已关闭！",
+    "panel-rank.text_895076daad": "本群已隐藏该档案的角色面板排名。",
+    "panel-rank.text_970d688dd6": "国际服",
+    "panel-rank.text_a005ac788c": "本群最强{name_mi18n} · UID {uid} · 驱动盘 {value3} 分",
+    "panel-rank.text_a885a22d16": "综合榜",
+    "panel-rank.text_a98f99ed89": "角色面板排名",
+    "panel-rank.text_ad858b391d": "请先登录并选择已认证的绝区零角色。",
+    "panel-rank.text_b6a3984d7d": "当前榜单共 {maxPage} 页。",
+    "panel-rank.text_b82cead464": "角色面板排名暂时不可用。",
+    "panel-rank.text_bc0c8082f8": "榜单成员、档案或可见状态已变化，请重新查询。",
+    "panel-rank.text_bf3e1ea9a3": "绝区零公开展柜所需的本地游戏资料不可用。",
+    "panel-rank.text_dc4e925566": "请在群聊中使用该命令！",
+    "panel-rank.text_f9fd277d3d": "暂无法核对当前群成员，请稍后重试。",
+    "panel-score-data.text_0c3adf1f61": "辅助·异常",
+    "panel-score-data.text_2e090b0699": "冲击·双爆",
+    "panel-score-data.text_2f6a6dc479": "辅助·攻击",
+    "panel-score-data.text_37f14a04e3": "冰伤",
+    "panel-score-data.text_3d148572bd": "风伤",
+    "panel-score-data.text_3e0ddd6653": "掌控",
+    "panel-score-data.text_45bc77bc1c": "生命",
+    "panel-score-data.text_591f60433f": "精通",
+    "panel-score-data.text_59d499d937": "暴击",
+    "panel-score-data.text_6e31c7a2cb": "辅助·双爆",
+    "panel-score-data.text_725e46fa35": "物伤",
+    "panel-score-data.text_75ba7a5727": "防御",
+    "panel-score-data.text_77a322bc14": "穿透",
+    "panel-score-data.text_7e4aa8b10f": "主C·双爆",
+    "panel-score-data.text_8226ca02ff": "攻击",
+    "panel-score-data.text_8e0631f66a": "主C·异常",
+    "panel-score-data.text_9044d2c170": "暴伤",
+    "panel-score-data.text_a2a1cc94c1": "火伤",
+    "panel-score-data.text_a98d7dcd08": "冲击·异常",
+    "panel-score-data.text_b0714708ab": "锋御·双爆",
+    "panel-score-data.text_b45721e16c": "回能",
+    "panel-score-data.text_ba89f259f4": "命破·双爆",
+    "panel-score-data.text_be164c9c5a": "冲击",
+    "panel-score-data.text_c83d6f4ba3": "电伤",
+    "panel-score-data.text_d5a7fa44ac": "以伤",
+    "panel-score-data.text_ecfa230028": "冲击·攻击",
+    "panel-score.text_0c3adf1f61": "辅助·异常",
+    "panel-score.text_15bccc3951": "暴击伤害",
+    "panel-score.text_1a256e6376": "生命值",
+    "panel-score.text_1cb579e6ba": "防御力",
+    "panel-score.text_2e090b0699": "冲击·双爆",
+    "panel-score.text_6e31c7a2cb": "辅助·双爆",
+    "panel-score.text_6e3a412be4": "高影画",
+    "panel-score.text_7e4aa8b10f": "主C·双爆",
+    "panel-score.text_844b8cc8df": "默认",
+    "panel-score.text_894b2cac02": "·改",
+    "panel-score.text_8e0631f66a": "主C·异常",
+    "panel-score.text_a98d7dcd08": "冲击·异常",
+    "panel-score.text_b0714708ab": "锋御·双爆",
+    "panel-score.text_b84ee11f4f": "攻击力",
+    "panel-score.text_ba89f259f4": "命破·双爆",
+    "panel-score.text_bfd3754be1": "你没戴安全帽！",
+    "panel-score.text_d29c3efc8f": "异常掌控",
+    "panel-score.text_d4b0baf955": "暴击率",
+    "panel-score.text_e7b27fa0b1": "异常精通",
+    "panel-score.text_ecfa230028": "冲击·攻击",
+    "panel-score.text_f7b50a8cd2": "直伤流",
+    "panel-storage.text_03b2234074": "绝区零面板没有新的角色资料。",
+    "panel-storage.text_0a0b1f9769": "绝区零面板须读取原归属文件。",
+    "panel-storage.text_0bff6bca4a": "绝区零面板文件超出数据目录。",
+    "panel-storage.text_6e07a09a7d": "绝区零公开展柜归属不明。",
+    "panel-storage.text_90f2579cb8": "绝区零面板角色列表无效。",
+    "panel-storage.text_b5ba4f7400": "绝区零公开展柜",
+    "panel-storage.text_be2b4ebf5c": "绝区零面板归档身份不符。",
+    "panel-storage.text_ce4af56042": "绝区零面板",
+    "panel-storage.text_da62966ff4": "绝区零面板角色编号重复。",
+    "panel-storage.text_df50ee74d8": "绝区零面板归属不明。",
+    "panel-storage.text_e323aabbe5": "绝区零公开展柜归档时间无效。",
+    "panel-storage.text_e96d3588a3": "绝区零面板文件大小无效。",
+    "panel-storage.text_f0f90c3d12": "绝区零面板归档无效。",
+    "pool-history.text_0c97c23704": "【 {rank}级{kind}复刻统计 】",
+    "pool-history.text_169eb52154": "常驻角色不支持查询",
+    "pool-history.text_18677466e9": "【 {display}({value2}级{kind}) 卡池记录 】",
+    "pool-history.text_1ed3ace983": "绝区零卡池历史请求失败",
+    "pool-history.text_212dc0c820": "未查询到绝区零{version}{value2}版本的卡池历史数据。{coverage}",
+    "pool-history.text_28e6eb5466": "S级UP：{headliner}",
+    "pool-history.text_2ce0392ca1": "音擎",
+    "pool-history.text_3401df6359": "上半",
+    "pool-history.text_36e70d44f3": "所属版本：{version}",
+    "pool-history.text_38866b106e": "下半",
+    "pool-history.text_404bad945d": "卡池名称：{title}",
+    "pool-history.text_427bc46106": "绝区零卡池历史格式异常",
+    "pool-history.text_517932d56c": "来源所载频段截至 {until}。",
+    "pool-history.text_556e2680cb": "绝区零卡池历史超出大小限制",
+    "pool-history.text_5aea7d747f": "代理人",
+    "pool-history.text_7ce659fe3f": "还有{delta}天",
+    "pool-history.text_8f6813a539": "{item}: {value2}天未复刻",
+    "pool-history.text_92da6dab04": "绝区零卡池历史时间异常",
+    "pool-history.text_9e6b4b8e54": "开始时间：{value1}",
+    "pool-history.text_ad8c7ba357": "截至 {value1}，{value2}天未复刻",
+    "pool-history.text_b6506d7196": "绝区零全版本卡池记录",
+    "pool-history.text_b7b496c092": "2.7下半",
+    "pool-history.text_c613201f2a": "下期UP，还有{next}天开启卡池",
+    "pool-history.text_c76cf8aff6": "来源所载频段截至 {value1}。",
+    "pool-history.text_c80542283c": "【 绝区零 v{title} 卡池 】",
+    "pool-history.text_cd98cf1512": "当期UP，{value1}结束卡池",
+    "pool-history.text_cfcda154f0": "卡池历史记录数据获取失败",
+    "pool-history.text_d5f5a7a010": "今天",
+    "pool-history.text_d7693df1b7": "{value1}天未复刻",
+    "pool-history.text_d7c5ca85c9": "未找到【{label}】卡池记录，请确保角色名称/别称存在。来源所载频段截至 {until}。",
+    "pool-history.text_e1e89d5874": "按 {value1} 统计。来源所载频段截至 {value2}。",
+    "pool-history.text_e817f4b6dc": "{label}卡池详情",
+    "pool-history.text_f256dfa79d": "A级UP：{value1}",
+    "pool-history.text_fa829d0387": "结束时间：{value1}",
+    "proficiency-card.text_02c6f46a33": "闪",
+    "proficiency-card.text_04a1b34e0f": "SSS+驱动盘",
+    "proficiency-card.text_066a62e797": "—精",
+    "proficiency-card.text_1b79578a70": "S级代理人",
+    "proficiency-card.text_25bd63d817": "特",
+    "proficiency-card.text_2e03e7c94f": "未装备",
+    "proficiency-card.text_40f397ec2f": "高影代理人",
+    "proficiency-card.text_44230c2fcb": "S级音擎率",
+    "proficiency-card.text_5304f62a0d": "Enka 公开展柜",
+    "proficiency-card.text_68b16e68e7": "{rank}影",
+    "proficiency-card.text_7bb1340403": "援",
+    "proficiency-card.text_7f4826dbdb": "练度统计",
+    "proficiency-card.text_918e3dd5be": "本地面板",
+    "proficiency-card.text_91bb18682b": "连",
+    "proficiency-card.text_9d86d2df73": "{star}精",
+    "proficiency-card.text_a223d4521a": "普",
+    "proficiency-card.text_b100340b6a": "绝区零练度统计超过当前会话的图片大小上限。",
+    "proficiency-card.text_d245c1825d": "驱动盘",
+    "proficiency-card.text_e055af7b73": "未装配",
+    "proficiency-card.text_e90ae9b53b": "核",
+    "proficiency-card.text_f58e9a5870": "未评分",
+    "recall-settings.text_0d86667f23": "绝区零提示消息撤回时间已设置为 {next} 秒。",
+    "recall-settings.text_29a1b7bb7b": "撤回时间须在 0 到 {maxZzzRecallSeconds} 秒之间。",
+    "recall-settings.text_52871380fe": "暂无法核对当前群成员，请稍后再试。",
+    "recall-settings.text_aa614ea32a": "绝区零提示消息已关闭自动撤回。",
+    "recall-settings.text_c4a86edeab": "仅限当前机器人的主人设置。",
+    "recall-settings.text_e8ff6be601": "绝区零撤回时间未保存，请稍后再试。",
+    "role-alias-command.text_0a7701427b": "别名已变化，请重新查询。",
+    "role-alias-command.text_1877d3b583": "未找到唯一可删除的角色别名。",
+    "role-alias-command.text_197881ba6a": "角色 {name} 共 {length} 个别名：\n{value3}",
+    "role-alias-command.text_1b49d362fa": "角色别名设置暂时不可用。",
+    "role-alias-command.text_277e11e2e9": "角色 {name} 暂无别名。",
+    "role-alias-command.text_2a09470b5e": "别名 {alias} 已存在。",
+    "role-alias-command.text_5f45f664eb": "该名称来自角色本名或图鉴索引，无法删除。",
+    "role-alias-command.text_6144c59d4c": "角色 {name} 已添加别名 {alias}。",
+    "role-alias-command.text_6db10f578f": "未找到唯一对应的绝区零代理人。",
+    "role-alias-command.text_71ef71bf7e": "请输入 1 到 48 个文字、数字或常用连接符组成的角色别名。",
+    "role-alias-command.text_721f893eab": "角色 {role} 的别名 {alias} 已删除。",
+    "role-alias-command.text_9cdadc18d3": "角色别名暂时不可用。",
+    "role-alias-command.text_b9eeade8a7": "暂无法核对当前群成员。",
+    "role-alias-command.text_e3c1df5c60": "仅限主人设置。",
+    "role-alias-command.text_ebcb4d619b": "未找到对应代理人。",
+    "role-gallery.text_11d4132897": "{title}（第 {value2}/{length} 段）",
+    "role-gallery.text_176464cbca": "角色图已发送，但本页删除回执未登记，请重新查看。",
+    "role-gallery.text_1ef4232779": "角色图库暂时不可用。",
+    "role-gallery.text_25d7dcd198": "只有 {pages} 页角色图。",
+    "role-gallery.text_4dea5c6155": "每次最多添加 5 张角色图。",
+    "role-gallery.text_61c6cc3bdf": "{name} 角色图第 {page}/{pages} 页，查询指定页请在指令后加页码。",
+    "role-gallery.text_645777035d": "已为 {name} 添加 {added} 张角色图，已有 {duplicates} 张，未添加 {value4} 张。",
+    "role-gallery.text_6add2714c4": "私聊",
+    "role-gallery.text_6ed6545809": "暂无可删除的角色图。",
+    "role-gallery.text_6fd774c3af": "图库目录暂不可写。",
+    "role-gallery.text_72cd59ea73": "待回执:",
+    "role-gallery.text_79fcc39cf1": "ID：{id} 暂无法读取。",
+    "role-gallery.text_7dfe6501a8": "{name} 暂无角色图。",
+    "role-gallery.text_7e3ecacc57": "（只读）",
+    "role-gallery.text_8875eeee1e": "角色图库设置暂时不可用。",
+    "role-gallery.text_8a54a20950": "当前会话无法合并转发角色图。",
+    "role-gallery.text_8d3bf6abf6": "本页有角色原图超过当前会话大小上限，未发送本页。",
+    "role-gallery.text_98b50aba16": "角色图库管理权限已变化，请重新查看。",
+    "role-gallery.text_9be316a81b": "请随指令发送图片，或引用本会话中含图片的消息。",
+    "role-gallery.text_b2f061c373": "ID {value1} 无法删除，请重新查看对应页。旧图库和外部资源只读。",
+    "role-gallery.text_b9eeade8a7": "暂无法核对当前群成员。",
+    "role-gallery.text_d599ec206c": "代理人名称不唯一，暂无法管理角色图。",
+    "role-gallery.text_de79d52d9c": "第 {value1} 段角色图合并转发结果未确认，请在聊天中核对。",
+    "role-gallery.text_e3c1df5c60": "仅限主人设置。",
+    "role-gallery.text_ea49264174": "主人可在本段确认送达后五分钟内删除本段自建角色图。",
+    "role-gallery.text_eb833b8e8c": "第 {value1} 段角色图合并转发未发送，其余段落已停止。",
+    "role-gallery.text_ebcb4d619b": "未找到对应代理人。",
+    "role-gallery.text_f8522e0bb9": "已删除角色图 ID {value1}。",
+    "shiyu-card.text_084b42f6e9": "二",
+    "shiyu-card.text_1075497db9": "式舆防卫战 · 本期个人战绩",
+    "shiyu-card.text_144394dc83": "式舆防卫战 · 上期个人战绩",
+    "shiyu-card.text_145219e726": "隐藏",
+    "shiyu-card.text_29577cdb93": "队伍{value1}",
+    "shiyu-card.text_36a0838b7a": "通关时间：{challengeTime}",
+    "shiyu-card.text_46ca86da52": "暂无记录",
+    "shiyu-card.text_4e1449e7d5": "显示",
+    "shiyu-card.text_51a75f4634": "一",
+    "shiyu-card.text_754a9d5828": "四",
+    "shiyu-card.text_8222f5440b": "总通关时长：{value1}",
+    "shiyu-card.text_9f28482a09": "剧变节点第{value1}防线",
+    "shiyu-card.text_a4c3313deb": "三",
+    "shiyu-card.text_bb1aebf777": "统计周期 {cycle}",
+    "shiyu-card.text_c9b87f516a": "五",
+    "shiyu-card.text_d1ead74edd": "增益：—",
+    "shiyu-card.text_d23d0c445b": "通关时间：{value1}",
+    "shiyu-card.text_e6bc2686a5": "本群式舆防卫战排名：{value1}，可用 %显示深渊排名 或 %隐藏深渊排名 切换",
+    "shiyu-card.text_e75b3723fe": "增益：{buff}",
+    "skills-card.text_3b89502eed": "闪避",
+    "skills-card.text_833d247560": "数据来源于 Nanoka",
+    "skills-card.text_c601aa644a": "连携技",
+    "skills-card.text_d54bf7cccf": "详细属性",
+    "skills-card.text_d90c73f75a": "普通攻击",
+    "skills-card.text_f1739fc27c": "核心技",
+    "skills-card.text_f3a96442e9": "支援技",
+    "skills-card.text_fb6d88911b": "特殊技",
+    "skills-command.text_07359a0477": "绝区零技能暂时无法查看。",
+    "skills-command.text_2cbb80ffd2": "绝区零技能图超过当前会话的图片大小上限。",
+    "skills-command.text_36fcfe9b7c": "{name}的指定等级技能资料不完整。",
+    "skills-command.text_98c70549e8": "未找到{name}的技能资料。",
+    "skills-command.text_cfd049d3f5": "{name}技能 · {length} 页",
+    "skills-command.text_f11a55782f": "{name}的原始技能记录无法核验。",
+    "skills-data.text_3b89502eed": "闪避",
+    "skills-data.text_85ebf039c1": "强化特殊技",
+    "skills-data.text_a985bc32b7": "终结技",
+    "skills-data.text_c601aa644a": "连携技",
+    "skills-data.text_c74ede8277": "闪避反击",
+    "skills-data.text_d90c73f75a": "普通攻击",
+    "skills-data.text_f1739fc27c": "核心技",
+    "skills-data.text_f3a96442e9": "支援技",
+    "skills-data.text_fb6d88911b": "特殊技",
+    "tuning-detail-card.text_272186f4a8": "平均UP（估算）",
+    "tuning-detail-card.text_2b0bd98cfe": "绝区零调频的原版评级素材不可用。",
+    "tuning-detail-card.text_362f032062": "绝区零调频统计超出可渲染高度。",
+    "tuning-detail-card.text_3a196e5dc8": "{totalCount}抽",
+    "tuning-detail-card.text_497c85690c": "暂无数据",
+    "tuning-detail-card.text_4efe2edb6d": "绳匠",
+    "tuning-detail-card.text_544c6b4ace": "绝区零调频的原版图片不可用。",
+    "tuning-detail-card.text_642368cb90": "平均UP",
+    "tuning-detail-card.text_709e582f33": "绝区零调频的原版字体不可用。",
+    "tuning-detail-card.text_8eb7ac45a0": "平均出金",
+    "tuning-detail-card.text_a0b02900d1": "绝区零调频的原版主题目录不可用。",
+    "tuning-detail-card.text_a3b445efc4": "已",
+    "tuning-detail-card.text_af49bac102": "抽未出S级",
+    "tuning-detail-card.text_b873026a86": "绝区零调频统计超过当前会话的图片大小上限。",
+    "tuning-detail-card.text_da4e58bb5e": "调频统计缩放须在 1 至 4 之间。",
+    "tuning-detail-card.text_f755d1c268": "不歪率",
+    "tuning-detail-card.text_f9275d770d": "不歪率（估算）",
+    "tuning-detail-card.text_fe61382ff1": "抽卡总数",
+    "tuning-detail.text_0c56f6bb3a": "档案 {profileId}（UID: {uid}）",
+    "tuning-detail.text_1038ca6f98": "平稳保底",
+    "tuning-detail.text_241bb2544c": "菲林",
+    "tuning-detail.text_33010258e7": "还没有抽卡",
+    "tuning-detail.text_364a5e6ba2": "邦布券",
+    "tuning-detail.text_3b0c768385": "小欧一把",
+    "tuning-detail.text_449e4419c0": "运气不好",
+    "tuning-detail.text_5bcc7f70c8": "菲林底片",
+    "tuning-detail.text_5db4e1eabf": "暂无 S 级记录",
+    "tuning-detail.text_7a5b6bef58": "{value1} ～ {value2}（S级）",
+    "tuning-detail.text_8d4011aa6a": "非到极致",
+    "tuning-detail.text_afb3a703d5": "原装母带",
+    "tuning-detail.text_da24b5ced4": "绝区零调频详情缺少频段。",
+    "tuning-detail.text_e3ead1a16b": "欧狗在此",
+    "tuning-detail.text_e637c84359": "加密母带",
+    "tuning-detail.text_ee3c447086": "当前库存：",
+    "tuning-history.text_011ff1d948": "物品类型",
+    "tuning-history.text_02c986c5e9": "期次开始时间",
+    "tuning-history.text_07c7462827": "期次结束时间",
+    "tuning-history.text_0ece15300d": "物品稀有度",
+    "tuning-history.text_0f1889a8e5": "{name} S 级明细",
+    "tuning-history.text_16d9466677": "总览抽数",
+    "tuning-history.text_1ccdb6588f": "档案编号",
+    "tuning-history.text_1d02f53e72": "记录期次",
+    "tuning-history.text_1d60354370": "角色 UID 或分区",
+    "tuning-history.text_1e7421ad04": "S 级记录",
+    "tuning-history.text_23993de6f6": "{name} S 级明细与官方汇总",
+    "tuning-history.text_29c70a8821": "保底剩余抽数",
+    "tuning-history.text_32e486ab14": "绝区零调频快照的{field}无效。",
+    "tuning-history.text_36fca5315f": "新数据",
+    "tuning-history.text_3b37e149fe": "五星间隔",
+    "tuning-history.text_3f60ea75b3": "六个频段",
+    "tuning-history.text_3fc0e85fe6": "物品编号",
+    "tuning-history.text_483eede868": "物品与期次的归属",
+    "tuning-history.text_4a703a03f5": "期次",
+    "tuning-history.text_4e121e3de2": "UP 次数",
+    "tuning-history.text_572c2fcc75": "总览 S 级数量",
+    "tuning-history.text_5c03c34bfa": "频段",
+    "tuning-history.text_5dd4a8a52c": "UP 标记",
+    "tuning-history.text_60d3f60780": "左侧期次结束时间",
+    "tuning-history.text_631e702967": "记录时间",
+    "tuning-history.text_6ca019d1c0": "记录排序",
+    "tuning-history.text_77b1d61bd6": "频段名称",
+    "tuning-history.text_780c5fd5b1": "库存",
+    "tuning-history.text_7a68830642": "内容",
+    "tuning-history.text_875a6c08f0": "绝区零调频快照与当前档案编号不一致。",
+    "tuning-history.text_8921b8bc15": "{name}期次列表",
+    "tuning-history.text_8c48dc0277": "UP 标签",
+    "tuning-history.text_98b04f00fe": "格式版本",
+    "tuning-history.text_9bf843218e": "频段列表",
+    "tuning-history.text_9e7d2e8ec8": "期次物品",
+    "tuning-history.text_a2442bb1af": "当前垫抽",
+    "tuning-history.text_b411fd04a9": "物品名称",
+    "tuning-history.text_b44f467aca": "频段编号",
+    "tuning-history.text_c3237c0f25": "期次编号",
+    "tuning-history.text_ce53d985a1": "{name} S 级数量",
+    "tuning-history.text_cfffef761a": "绝区零调频快照与当前角色 UID 或分区不一致。",
+    "tuning-history.text_d532ea4ce7": "左侧期次开始时间",
+    "tuning-history.text_d6433d40b2": "{name}总抽数",
+    "tuning-history.text_d8ba4ad88a": "期次 S 级明细",
+    "tuning-history.text_e531643f63": "物品图标",
+    "tuning-history.text_e9f64f95d0": "当前期次",
+    "tuning-history.text_edd82d3949": "UP 平均抽数",
+    "tuning-history.text_ee43021d57": "较早的绝区零调频快照无法覆盖已保存的较新快照。",
+    "tuning-history.text_f0f609f1e2": "保存时间",
+    "tuning-history.text_f4c41b2bb1": "期次状态",
+    "tuning-history.text_fb5f4a3577": "库存数量",
+    "tuning-history.text_fd0e88d7b5": "全频段官方总账",
+    "tuning-inventory-card.text_0f50d2928e": "等级：",
+    "tuning-inventory-card.text_231e8863ee": "绳",
+    "tuning-inventory-card.text_241bb2544c": "菲林",
+    "tuning-inventory-card.text_364a5e6ba2": "邦布券",
+    "tuning-inventory-card.text_4d8c1c5b42": "未知",
+    "tuning-inventory-card.text_5bcc7f70c8": "菲林底片",
+    "tuning-inventory-card.text_afb3a703d5": "原装母带",
+    "tuning-inventory-card.text_b1110352c9": "绝区零",
+    "tuning-inventory-card.text_c9f36e703d": "昵称：",
+    "tuning-inventory-card.text_e637c84359": "加密母带",
+    "tuning-inventory-command.text_1397b2ffaf": "档案 {profileId} · UID {uid}",
+    "tuning-inventory-command.text_367fe81399": "绝区零调频库存",
+    "tuning-inventory-command.text_3dd62228d2": "档案编号须在 1 到 255 之间。",
+    "tuning-inventory-command.text_6c985534ba": "发送 #母带、#绝区零存货 或 %母带2 查询自己的实时调频库存。",
+    "tuning-inventory-command.text_70768e9155": "绝区零档案已变化，请重新查询调频库存。",
+    "tuning-inventory-command.text_76720712c8": "请先登录档案 {profileId}。",
+    "tuning-inventory-command.text_959fa848a6": "米游社未返回该角色的实时调频库存。",
+    "tuning-inventory-command.text_b4eff6df29": "绝区零调频库存暂时无法查询。",
+    "tuning-inventory-command.text_c04ba77a99": "读取调频库存过于频繁，请稍后再试。",
+    "tuning-inventory-command.text_c088f123b0": "请从自己的已连接 QQ 会话查询绝区零调频库存。",
+    "tuning-inventory-command.text_eed183658b": "只能查询自己选中的绝区零档案。",
+    "tuning-inventory-command.text_f4a9dc8367": "档案 {profileId} 未选中已认证的绝区零 UID。",
+    "tuning-profile.text_17af6f3e46": "绝区零官方调频需要当前档案的有效登录账号，请重新登录。",
+    "tuning-result-card.text_2abe38ab62": "绝区零抽卡记录更新失败。",
+    "tuning-result-card.text_3f341e6635": "访问过于频繁。",
+    "tuning-result-card.text_45f501d999": "官方服务暂时不可用。",
+    "tuning-result-card.text_7a351db5c1": "QQ {qq} · 档案 {profileId}\n{value3}",
+    "tuning-result-card.text_8efe873b92": "绝区零抽卡记录",
+    "tuning-result-card.text_aef566e1e7": "网络连接失败。",
+    "tuning-result-card.text_be8582ff79": "卡池：无新增记录",
+    "tuning-result-card.text_dc7677bc1d": "{name}：共 {totalDraws} 抽 · S 级 {total}（新增 {added}）· 当前垫 {value5}",
+    "tuning-result-card.text_e747eddef9": "QQ {qq} · 档案 {profileId} · UID {uid}",
+    "tuning-result-card.text_e77f1910c7": "档案已变更，请重新更新抽卡记录。",
+    "tuning-sync.text_0de5760ae7": "保存绝区零调频历史时档案已变更，请重新发起请求。",
+    "tuning-sync.text_1142b81c02": "两处绝区零旧调频汇总内容冲突。",
+    "tuning-sync.text_239befcbb1": "绝区零旧调频汇总",
+    "tuning-sync.text_30ed134dfa": "绝区零调频快照与请求角色不一致。",
+    "tuning-sync.text_43a385001a": "绝区零调频历史",
+    "tuning-sync.text_8ab3d9e0c7": "绝区零调频历史已更新，请重新发起请求。",
+    "void-front-card.text_089bce08ee": "子关",
+    "void-front-card.text_145219e726": "隐藏",
+    "void-front-card.text_231e8863ee": "绳",
+    "void-front-card.text_379b38e2e5": "得分倍率：{value1}",
+    "void-front-card.text_3e191e7585": "排名未知",
+    "void-front-card.text_437e8e18d4": "%临界推演",
+    "void-front-card.text_442c37936d": "统计周期：{value1} ~ {value2}",
+    "void-front-card.text_4e1449e7d5": "显示",
+    "void-front-card.text_4efe2edb6d": "绳匠",
+    "void-front-card.text_98f91425aa": "%显示/隐藏推演排名",
+    "void-front-card.text_99534f0824": "当前临界推演排名状态：{value1}，可通过",
+    "void-front-card.text_cbdbb0a566": "结束未知",
+    "void-front-card.text_d0697ab3cf": "起始未知",
+    "void-front-card.text_d23d0c445b": "通关时间：{value1}",
+    "void-front-card.text_e7135a7feb": "请在群内查询",
+    "void-front-card.text_e9a4798f8e": "关卡 {value1}",
+    "void-front-card.text_ed947dac84": "，以参与对应群的临界推演排名",
+    "void-front-card.text_eff514b8b8": "切换",
+    "void-front-card.text_f68f7ec0a7": "最终关",
+    "zenkov-card.text_008e539a00": "珍品图鉴",
+    "zenkov-card.text_05a2a8504c": "下一页 {command} 页 {value2}",
+    "zenkov-card.text_0a991a8e6c": "迷宫诡域",
+    "zenkov-card.text_133fdb2ff0": "勋章墙",
+    "zenkov-card.text_29784f10dd": "本赛季最高排名",
+    "zenkov-card.text_2affa47f29": "{value1} · {value2} · 累计带出 {value3}",
+    "zenkov-card.text_2f718c2d22": "另有 {value1} 张地图",
+    "zenkov-card.text_308d62ba23": "未解锁",
+    "zenkov-card.text_3714bab865": "赛季委托未解锁",
+    "zenkov-card.text_39e129ae70": "迷宫诡域战绩",
+    "zenkov-card.text_3ccf734617": "阶段{value1}",
+    "zenkov-card.text_41ab2e0ecb": "地图",
+    "zenkov-card.text_4298212e3f": "第{value1}赛季委托",
+    "zenkov-card.text_4dc648b440": "另有 {hiddenLoot} 项",
+    "zenkov-card.text_543f2d3c25": "获取上限",
+    "zenkov-card.text_5cc9dc86ae": "本赛季最高排名：",
+    "zenkov-card.text_6013118dbf": "收藏展示 {value1}",
+    "zenkov-card.text_63c4ff4f1e": "{days}天",
+    "zenkov-card.text_670575b685": "撤离率",
+    "zenkov-card.text_69d17d5308": "暂无地图记录",
+    "zenkov-card.text_7682e042ee": "探索记录 {firstPage} / {pageCount}",
+    "zenkov-card.text_7fe3cd3e40": "撤离成功",
+    "zenkov-card.text_83c0de6903": "暂无探索记录",
+    "zenkov-card.text_873b1e10a9": "赛季委托",
+    "zenkov-card.text_8d9f2691de": "最高带出",
+    "zenkov-card.text_90ca1f28a7": "阶段 {value1} · 委托 {value2} · 获取上限 {value3}",
+    "zenkov-card.text_952f1ba039": "{value1}天{value2}时",
+    "zenkov-card.text_964dc6eedf": "地图-高危模式",
+    "zenkov-card.text_9805f5c158": "收藏展示",
+    "zenkov-card.text_9815726067": "赛季等级",
+    "zenkov-card.text_a4ccc0a299": "调查收获",
+    "zenkov-card.text_a500b5268a": "另有 {hiddenMaps} 张地图",
+    "zenkov-card.text_ad283677f7": "百万撤离次数",
+    "zenkov-card.text_adb2e9fbe0": "周常委托",
+    "zenkov-card.text_b9467cfb61": "最高排名",
+    "zenkov-card.text_bb174407bd": "第 {value1} 赛季 · 等级 {value2} · 剩余 {value3}",
+    "zenkov-card.text_c01e38da06": "Z级贵重物品获取次数",
+    "zenkov-card.text_c11255961c": "本赛季最高排名 {value1}",
+    "zenkov-card.text_c8d92ba124": "累计带出",
+    "zenkov-card.text_ca88e64e61": "另有 {hiddenItems} 项",
+    "zenkov-card.text_deff9fcd12": "本周剩余时间：{value1}",
+    "zenkov-card.text_df436f2c38": "周常委托 · 剩余 {value1}",
+    "zenkov-card.text_e1c16b94a0": "撤离失败",
+    "zenkov-card.text_ed413f2c05": "探索记录 · 共 {totalRecords} 场",
+    "zenkov-card.text_f56dc77490": "探索时长 {value1}",
+    "zenkov-card.text_f63cc5db09": "勋章墙 {value1}",
+    "zenkov-card.text_f81ff55de1": "进度",
+    "zenkov-card.text_fd0694b6d0": "撤离结果未知",
+    "card-theme.text_0ddf78c06d": "Lotus-Yunzai · ZZZ"
+  },
+  "parameters": {
+    "challenge-rank-card.text_85b772fa7e": {
+      "value1": "rankLabels[mode]"
+    },
+    "challenge-rank-card.text_80aa1820d6": {
+      "tie": "tie"
+    },
+    "challenge-rank-model.text_3bd7c85c4e": {
+      "deadly": "deadly",
+      "value2": "deadly"
+    },
+    "challenge-rank.text_7ff656ddba": {
+      "value1": "rankLabels[ownedType]"
+    },
+    "challenge-rank.text_b09172acbf": {
+      "uid": "role.uid",
+      "value2": "command.types.map(type => rankLabels[type]).join(\"、\")",
+      "value3": "command.enabled ? \"显示\" : \"隐藏\""
+    },
+    "challenge-rank.text_13c5673406": {
+      "name": "name"
+    },
+    "challenge-rank.text_3b5f19a85b": {
+      "season": "season",
+      "value2": "season"
+    },
+    "challenge-rank.text_2bdf276b7b": {
+      "name": "name",
+      "include": "include",
+      "value3": "include"
+    },
+    "challenge-rank.text_75328387da": {
+      "name": "name"
+    },
+    "challenge-rank.text_4933ee76a2": {
+      "member": "member",
+      "bonus": "row.bonus",
+      "value3": "holoBossDuration(row.score)",
+      "undamaged": "row.holo.undamaged"
+    },
+    "challenge-rank.text_60ff550fcf": {
+      "score": "row.score"
+    },
+    "challenge-rank.text_d1c41e0dde": {
+      "layer": "row.tower.layer"
+    },
+    "challenge-rank.text_7fc38da62a": {
+      "noDamage": "row.tower.noDamage"
+    },
+    "challenge-reminder-runtime.text_6e20127c91": {
+      "text": "text"
+    },
+    "challenge-reminder-store.text_603abac298": {
+      "minute": "minute"
+    },
+    "challenge-reminder-store.text_13f9d6888b": {
+      "value1": "match[1]",
+      "hour": "hour",
+      "value3": "minute ? `${minute}分` : \"\""
+    },
+    "challenge-reminder.text_c1d6fc7537": {
+      "value1": "Math.min(abyssCheckLevel, 5)",
+      "value2": "abyssCheckLevel === 6 ? \"或第五层<S+评价\" : \"\""
+    },
+    "challenge-reminder.text_f5c193154e": {
+      "deadlyStars": "deadlyStars"
+    },
+    "challenge-reminder.text_0a989797d0": {
+      "remindTime": "remindTime",
+      "abyss": "abyss",
+      "deadly": "deadly"
+    },
+    "challenge-reminder.text_001e45cbfe": {
+      "value1": "day(period.start)",
+      "value2": "day(period.end)"
+    },
+    "challenge-reminder.text_86182928fc": {
+      "value1": "Math.floor(hours / 24)",
+      "value2": "hours % 24"
+    },
+    "challenge-reminder.text_fd669be8ec": {
+      "name": "name"
+    },
+    "challenge-reminder.text_e48e8362c8": {
+      "value1": "count ?? \"—\"",
+      "value2": "passed ? \" ✓\" : \"\""
+    },
+    "challenge-reminder.text_2b69096fc4": {
+      "value1": "fifth ?? \"无\"",
+      "value2": "passed && target === 6 ? \" ✓\" : \"\""
+    },
+    "challenge-reminder.text_5083419aa5": {
+      "value1": "stars ?? \"—\"",
+      "value2": "passed ? \" ✓\" : \"\""
+    },
+    "challenge-reminder.text_26fbdacd22": {
+      "remindTime": "global.remindTime"
+    },
+    "challenge-reminder.text_3a13d8e8df": {
+      "remindTime": "user.remindTime"
+    },
+    "challenge-reminder.text_5cf51970d0": {
+      "remindTime": "global.remindTime"
+    },
+    "challenge-reminder.text_6721358145": {
+      "value1": "summary(effectiveChallengeReminder(global, user))"
+    },
+    "challenge-reminder.text_01d829ecc1": {
+      "time": "time",
+      "value2": "user.enable ? `开启\\n${summary(effectiveChallengeReminder(global, user))}` : \"关闭\""
+    },
+    "challenge-reminder.text_44a4b3c65d": {
+      "value1": "command.enabled ? \"启用\" : \"禁用\""
+    },
+    "challenge-reminder.text_d94391dc68": {
+      "value1": "summary(effectiveChallengeReminder(global, changed))"
+    },
+    "challenge-reminder.text_c13b40d772": {
+      "value1": "command.enabled ? `开启，${summary(effectiveChallengeReminder(global, changed))}` : \"关闭\""
+    },
+    "challenge-reminder.text_ca0faafcf5": {
+      "value1": "shiyu ? \"防卫战\" : \"危局\"",
+      "max": "max"
+    },
+    "challenge-reminder.text_3a49cc2d72": {
+      "value1": "command.global ? \"全局默认\" : \"\"",
+      "value2": "shiyu ? \"式舆防卫战\" : \"危局强袭战\""
+    },
+    "challenge-reminder.text_307bd805d6": {
+      "value1": "Math.min(5, command.value)",
+      "value2": "command.value === 6 ? \"或第五层<S+评价\" : \"\""
+    },
+    "challenge-reminder.text_e06b50e03d": {
+      "value": "command.value"
+    },
+    "challenge-reminder.text_6ebd073589": {
+      "threshold": "threshold"
+    },
+    "challenge-reminder.text_69ea8e3e98": {
+      "time": "parsed.time"
+    },
+    "challenge-reminder.text_b0db9143c5": {
+      "time": "parsed.time"
+    },
+    "cinema.text_1a921c3bf2": {
+      "query": "query"
+    },
+    "cinema.text_a75604690b": {
+      "name": "entry.name"
+    },
+    "cinema.text_cf5e650758": {
+      "name": "entry.name"
+    },
+    "climbing-tower-card.text_ab6a049061": {
+      "value1": "visibility.map((value, index) => `S${index + 1} ${state(value)}`).join(\" · \")"
+    },
+    "climbing-tower-rank-card.text_567826bb8d": {
+      "title": "title"
+    },
+    "climbing-tower-rank-card.text_911a055379": {
+      "title": "title"
+    },
+    "climbing-tower-rank-card.text_42f40f9c32": {
+      "season": "season"
+    },
+    "climbing-tower-rank-card.text_cb2a958115": {
+      "season": "season",
+      "value2": "season",
+      "order": "order"
+    },
+    "current-pool.text_ca82da30bc": {
+      "title": "period.title",
+      "time": "period.time",
+      "remaining": "remaining"
+    },
+    "current-pool.text_d1c77ada3a": {
+      "value1": "kind === \"代理人\" ? \"角色\" : kind"
+    },
+    "deadly-card.text_26bc3e21d1": {
+      "value1": "room.clearedAt ? dateLabel(room.clearedAt) : \"—\""
+    },
+    "deadly-card.text_e9438ab79d": {
+      "value1": "period ? `${dateLabel(period.start.slice(0, 10))} - ${dateLabel(period.end.slice(0, 10))}` : \"暂无记录\""
+    },
+    "deadly-card.text_6322133b5c": {
+      "value1": "options.rankVisibility ? \"显示\" : \"隐藏\""
+    },
+    "enka-showcase.text_ad7fcbfa9b": {
+      "reason": "reason",
+      "value2": "Math.max(1, Math.ceil(seconds))"
+    },
+    "exploration-card.text_05a2a8504c": {
+      "command": "command",
+      "value2": "snapshot.page + 1"
+    },
+    "exploration-card.text_53f6a935c5": {
+      "page": "snapshot.page",
+      "pageCount": "snapshot.pageCount"
+    },
+    "gacha-legacy.text_c0a01888f2": {
+      "field": "field"
+    },
+    "gacha-link-session.text_76720712c8": {
+      "profileId": "profileId"
+    },
+    "gacha-link-session.text_4ea60872c8": {
+      "profileId": "profileId"
+    },
+    "gacha-link-session.text_04a02a3f55": {
+      "alias": "alias"
+    },
+    "game-record-card.text_d4813d01f4": {
+      "level": "item.level"
+    },
+    "hollow-zero-card.text_c438f4deb2": {
+      "value1": "data?.name || \"—\"",
+      "value2": "data?.heat ?? \"—\""
+    },
+    "holo-boss-card.text_e9438ab79d": {
+      "value1": "period ? `${format(period.start)} - ${format(period.end)}` : \"—\""
+    },
+    "holo-boss-card.text_d4896d0ba5": {
+      "status": "status"
+    },
+    "index.text_1ad19c8a98": {
+      "name": "name",
+      "value2": "added[type]",
+      "value3": "records.find((pool) => pool.type === type)?.records.length ?? 0"
+    },
+    "index.text_87a81e8170": {
+      "value1": "zzzCommandProfileSuffix(profileId)"
+    },
+    "index.text_32cdf01bcc": {
+      "command": "command"
+    },
+    "index.text_318d0fed8b": {
+      "subject": "subject"
+    },
+    "index.text_c26b33d678": {
+      "value1": "\"avatars\" in record ? zzzGameRecordText(record) : zzzOwnedBuddyText(record)"
+    },
+    "index.text_f4a9dc8367": {
+      "profileId": "profileId"
+    },
+    "index.text_47f3e3964b": {
+      "profileId": "profileId"
+    },
+    "index.text_76720712c8": {
+      "profileId": "profileId"
+    },
+    "index.text_acbd9b9ebe": {
+      "subject": "subject"
+    },
+    "index.text_10d85181ae": {
+      "value1": "zzzCommandProfileSuffix(profileId)"
+    },
+    "index.text_1abb50bdb0": {
+      "pageCount": "record.pageCount",
+      "command": "command",
+      "value3": "record.pageCount"
+    },
+    "index.text_69c07d5803": {
+      "length": "nodes.length",
+      "value2": "followUp ? `\\n${followUp}` : \"\""
+    },
+    "index.text_e1cc153c64": {
+      "value1": "zzzCommandProfileSuffix(profileId)"
+    },
+    "index.text_c6e8269745": {
+      "pageCount": "record.pageCount",
+      "command": "command",
+      "value3": "record.pageCount"
+    },
+    "index.text_86b48550a7": {
+      "text": "text"
+    },
+    "index.text_2d43673910": {
+      "length": "nodes.length"
+    },
+    "index.text_20072b851c": {
+      "name": "name"
+    },
+    "index.text_91fdc991b5": {
+      "period": "period",
+      "name": "name"
+    },
+    "index.text_450b8c5716": {
+      "name": "name"
+    },
+    "index.text_028f2c565d": {
+      "period": "period",
+      "name": "name"
+    },
+    "index.text_71a331d410": {
+      "name": "name"
+    },
+    "index.text_422aa73408": {
+      "value1": "snapshot.totalScore ?? \"—\""
+    },
+    "index.text_4fbd96a211": {
+      "value1": "holoBossDuration(snapshot.totalDuration)",
+      "value2": "snapshot.totalStars ?? \"—\"",
+      "undamaged": "snapshot.undamaged"
+    },
+    "index.text_59faa7ffd6": {
+      "value1": "boss.name ?? \"首领\"",
+      "value2": "holoBossDuration(boss.duration)",
+      "value3": "boss.stars ?? \"—\"",
+      "value4": "boss.undamaged ? \" · 无伤\" : \"\""
+    },
+    "index.text_841c31ef32": {
+      "period": "period"
+    },
+    "index.text_94f5c06650": {
+      "totalScore": "snapshot.totalScore"
+    },
+    "index.text_c6eac1ddc3": {
+      "totalStars": "snapshot.totalStars"
+    },
+    "index.text_22ca39a135": {
+      "value1": "room.name ?? \"首领\"",
+      "value2": "room.score ?? \"—\""
+    },
+    "index.text_4e10d31e79": {
+      "value1": "room.name ?? \"首领\"",
+      "value2": "room.score ?? \"—\""
+    },
+    "index.text_d90ec91ae9": {
+      "period": "period"
+    },
+    "index.text_f8227398b3": {
+      "score": "score",
+      "value2": "rating ? ` · ${rating}` : \"\""
+    },
+    "index.text_0c53b24fef": {
+      "number": "layer.number",
+      "length": "layer.teams.length",
+      "value3": "layer.rating ? ` · ${layer.rating}` : \"\""
+    },
+    "index.text_a72f794b97": {
+      "name": "name"
+    },
+    "index.text_4ea60872c8": {
+      "profileId": "profileId"
+    },
+    "index.text_62a355e2fd": {
+      "value1": "zzzCommandProfileSuffix(profileId)",
+      "page": "page"
+    },
+    "index.text_48afbcd626": {
+      "profileId": "profileId"
+    },
+    "monthly-archive.text_648de7ec85": {
+      "subject": "subject"
+    },
+    "monthly-card.text_05a2a8504c": {
+      "command": "view.command",
+      "value2": "view.page + 1"
+    },
+    "monthly-card.text_61d4f3bdb6": {
+      "value1": "dateTitle(view)"
+    },
+    "monthly-card.text_ab237dda44": {
+      "service": "service"
+    },
+    "monthly-command.text_79ec8e7e87": {
+      "value1": "zzzCommandProfileSuffix(profileId)"
+    },
+    "monthly-command.text_502c241aee": {
+      "command": "command",
+      "page": "options.page"
+    },
+    "monthly-command.text_65d5ab8c31": {
+      "profileId": "profileId"
+    },
+    "monthly-command.text_5ead684d63": {
+      "profileId": "profileId"
+    },
+    "monthly-command.text_343a2a43a7": {
+      "last": "last",
+      "command": "command",
+      "value3": "last"
+    },
+    "monthly-command.text_3caf242584": {
+      "profileId": "profileId"
+    },
+    "monthly-model.text_c85dda8b58": {
+      "value1": "key.slice(0, 4)",
+      "value2": "Number(key.slice(-2))"
+    },
+    "owned-buddy-card.text_142e591ff1": {
+      "rank": "rank"
+    },
+    "panel-command.text_2a779b6c39": {
+      "uid": "role.uid"
+    },
+    "panel-command.text_16396605da": {
+      "uid": "role.uid"
+    },
+    "panel-command.text_d080e2be29": {
+      "name": "command.name"
+    },
+    "panel-command.text_3b7a008e6f": {
+      "name": "command.name"
+    },
+    "panel-command.text_58d3b20941": {
+      "name": "command.name"
+    },
+    "panel-command.text_465b7453fa": {
+      "length": "saved.length"
+    },
+    "panel-command.text_00b8cd9c3d": {
+      "value1": "selected.missing.map(name => `【${name}】`).join(\"\")"
+    },
+    "panel-command.text_a24961be0f": {
+      "value1": "command.names.join(\"、\")"
+    },
+    "panel-command.text_7adbf8ad9f": {
+      "size": "updatedIds.size"
+    },
+    "panel-command.text_76720712c8": {
+      "profileId": "profileId"
+    },
+    "panel-command.text_4ea60872c8": {
+      "profileId": "profileId"
+    },
+    "panel-damage-card.text_d80d2c5223": {
+      "suffix": "suffix"
+    },
+    "panel-damage-card.text_6dc6a2c598": {
+      "name": "name",
+      "value2": "skillIndex + 1",
+      "value3": "suffix ? ` 档案${suffix}` : \"\""
+    },
+    "panel-damage-card.text_9891f22d71": {
+      "level": "level"
+    },
+    "panel-damage-card.text_14fa51e9e3": {
+      "command": "command"
+    },
+    "panel-damage-card.text_e109dbfcd1": {
+      "name": "selected.skill.name"
+    },
+    "panel-damage-card.text_3c348b34e3": {
+      "name": "name"
+    },
+    "panel-damage-card.text_0b4e7db6b1": {
+      "skill": "skill"
+    },
+    "panel-detail-card.text_d4813d01f4": {
+      "level": "disc.level"
+    },
+    "panel-detail-card.text_3dcb981cfc": {
+      "value1": "score.total.toFixed(2)"
+    },
+    "panel-detail-card.text_6cf8b5c69a": {
+      "rule": "score.rule"
+    },
+    "panel-detail-card.text_75abb7f5de": {
+      "useful": "score.useful",
+      "value2": "score.effective.toFixed(2)"
+    },
+    "panel-detail-card.text_8701766fa1": {
+      "star": "weapon.star"
+    },
+    "panel-detail-card.text_a86d757b88": {
+      "profile": "profile"
+    },
+    "panel-detail-card.text_82e4ecaacc": {
+      "name": "name",
+      "value2": "profile === 1 ? \"\" : ` 档案${profile}`"
+    },
+    "panel-detail-card.text_74abea9708": {
+      "level": "level"
+    },
+    "panel-detail-card.text_cd63b65ea3": {
+      "skillCommand": "skillCommand"
+    },
+    "panel-detail-card.text_0b4e7db6b1": {
+      "skill": "skill"
+    },
+    "panel-interval-command.text_b960d43924": {
+      "roleInterval": "values.roleInterval"
+    },
+    "panel-list-card.text_80a0745d27": {
+      "length": "rows.length"
+    },
+    "panel-list-card.text_62d158342b": {
+      "size": "options.updatedIds.size"
+    },
+    "panel-list-card.text_ad62774c4b": {
+      "length": "rows.length"
+    },
+    "panel-rank-card.text_c091ad7c71": {
+      "uid": "row.uid",
+      "rank": "row.avatar.rank"
+    },
+    "panel-rank-card.text_626d751f37": {
+      "value1": "row.weapon.level ?? \"—\"",
+      "value2": "row.weapon.star ?? \"—\""
+    },
+    "panel-rank-card.text_2cb43eac24": {
+      "next": "options.next"
+    },
+    "panel-rank.text_3b488823cb": {
+      "uid": "viewer.uid"
+    },
+    "panel-rank.text_4baf68b300": {
+      "label": "label",
+      "value2": "command.international ? \"国际服\" : \"\"",
+      "profileId": "command.profileId"
+    },
+    "panel-rank.text_63ace66ab0": {
+      "value1": "results.length - missing - failed",
+      "missing": "missing",
+      "failed": "failed"
+    },
+    "panel-rank.text_6c424aa2fc": {
+      "overview": "overview"
+    },
+    "panel-rank.text_b6a3984d7d": {
+      "maxPage": "maxPage"
+    },
+    "panel-rank.text_a005ac788c": {
+      "name_mi18n": "strongest.avatar.name_mi18n",
+      "uid": "strongest.uid",
+      "value3": "strongest.drive.toFixed(2)"
+    },
+    "panel-rank.text_65394218f3": {
+      "example": "example",
+      "value2": "command.page + 1"
+    },
+    "panel-rank.text_0bcdffed52": {
+      "leader": "leader",
+      "overview": "overview"
+    },
+    "panel-rank.text_2cb43eac24": {
+      "next": "next"
+    },
+    "pool-history.text_0c97c23704": {
+      "rank": "request.rank",
+      "kind": "kind"
+    },
+    "pool-history.text_8f6813a539": {
+      "item": "row.item",
+      "value2": "String(row.days).padStart(3, \" \")"
+    },
+    "pool-history.text_e1e89d5874": {
+      "value1": "calendar(snapshot).slice(0, 10)",
+      "value2": "calendar(lastEnd).slice(0, 10)"
+    },
+    "pool-history.text_c80542283c": {
+      "title": "title"
+    },
+    "pool-history.text_c76cf8aff6": {
+      "value1": "calendar(rows.at(-1)!.end).slice(0, 10)"
+    },
+    "pool-history.text_212dc0c820": {
+      "version": "request.version",
+      "value2": "request.phase ?? \"\"",
+      "coverage": "coverage"
+    },
+    "pool-history.text_ad8c7ba357": {
+      "value1": "calendar(last).slice(0, 10)",
+      "value2": "Math.max(0, -delta)"
+    },
+    "pool-history.text_d7693df1b7": {
+      "value1": "-delta"
+    },
+    "pool-history.text_c613201f2a": {
+      "next": "next"
+    },
+    "pool-history.text_7ce659fe3f": {
+      "delta": "delta"
+    },
+    "pool-history.text_cd98cf1512": {
+      "value1": "delta ? `还有${delta}天` : \"今天\""
+    },
+    "pool-history.text_36e70d44f3": {
+      "version": "row.version"
+    },
+    "pool-history.text_404bad945d": {
+      "title": "row.title"
+    },
+    "pool-history.text_28e6eb5466": {
+      "headliner": "row.headliner"
+    },
+    "pool-history.text_f256dfa79d": {
+      "value1": "row.items.join(\"，\")"
+    },
+    "pool-history.text_9e6b4b8e54": {
+      "value1": "calendar(row.start)"
+    },
+    "pool-history.text_fa829d0387": {
+      "value1": "calendar(row.end)"
+    },
+    "pool-history.text_e817f4b6dc": {
+      "label": "label"
+    },
+    "pool-history.text_d7c5ca85c9": {
+      "label": "label",
+      "until": "until"
+    },
+    "pool-history.text_18677466e9": {
+      "display": "display",
+      "value2": "display === first.headliner ? \"S\" : \"A\"",
+      "kind": "kind"
+    },
+    "pool-history.text_517932d56c": {
+      "until": "until"
+    },
+    "proficiency-card.text_68b16e68e7": {
+      "rank": "avatar.rank"
+    },
+    "proficiency-card.text_9d86d2df73": {
+      "star": "weapon.star"
+    },
+    "recall-settings.text_29a1b7bb7b": {
+      "maxZzzRecallSeconds": "maxZzzRecallSeconds"
+    },
+    "recall-settings.text_0d86667f23": {
+      "next": "next"
+    },
+    "role-alias-command.text_197881ba6a": {
+      "name": "role.name",
+      "length": "list.length",
+      "value3": "list.join(\"、\")"
+    },
+    "role-alias-command.text_277e11e2e9": {
+      "name": "role.name"
+    },
+    "role-alias-command.text_721f893eab": {
+      "role": "configured[0]!.role",
+      "alias": "command.alias"
+    },
+    "role-alias-command.text_2a09470b5e": {
+      "alias": "command.alias"
+    },
+    "role-alias-command.text_6144c59d4c": {
+      "name": "role.name",
+      "alias": "command.alias"
+    },
+    "role-gallery.text_645777035d": {
+      "name": "role.name",
+      "added": "added",
+      "duplicates": "duplicates",
+      "value4": "images.length - added - duplicates"
+    },
+    "role-gallery.text_f8522e0bb9": {
+      "value1": "removed.join(\"、\")"
+    },
+    "role-gallery.text_b2f061c373": {
+      "value1": "missing.join(\"、\")"
+    },
+    "role-gallery.text_7dfe6501a8": {
+      "name": "role.name"
+    },
+    "role-gallery.text_25d7dcd198": {
+      "pages": "pages"
+    },
+    "role-gallery.text_61c6cc3bdf": {
+      "name": "role.name",
+      "page": "command.page",
+      "pages": "pages"
+    },
+    "role-gallery.text_79fcc39cf1": {
+      "id": "id"
+    },
+    "role-gallery.text_11d4132897": {
+      "title": "title",
+      "value2": "index + 1",
+      "length": "batches.length"
+    },
+    "role-gallery.text_eb833b8e8c": {
+      "value1": "index + 1"
+    },
+    "role-gallery.text_de79d52d9c": {
+      "value1": "index + 1"
+    },
+    "shiyu-card.text_29577cdb93": {
+      "value1": "numberWords[teamIndex]"
+    },
+    "shiyu-card.text_d23d0c445b": {
+      "value1": "team.challengeTime ?? \"—\""
+    },
+    "shiyu-card.text_e75b3723fe": {
+      "buff": "team.buff"
+    },
+    "shiyu-card.text_9f28482a09": {
+      "value1": "names[layer.number]"
+    },
+    "shiyu-card.text_36a0838b7a": {
+      "challengeTime": "layer.challengeTime"
+    },
+    "shiyu-card.text_8222f5440b": {
+      "value1": "duration(summary.battleTime)"
+    },
+    "shiyu-card.text_bb1aebf777": {
+      "cycle": "cycle"
+    },
+    "shiyu-card.text_e6bc2686a5": {
+      "value1": "options.rankVisibility ? \"显示\" : \"隐藏\""
+    },
+    "skills-command.text_98c70549e8": {
+      "name": "name"
+    },
+    "skills-command.text_f11a55782f": {
+      "name": "entry.name"
+    },
+    "skills-command.text_36fcfe9b7c": {
+      "name": "entry.name"
+    },
+    "skills-command.text_cfd049d3f5": {
+      "name": "entry.name",
+      "length": "images.length"
+    },
+    "tuning-detail-card.text_3a196e5dc8": {
+      "totalCount": "row.totalCount"
+    },
+    "tuning-detail.text_7a5b6bef58": {
+      "value1": "dates[0]",
+      "value2": "dates.at(-1)"
+    },
+    "tuning-detail.text_0c56f6bb3a": {
+      "profileId": "profileId",
+      "uid": "uid"
+    },
+    "tuning-history.text_32e486ab14": {
+      "field": "field"
+    },
+    "tuning-history.text_d6433d40b2": {
+      "name": "name"
+    },
+    "tuning-history.text_ce53d985a1": {
+      "name": "name"
+    },
+    "tuning-history.text_0f1889a8e5": {
+      "name": "name"
+    },
+    "tuning-history.text_8921b8bc15": {
+      "name": "name"
+    },
+    "tuning-history.text_23993de6f6": {
+      "name": "name"
+    },
+    "tuning-inventory-command.text_1397b2ffaf": {
+      "profileId": "profileId",
+      "uid": "uid"
+    },
+    "tuning-inventory-command.text_76720712c8": {
+      "profileId": "profileId"
+    },
+    "tuning-inventory-command.text_f4a9dc8367": {
+      "profileId": "profileId"
+    },
+    "tuning-result-card.text_e747eddef9": {
+      "qq": "qq",
+      "profileId": "profileId",
+      "uid": "uid"
+    },
+    "tuning-result-card.text_dc7677bc1d": {
+      "name": "name",
+      "totalDraws": "totalDraws",
+      "total": "total",
+      "added": "added",
+      "value5": "pity ?? \"—\""
+    },
+    "tuning-result-card.text_7a351db5c1": {
+      "qq": "qq",
+      "profileId": "profileId",
+      "value3": "failureMessages[reason]"
+    },
+    "void-front-card.text_379b38e2e5": {
+      "value1": "stage.ratio ?? \"—\""
+    },
+    "void-front-card.text_d23d0c445b": {
+      "value1": "stage.clearedAt ?? \"—\""
+    },
+    "void-front-card.text_99534f0824": {
+      "value1": "visibility ? \"显示\" : \"隐藏\""
+    },
+    "void-front-card.text_442c37936d": {
+      "value1": "snapshot.start ?? \"起始未知\"",
+      "value2": "snapshot.end ?? \"结束未知\""
+    },
+    "void-front-card.text_e9a4798f8e": {
+      "value1": "i + (snapshot.finalStage ? 0 : 1)"
+    },
+    "zenkov-card.text_05a2a8504c": {
+      "command": "command",
+      "value2": "snapshot.firstPage + renderedPages"
+    },
+    "zenkov-card.text_63c4ff4f1e": {
+      "days": "days"
+    },
+    "zenkov-card.text_952f1ba039": {
+      "value1": "String(days).padStart(2, \"0\")",
+      "value2": "String(Math.floor(seconds / 3600) % 24).padStart(2, \"0\")"
+    },
+    "zenkov-card.text_c11255961c": {
+      "value1": "rankText(snapshot.rank)"
+    },
+    "zenkov-card.text_2f718c2d22": {
+      "value1": "snapshot.maps.length + snapshot.hiddenMaps - 8"
+    },
+    "zenkov-card.text_2affa47f29": {
+      "value1": "outcome(row.success)",
+      "value2": "duration(row.seconds)",
+      "value3": "amount(row.value)"
+    },
+    "zenkov-card.text_7682e042ee": {
+      "firstPage": "snapshot.firstPage",
+      "pageCount": "snapshot.pageCount"
+    },
+    "zenkov-card.text_bb174407bd": {
+      "value1": "season?.id ?? \"—\"",
+      "value2": "season?.level ?? \"—\"",
+      "value3": "remaining(season?.remaining, false)"
+    },
+    "zenkov-card.text_90ca1f28a7": {
+      "value1": "season?.stage ?? \"—\"",
+      "value2": "progress(season?.quest)",
+      "value3": "progress(season?.coin)"
+    },
+    "zenkov-card.text_df436f2c38": {
+      "value1": "remaining(snapshot.weeklyRemaining, true)"
+    },
+    "zenkov-card.text_f63cc5db09": {
+      "value1": "progress(snapshot.medals)"
+    },
+    "zenkov-card.text_6013118dbf": {
+      "value1": "progress(snapshot.goods)"
+    },
+    "zenkov-card.text_a500b5268a": {
+      "hiddenMaps": "snapshot.hiddenMaps"
+    },
+    "zenkov-card.text_f56dc77490": {
+      "value1": "duration(run.seconds)"
+    },
+    "zenkov-card.text_4dc648b440": {
+      "hiddenLoot": "run.hiddenLoot"
+    },
+    "zenkov-card.text_ed413f2c05": {
+      "totalRecords": "snapshot.totalRecords"
+    },
+    "zenkov-card.text_3ccf734617": {
+      "value1": "season?.stage ?? \"—\""
+    },
+    "zenkov-card.text_4298212e3f": {
+      "value1": "season?.id ?? \"—\""
+    },
+    "zenkov-card.text_deff9fcd12": {
+      "value1": "remaining(snapshot.weeklyRemaining, true)"
+    },
+    "zenkov-card.text_ca88e64e61": {
+      "hiddenItems": "view.hiddenItems"
+    }
+  }
+}

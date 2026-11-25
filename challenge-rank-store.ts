@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { constants } from "node:fs";
 import { open, readFile, realpath } from "node:fs/promises";
@@ -28,7 +31,7 @@ async function readGeneration(redis: Redis, group: string, type: RankType): Prom
   if (type !== "ABYSS") return null;
   const value = await redis.get(generationKey(group));
   if (value == null) return null;
-  if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/u.test(value)) throw new Error("群榜代次无效");
+  if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/u.test(value)) throw new Error($t("challenge-rank-store.text_13fca932da"));
   return value;
 }
 
@@ -96,27 +99,27 @@ function object(value: unknown): Json | undefined {
 
 function configIds(input: unknown) {
   if (input === undefined || input === null) return new Set<string>();
-  if (!Array.isArray(input)) throw new Error("群榜列表无效");
+  if (!Array.isArray(input)) throw new Error($t("challenge-rank-store.text_01ae64e0b4"));
   const ids = input.map(idOf);
-  if (ids.some(id => !id)) throw new Error("群榜群号无效");
+  if (ids.some(id => !id)) throw new Error($t("challenge-rank-store.text_9fdba70e24"));
   return new Set(ids as string[]);
 }
 
 export function parseRankConfig(input: unknown, group: string, override?: boolean) {
   const record = input === undefined ? {} : object(input);
-  if (!record) throw new Error("群榜配置无效");
+  if (!record) throw new Error($t("challenge-rank-store.text_b7ec08a067"));
   const configured = record.allow_group ?? true;
-  if (typeof configured !== "boolean" && configured !== 0 && configured !== 1) throw new Error("群榜开关无效");
+  if (typeof configured !== "boolean" && configured !== 0 && configured !== 1) throw new Error($t("challenge-rank-store.text_40c99b87ba"));
   const enable = override ?? Boolean(configured);
   const listed = configIds(enable ? record.black_list : record.white_list).has(group);
   const maximum = Number(record.max_display ?? 15);
-  if (!Number.isInteger(maximum)) throw new Error("群榜显示数量无效");
+  if (!Number.isInteger(maximum)) throw new Error($t("challenge-rank-store.text_6c29616e67"));
   return { allowed: enable ? !listed : listed, maximum: Math.max(1, Math.min(15, maximum)) };
 }
 
 export async function readRankGroupSwitch() {
   const [stored, revision] = await globalThis.redis?.mGet([groupRankSwitch, groupRankSwitchRevision]) ?? [null, null];
-  if (stored != null && stored !== "0" && stored !== "1") throw new Error("群榜总开关无效");
+  if (stored != null && stored !== "0" && stored !== "1") throw new Error($t("challenge-rank-store.text_93881a3306"));
   return { value: stored == null ? undefined : stored === "1", stamp: stored == null ? null : `${stored}:${revision ?? ""}` };
 }
 
@@ -133,7 +136,7 @@ export async function readZzzRankConfigDocument(root = installation) {
     try {
       const document: unknown = Bun.YAML.parse(await readFile(path, "utf8"));
       const record = object(document);
-      if (document !== undefined && !record) throw new Error("群榜配置无效");
+      if (document !== undefined && !record) throw new Error($t("challenge-rank-store.text_b7ec08a067"));
       return record ?? {};
     } catch (error) {
       if (explicit || (error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
@@ -179,7 +182,7 @@ function parseProfile(raw: Json, qq: string, uid: string) {
   const level = typeof raw.level === "number" || typeof raw.level === "string" ? Number(raw.level) : undefined;
   const profileId = typeof raw.profileId === "number" && Number.isInteger(raw.profileId) &&
     raw.profileId > 0 && raw.profileId <= MAX_PROFILE_ID ? raw.profileId : undefined;
-  return { qq, profileId, uid, region, nickname: profileText(raw.nickname) || "绳匠",
+  return { qq, profileId, uid, region, nickname: profileText(raw.nickname) || $t("challenge-rank-store.text_4efe2edb6d"),
     level: typeof level === "number" && Number.isSafeInteger(level) && level >= 0 && level <= 999 ? level : undefined,
     regionName: profileText(raw.regionName ?? raw.region_name, 100),
   };

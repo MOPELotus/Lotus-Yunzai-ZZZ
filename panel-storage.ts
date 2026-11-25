@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { constants } from "node:fs";
 import { open, realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
@@ -22,14 +25,14 @@ export async function readPanelJson(directory: string, path: string, max = maxim
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   });
   if (!target) return;
-  if (!target.startsWith(root + sep)) throw new Error("绝区零面板文件超出数据目录。");
-  if (target !== expected) throw new Error("绝区零面板须读取原归属文件。");
+  if (!target.startsWith(root + sep)) throw new Error($t("panel-storage.text_0bff6bca4a"));
+  if (target !== expected) throw new Error($t("panel-storage.text_0a0b1f9769"));
   const file = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
     const info = await file.stat();
-    if (!info.isFile() || info.size < 1 || info.size > max) throw new Error("绝区零面板文件大小无效。");
+    if (!info.isFile() || info.size < 1 || info.size > max) throw new Error($t("panel-storage.text_e96d3588a3"));
     const bytes = await file.readFile("utf8");
-    if (Buffer.byteLength(bytes) > max) throw new Error("绝区零面板文件大小无效。");
+    if (Buffer.byteLength(bytes) > max) throw new Error($t("panel-storage.text_e96d3588a3"));
     return JSON.parse(bytes) as unknown;
   } finally {
     await file.close();
@@ -37,9 +40,9 @@ export async function readPanelJson(directory: string, path: string, max = maxim
 }
 
 export function decodeZzzPanelRows(value: unknown) {
-  if (!Array.isArray(value) || value.length > maximumZzzPanelRows) throw new Error("绝区零面板角色列表无效。");
+  if (!Array.isArray(value) || value.length > maximumZzzPanelRows) throw new Error($t("panel-storage.text_90f2579cb8"));
   const rows = value.map(normalizeZzzPanelAvatar);
-  if (new Set(rows.map(row => row.id)).size !== rows.length) throw new Error("绝区零面板角色编号重复。");
+  if (new Set(rows.map(row => row.id)).size !== rows.length) throw new Error($t("panel-storage.text_da62966ff4"));
   return rows;
 }
 
@@ -59,9 +62,9 @@ export function zzzPanelRegion(uid: string, region: string, gameBiz: string) {
 interface PanelIdentity { readonly qq: string; readonly uid: string; readonly region: string }
 function managedRows(value: unknown, identity: PanelIdentity) {
   if (value === null) return;
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("绝区零面板归档无效。");
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error($t("panel-storage.text_f0f90c3d12"));
   const data = value as Readonly<Record<string, unknown>>;
-  if (data.version !== 1 || data.uid !== identity.uid || data.region !== identity.region) throw new Error("绝区零面板归档身份不符。");
+  if (data.version !== 1 || data.uid !== identity.uid || data.region !== identity.region) throw new Error($t("panel-storage.text_be2b4ebf5c"));
   return decodeZzzPanelRows(data.avatars);
 }
 
@@ -72,9 +75,9 @@ export function createZzzPanelStorage(acquireLock: AcquireRoleArchiveLock, optio
   const legacy = options.legacy || Bun.env.LOTUS_ZZZ_LEGACY_DATA_DIR || legacyDirectory;
   const managed = options.managed || Bun.env.LOTUS_ZZZ_PANEL_DIR || managedDirectory;
   function archive(identity: PanelIdentity) {
-    if (zzzPanelRegion(identity.uid, identity.region, "") !== identity.region) throw new Error("绝区零面板归属不明。");
+    if (zzzPanelRegion(identity.uid, identity.region, "") !== identity.region) throw new Error($t("panel-storage.text_df50ee74d8"));
     return createRoleJsonArchive(join(managed, identity.region), acquireLock, {
-      subject: "绝区零面板", lockSuffix: "panel", maxBytes: maximumBytes, rejectNull: true,
+      subject: $t("panel-storage.text_ce4af56042"), lockSuffix: "panel", maxBytes: maximumBytes, rejectNull: true,
     });
   }
   async function oldRows({ uid, region }: PanelIdentity) {
@@ -88,7 +91,7 @@ export function createZzzPanelStorage(acquireLock: AcquireRoleArchiveLock, optio
       return managedRows(await archive(identity).read(identity.qq, identity.uid), identity) ?? await oldRows(identity);
     },
     async merge(identity: PanelIdentity, fresh: readonly ZzzPanelAvatar[], verify: () => Promise<void>) {
-      if (!fresh.length) throw new Error("绝区零面板没有新的角色资料。");
+      if (!fresh.length) throw new Error($t("panel-storage.text_03b2234074"));
       return archive(identity).update(identity, verify, async original => {
         const prior = managedRows(original, identity) ?? await oldRows(identity);
         const ids = new Set(fresh.map(row => row.id));
@@ -106,10 +109,10 @@ export function createZzzShowcaseStorage(acquireLock: AcquireRoleArchiveLock,
   directory = Bun.env.LOTUS_ZZZ_SHOWCASE_DIR || showcaseDirectory) {
   function archive(identity: PanelIdentity) {
     if (zzzPanelRegion(identity.uid, identity.region, "") !== identity.region) {
-      throw new Error("绝区零公开展柜归属不明。");
+      throw new Error($t("panel-storage.text_6e07a09a7d"));
     }
     return createRoleJsonArchive(join(directory, identity.region), acquireLock, {
-      subject: "绝区零公开展柜", lockSuffix: "showcase", maxBytes: maximumBytes, rejectNull: true,
+      subject: $t("panel-storage.text_b5ba4f7400"), lockSuffix: "showcase", maxBytes: maximumBytes, rejectNull: true,
     });
   }
   function snapshot(value: unknown, identity: PanelIdentity) {
@@ -117,7 +120,7 @@ export function createZzzShowcaseStorage(acquireLock: AcquireRoleArchiveLock,
     if (avatars === undefined) return;
     const observedAt = (value as { observedAt?: unknown }).observedAt;
     if (typeof observedAt !== "number" || !Number.isSafeInteger(observedAt) || observedAt < 1) {
-      throw new Error("绝区零公开展柜归档时间无效。");
+      throw new Error($t("panel-storage.text_e323aabbe5"));
     }
     return { avatars, observedAt };
   }

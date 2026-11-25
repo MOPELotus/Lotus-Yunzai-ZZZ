@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { basename, join } from "node:path";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { nativeImageRasterScale, renderPng } from "@lotus-yunzai/skia";
@@ -47,7 +50,7 @@ const propertyNames: Readonly<Record<string, string>> = {
   "贯穿力": "SheerForce", "锐暴伤害": "Laceration.svg",
   "闪能自动累积": "AdrenalineAccumulate.svg", "锐能自动累积": "SharpnessAccumulate.svg",
 };
-const skillNames = ["普攻", "闪避", "支援", "特殊", "连携", "核心"] as const;
+const skillNames = [$t("panel-detail-card.text_8b79df27ba"), $t("panel-detail-card.text_3b89502eed"), $t("panel-detail-card.text_9aa79fc650"), $t("panel-detail-card.text_c32b61e9bd"), $t("panel-detail-card.text_f269f5e2c8"), $t("panel-detail-card.text_a8a88ddbea")] as const;
 const propertyWeightIds: Readonly<Record<string, number>> = {
   "生命值": 11102, "攻击力": 12102, "防御力": 13102, "冲击力": 12202, "暴击率": 20103,
   "暴击伤害": 21103, "异常掌控": 31402, "异常精通": 31203, "穿透率": 23103, "能量自动回复": 30502,
@@ -207,8 +210,8 @@ function drawPanelProperties(context: Context, model: Detail, images: Images, sc
   const end = y + rowSizes.reduce((sum, size) => sum + size + 5.76, 0);
   box(context, "#262626", x, 102, w, Math.max(100, end - 102));
   box(context, "#000", x, 102, 3, Math.max(100, end - 102));
-  title(context, "属性", "PROPERTY", x + 4, 132, w - 6, true);
-  if (!model.properties.length) label(context, "暂无属性", x + w / 2, y + 26, 20, { color: muted, align: "center" });
+  title(context, $t("panel-detail-card.text_86de52d178"), "PROPERTY", x + 4, 132, w - 6, true);
+  if (!model.properties.length) label(context, $t("panel-detail-card.text_07b2ceaac1"), x + w / 2, y + 26, 20, { color: muted, align: "center" });
   for (const [index, stat] of model.properties.entries()) {
     const height = rowSizes[index]!;
     const middle = y + height / 2;
@@ -253,13 +256,13 @@ function drawDriveDisc(context: Context, art: Awaited<ReturnType<typeof loadPane
   }
   rarity(context, images, disc.rarity, x + 184, y + 7, 42);
   fillRound(context, "#000", x + 53, y + 13, 125, 29, 16);
-  label(context, disc.level === undefined ? "等级—" : `等级${disc.level}`, x + 116, y + 28, 18, { align: "center" });
+  label(context, disc.level === undefined ? $t("panel-detail-card.text_56c3216543") : $t("panel-detail-card.text_d4813d01f4", { "level": disc.level }), x + 116, y + 28, 18, { align: "center" });
   label(context, disc.name, x + 117, y + 67, 24, { align: "center", maxWidth: 224 });
   const scored = score?.discs[index];
   if (scored) {
     label(context, scored.grade, x + 105, y + 94, 22, { color: zzzScoreColors[scored.grade], align: "right" });
     label(context, scored.score.toFixed(2), x + 114, y + 95, 19, { color: "#c2c2c2" });
-  } else if (score) label(context, "未评分", x + 117, y + 95, 16, { align: "center", color: muted });
+  } else if (score) label(context, $t("panel-detail-card.text_f58e9a5870"), x + 117, y + 95, 16, { align: "center", color: muted });
   const stats = [...disc.main, ...disc.extra];
   stats.forEach((stat, row) => propertyLine(context, images, stat, x + 12, y + (score ? 127 : 102) + row * 29, 211, {
     alt: row % 2 === 1, main: row < disc.main.length, improvements: row >= disc.main.length,
@@ -276,8 +279,8 @@ function drawScoreSummary(context: Context, score: Score, y: number) {
   fillRound(context, "#24242491", x + 24, y + 31, 79, 79, 19, border);
   label(context, score.grade, x + 63, y + 71, 28, { align: "center", color: zzzScoreColors[score.grade] });
   fillRound(context, "#1118", x + 104, y + 48, 108, 44, 7, border);
-  label(context, `${score.total.toFixed(2)} 分`, x + 110, y + 70, 22, { maxWidth: 99, ellipsis: false });
-  label(context, `规则：${score.rule}`, x + gradeWidth / 2, y + 163, 19, { align: "center", color: "#aaa", maxWidth: 208 });
+  label(context, $t("panel-detail-card.text_3dcb981cfc", { "value1": score.total.toFixed(2) }), x + 110, y + 70, 22, { maxWidth: 99, ellipsis: false });
+  label(context, $t("panel-detail-card.text_6cf8b5c69a", { "rule": score.rule }), x + gradeWidth / 2, y + 163, 19, { align: "center", color: "#aaa", maxWidth: 208 });
   for (let index = 0; index < 9; index++) {
     const column = Math.floor(index / 3), row = index % 3;
     const left = x + gradeWidth + column * cellWidth;
@@ -292,7 +295,7 @@ function drawScoreSummary(context: Context, score: Score, y: number) {
     label(context, stat.name, left + 40, top + 21, 16, { color, maxWidth: 65 });
     label(context, `+${stat.value}`, left + cellWidth - 9, top + 21, 16, { align: "right", color, maxWidth: 67 });
   }
-  label(context, `有益词条数：${score.useful} 有效词条数：${score.effective.toFixed(2)}`,
+  label(context, $t("panel-detail-card.text_75abb7f5de", { "useful": score.useful, "value2": score.effective.toFixed(2) }),
     x + (width + gradeWidth) / 2, y + 163, 19, { align: "center", color: "#aaa", maxWidth: width - gradeWidth - 20 });
 }
 
@@ -307,7 +310,7 @@ function drawOriginalEngine(context: Context, model: Detail, art: Awaited<Return
   label(context, weapon.name, 502, y + 75, 27.65, { maxWidth: 295 });
   const stars = weapon.star === undefined ? undefined : images.get(`panel/images/star/${weapon.star}.png`);
   if (stars) cover(context, stars, 433, y + 102, 121.65, 33);
-  else if (weapon.star !== undefined) label(context, `改装 ${weapon.star}`, 433, y + 118, 19, { color: gold });
+  else if (weapon.star !== undefined) label(context, $t("panel-detail-card.text_8701766fa1", { "star": weapon.star }), 433, y + 118, 19, { color: gold });
   drawTag(context, "#f3cb45", 563, y + 105, 73, 27, 4);
   label(context, weapon.level === undefined ? "Lv.—" : `Lv.${weapon.level}`, 599.5, y + 118, 20, {
     color: "#2b2628", align: "center",
@@ -320,7 +323,7 @@ function drawEngine(context: Context, model: Detail, art: Awaited<ReturnType<typ
   const { images } = art, weapon = model.weapon;
   skin(context, images.get("panel/images/weapon_bg.png"), 416, y - 8, 419, 165);
   if (!weapon) {
-    label(context, "未装备音擎", 641, y + 63, 23, { align: "center", color: muted });
+    label(context, $t("panel-detail-card.text_f087564455"), 641, y + 63, 23, { align: "center", color: muted });
     return;
   }
   if (art.weapon) {
@@ -333,7 +336,7 @@ function drawEngine(context: Context, model: Detail, art: Awaited<ReturnType<typ
   label(context, weapon.name, 498, y + 26, 25, { weight: 700, maxWidth: 305 });
   const stars = weapon.star === undefined ? undefined : images.get(`panel/images/star/${weapon.star}.png`);
   if (stars) contain(context, stars, 464, y + 37, 94, 23);
-  else if (weapon.star !== undefined) label(context, `改装 ${weapon.star}`, 464, y + 50, 17, { color: gold });
+  else if (weapon.star !== undefined) label(context, $t("panel-detail-card.text_8701766fa1", { "star": weapon.star }), 464, y + 50, 17, { color: gold });
   label(context, weapon.level === undefined ? "Lv. —" : `Lv. ${weapon.level}`, 568, y + 50, 16);
   [...weapon.main, ...weapon.extra].slice(0, 4).forEach((stat, index) =>
     propertyLine(context, images, stat, 456, y + 74 + 22 * index, 225, { main: index < weapon.main.length }));
@@ -342,19 +345,19 @@ function drawEngine(context: Context, model: Detail, art: Awaited<ReturnType<typ
 function inlineDamageTables(summary: PanelDamageSummary, name: string, level: number, profile: number) {
   const amount = (value: number) => !Number.isFinite(value) ? "—" : value < 2 ? `${Math.round(value * 100)}%` :
     Number.isInteger(value) ? String(value) : value.toFixed(2);
-  const skillCommand = `%${name}伤害技能1${profile === 1 ? "" : ` 档案${profile}`}`;
+  const skillCommand = $t("panel-detail-card.text_82e4ecaacc", { "name": name, "value2": profile === 1 ? "" : $t("panel-detail-card.text_a86d757b88", { "profile": profile }) });
   return [
     ...(summary.buffs.length ? [{
-      rows: [["%", "增益名称", "增益类型", "增益数值"], ...summary.buffs.map(buff =>
+      rows: [["%", $t("panel-detail-card.text_6668db70f8"), $t("panel-detail-card.text_eb548fd7a1"), $t("panel-detail-card.text_8ae42630ca")], ...summary.buffs.map(buff =>
         ["-", buff.name, buff.type, amount(buff.value) + (buff.max ? `/${amount(buff.max)}` : "")])], notes: [],
     }] : []),
     ...(summary.skills.length ? [{
-      rows: [["%", "技能类型", "暴击伤害", "期望伤害"], ...summary.skills.map(({ skill, result }, index) =>
+      rows: [["%", $t("panel-detail-card.text_8b6a66bff7"), $t("panel-detail-card.text_15bccc3951"), $t("panel-detail-card.text_d5f4617e07")], ...summary.skills.map(({ skill, result }, index) =>
         [String(index + 1), skill.name, ...(result.critDMG === 0 ? [] : [result.critDMG.toFixed(0)]),
           result.expectDMG.toFixed(0)])],
-      notes: [`取有弱点、等级${level}、1级基础防御力50的敌方数据，不含失衡易伤区。`,
-        `发送 ${skillCommand} 查看指定技能的伤害详情。`,
-        ...summary.unavailableSkills.map(skill => `${skill}暂无原版计算结果。`)],
+      notes: [$t("panel-detail-card.text_74abea9708", { "level": level }),
+        $t("panel-detail-card.text_cd63b65ea3", { "skillCommand": skillCommand }),
+        ...summary.unavailableSkills.map(skill => $t("panel-detail-card.text_0b4e7db6b1", { "skill": skill }))],
     }] : []),
   ];
 }
@@ -368,7 +371,7 @@ function inlineTableHeight({ rows, notes }: InlineDamageTable) {
 }
 
 function drawInlineDamage(context: Context, tables: readonly InlineDamageTable[], gridBottom: number) {
-  title(context, "伤害统计", "DAMAGE", 0, gridBottom + 55, width);
+  title(context, $t("panel-detail-card.text_14480a16f5"), "DAMAGE", 0, gridBottom + 55, width);
   let y = gridBottom + 107;
   for (const table of tables) {
     const x = 29, w = width - x * 2, height = inlineTableHeight(table);
@@ -451,7 +454,7 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
     label(context, uidLabel, 12 + uidWidth / 2, 40, 24, { align: "center" });
     if (options.showcase) {
       fillRound(context, "#18171ddb", 22, 65, 170, 30, 11);
-      label(context, "Enka 公开展柜", 107, 80, 17, { align: "center", color: gold });
+      label(context, $t("panel-detail-card.text_5304f62a0d"), 107, 80, 17, { align: "center", color: gold });
     }
     skin(context, images.get("panel/images/CurseBG04.png"), 386, 19, 529, 83);
     rarity(context, images, avatar.rarity, 417, 30, 35, "RANK");
@@ -469,7 +472,7 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
     }
 
     if (damage) {
-      title(context, "属性", "PROPERTY", 452, 124, 348, true);
+      title(context, $t("panel-detail-card.text_86de52d178"), "PROPERTY", 452, 124, 348, true);
       for (const [index, stat] of model.properties.entries()) {
         propertyLine(context, images, stat, 460, 157 + 30 * index, 353, { alt: index % 2 === 1, bonus: true });
       }
@@ -494,7 +497,7 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
     } else {
       slicedFrame(context, images.get("panel/images/BgFrame01.png"), -67.2, otherY - 48, 931.2, height - otherY + 64.8,
         [200, 100, 70, 280], [48, 24, 16.8, 67.2]);
-      title(context, "驱动盘信息", "METAL", 0, otherY + 24, width);
+      title(context, $t("panel-detail-card.text_e6251be615"), "METAL", 0, otherY + 24, width);
       if (score) drawScoreSummary(context, score, otherY + 60);
       for (let slot = 0; slot < 6; slot++) {
         const row = slot < 3 ? 0 : 1;
@@ -508,7 +511,7 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
   let rendered = await render(4);
   if (options.inlineImageByteLimit !== undefined && rendered.png.byteLength > options.inlineImageByteLimit) {
     if (standard && !rendered.reducedScaleReason) rendered = await render(2);
-    if (rendered.png.byteLength > options.inlineImageByteLimit) throw new Error("绝区零面板超过当前会话的图片大小上限。");
+    if (rendered.png.byteLength > options.inlineImageByteLimit) throw new Error($t("panel-detail-card.text_4a4815f7ec"));
   }
   return { ...rendered, original: art.original };
 }

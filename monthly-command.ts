@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { ProfileError, type createProfileStore, type GameRole } from "@lotus-yunzai/account";
 import { GameRecordRequestError, HoyoRequestError, resolveZzzGachaLinkRole, type createProfileHoyoClient,
@@ -26,32 +29,32 @@ async function selectedMonthlyRole(profiles: Pick<ReturnType<typeof createProfil
   const before = await profiles.requestContext(qq, profileId, "zzz");
   const selected = await profiles.savedRole(qq, profileId, "zzz");
   const source = await profiles.requestContext(qq, profileId, "zzz", selected.uid);
-  if (before.revision !== source.revision) throw new ProfileError("changed", "绝区零档案已变化。");
+  if (before.revision !== source.revision) throw new ProfileError("changed", $t("monthly-command.text_a53ef5b37a"));
   if (!source.role.region || !source.role.gameBiz || source.role.uid !== selected.uid ||
       source.role.region !== selected.region || source.role.gameBiz !== selected.gameBiz) {
-    throw new ProfileError("role-missing", "档案没有已同步的绝区零角色。");
+    throw new ProfileError("role-missing", $t("monthly-command.text_e13424f8a0"));
   }
   return source;
 }
 
 export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfileStore>, client: ReturnType<typeof createProfileHoyoClient>,
   archive: ReturnType<typeof createZzzMonthlyArchive>, signal: AbortSignal) {
-  const changed = "绝区零档案已变化，请重新查询月报。";
+  const changed = $t("monthly-command.text_bfe4926e57");
   return async function monthly(context: Context, profileId: number, options: {
     readonly collect: boolean; readonly year?: string; readonly month?: string; readonly page?: number;
   }) {
     const user = context.user_id;
     if ((context.message_type !== "private" && context.message_type !== "group") || context.isDelegated ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
-      return "请从登录档案对应的 QQ 会话查询绝区零月报。";
+      return $t("monthly-command.text_43ad6fbdf0");
     }
-    const command = `%月报统计${zzzCommandProfileSuffix(profileId)}`;
+    const command = $t("monthly-command.text_79ec8e7e87", { "value1": zzzCommandProfileSuffix(profileId) });
     const month = zzzMonthlyDate(options.year, options.month);
-    if (month === undefined) return "获取月报数据失败，请检查日期是否正确";
-    if (!options.collect && options.page !== undefined) return `发送 ${command} 页 ${options.page} 查看指定统计页。`;
+    if (month === undefined) return $t("monthly-command.text_45c8562b2b");
+    if (!options.collect && options.page !== undefined) return $t("monthly-command.text_502c241aee", { "command": command, "page": options.page });
     const page = options.page ?? 1;
     const qq = String(user);
-    const fallback = options.collect ? "获取月报数据失败" : "获取月报数据失败，请检查日期是否正确";
+    const fallback = options.collect ? $t("monthly-command.text_aa489d2a4c") : $t("monthly-command.text_45c8562b2b");
     let activeSignal = signal;
     const profileChanged = () => new HoyoRequestError("profile-changed", changed);
     try {
@@ -64,10 +67,10 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
       let archiveAccess: () => Promise<boolean>;
       const overseas = !source || source.role.gameBiz === "nap_global";
       const international = overseas ? await profiles.internationalRoleContext(qq, profileId, "zzz") : undefined;
-      if (!source && !international) return `profile ${profileId} 没有同步绝区零 UID。`;
+      if (!source && !international) return $t("monthly-command.text_65d5ab8c31", { "profileId": profileId });
       if (overseas) {
         if (context.message_type !== "private" || !context.privateCredentialSignal) {
-          return "绝区零国际服月报请从本人私聊查询。";
+          return $t("monthly-command.text_ed03fece62");
         }
         activeSignal = AbortSignal.any([signal, context.privateCredentialSignal]);
         if (activeSignal.aborted) return [];
@@ -96,7 +99,7 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
         const account = previewRedeemIdentity(source);
         query = async () => {
           if (overseas) {
-            throw new HoyoRequestError("invalid-input", `请先在 profile ${profileId} 绑定已核验的 HoYoLAB 账号。`);
+            throw new HoyoRequestError("invalid-input", $t("monthly-command.text_5ead684d63", { "profileId": profileId }));
           }
           const result = await client.fetchZzzMonthly(source, { month, collect: options.collect, signal });
           revision = result.revision;
@@ -136,7 +139,7 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
           collected = live?.months ?? [];
         }
       }
-      let warning = failed || (!live?.months.length && page === 1) ? "本次未更新，仅显示已存档月报。" : undefined;
+      let warning = failed || (!live?.months.length && page === 1) ? $t("monthly-command.text_bf784fea2d") : undefined;
       if (!options.collect) {
         const actual = live?.selectedMonth ?? month;
         const selected = actual && collected.find(row => row.data_month === actual);
@@ -144,11 +147,11 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
       }
       if (!collected.length) {
         if (failed instanceof GameRecordRequestError || failed?.code === "refresh" || failed?.code === "invalid-input") return failed.message;
-        return !options.collect && live?.hasEnvelope ? "月报数据为空" : fallback;
+        return !options.collect && live?.hasEnvelope ? $t("monthly-command.text_71b7a354a9") : fallback;
       }
       if (page > Math.ceil(collected.length / zzzMonthlyPageSize)) {
         const last = Math.ceil(collected.length / zzzMonthlyPageSize);
-        return `绝区零月报统计共 ${last} 页。发送 ${command} 页 ${last} 查看末页。`;
+        return $t("monthly-command.text_343a2a43a7", { "last": last, "command": command, "value3": last });
       }
       if (failed instanceof GameRecordRequestError && warning) warning = `${failed.message} ${warning}`;
       const view = { all: collected, collect: options.collect, page, warning, command };
@@ -160,9 +163,9 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
     } catch (error) {
       if (activeSignal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
+        if (error.code === "missing" || error.code === "login-required") return $t("monthly-command.text_3caf242584", { "profileId": profileId });
         if (error.code === "changed") return changed;
-        if (error.code === "role-missing") return `profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "role-missing") return $t("monthly-command.text_65d5ab8c31", { "profileId": profileId });
       }
       if (error instanceof HoyoRequestError && error.code === "profile-changed") return changed;
       if (error instanceof GameRecordRequestError) return error.message;

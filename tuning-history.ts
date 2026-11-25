@@ -1,3 +1,6 @@
+import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
+import messageCatalog from "./i18n/zh-CN.json";
+const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import { zzzTuningPools, type ZzzTuningSnapshot } from "@lotus-yunzai/hoyo-client";
 
@@ -12,7 +15,7 @@ type Inventory = ZzzTuningSnapshot["inventory"];
 const inventoryKeys = ["polychrome", "monochrome", "encryptedMasterTape", "masterTape", "boopon"] as const;
 
 function invalid(field: string): never {
-  throw new TypeError(`绝区零调频快照的${field}无效。`);
+  throw new TypeError($t("tuning-history.text_32e486ab14", { "field": field }));
 }
 
 function object(value: unknown, field: string): Json {
@@ -41,56 +44,56 @@ function optionalCount(value: unknown, field: string): number | null {
 
 function optionalAverage(value: unknown): number | null {
   if (value == null) return null;
-  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) invalid("UP 平均抽数");
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) invalid($t("tuning-history.text_edd82d3949"));
   return value;
 }
 
 function profileId(value: unknown): number {
-  const id = count(value, "档案编号");
-  if (!id || id > MAX_PROFILE_ID) invalid("档案编号");
+  const id = count(value, $t("tuning-history.text_1ccdb6588f"));
+  if (!id || id > MAX_PROFILE_ID) invalid($t("tuning-history.text_1ccdb6588f"));
   return id;
 }
 
 function checkRole(role: Role) {
   if (!/^[1-9]\d{7,9}$/u.test(role.uid) || (role.region !== "prod_gf_cn" && role.region !== "prod_qd_cn")) {
-    invalid("角色 UID 或分区");
+    invalid($t("tuning-history.text_1d60354370"));
   }
 }
 
 function updatedAt(value: unknown): string {
-  const raw = text(value, "保存时间", true);
+  const raw = text(value, $t("tuning-history.text_f0f609f1e2"), true);
   const time = Date.parse(raw);
-  if (!Number.isFinite(time) || new Date(time).toISOString() !== raw) invalid("保存时间");
+  if (!Number.isFinite(time) || new Date(time).toISOString() !== raw) invalid($t("tuning-history.text_f0f609f1e2"));
   return raw;
 }
 
 function record(value: unknown, allowAbsentFirstUp = false): TuningRecord {
-  const row = object(value, "S 级记录");
-  const itemId = text(row.itemId, "物品编号", true);
-  if (itemId === "0" && !allowAbsentFirstUp) invalid("物品编号");
-  if (typeof row.isUp !== "boolean") invalid("UP 标记");
+  const row = object(value, $t("tuning-history.text_1e7421ad04"));
+  const itemId = text(row.itemId, $t("tuning-history.text_3fc0e85fe6"), true);
+  if (itemId === "0" && !allowAbsentFirstUp) invalid($t("tuning-history.text_3fc0e85fe6"));
+  if (typeof row.isUp !== "boolean") invalid($t("tuning-history.text_5dd4a8a52c"));
   return {
-    itemId, name: text(row.name, "物品名称"), icon: text(row.icon, "物品图标"),
-    rarity: text(row.rarity, "物品稀有度"), itemType: text(row.itemType, "物品类型"),
-    isUp: row.isUp, upTag: text(row.upTag, "UP 标签"), count: optionalCount(row.count, "五星间隔"),
-    time: optionalCount(row.time, "记录时间"), sort: text(row.sort, "记录排序"),
-    version: text(row.version, "记录期次", true),
+    itemId, name: text(row.name, $t("tuning-history.text_b411fd04a9")), icon: text(row.icon, $t("tuning-history.text_e531643f63")),
+    rarity: text(row.rarity, $t("tuning-history.text_0ece15300d")), itemType: text(row.itemType, $t("tuning-history.text_011ff1d948")),
+    isUp: row.isUp, upTag: text(row.upTag, $t("tuning-history.text_8c48dc0277")), count: optionalCount(row.count, $t("tuning-history.text_3b37e149fe")),
+    time: optionalCount(row.time, $t("tuning-history.text_631e702967")), sort: text(row.sort, $t("tuning-history.text_6ca019d1c0")),
+    version: text(row.version, $t("tuning-history.text_1d02f53e72"), true),
   };
 }
 
 function period(value: unknown): Period {
-  const row = object(value, "期次");
-  const version = text(row.version, "期次编号", true);
-  const records = list(row.records, "期次 S 级明细").map(item => record(item));
-  const items = list(row.items, "期次物品").map(item => record(item));
+  const row = object(value, $t("tuning-history.text_4a703a03f5"));
+  const version = text(row.version, $t("tuning-history.text_c3237c0f25"), true);
+  const records = list(row.records, $t("tuning-history.text_d8ba4ad88a")).map(item => record(item));
+  const items = list(row.items, $t("tuning-history.text_9e7d2e8ec8")).map(item => record(item));
   const firstUp = row.firstUp == null ? null : record(row.firstUp, true);
   if ([...records, ...items, ...(firstUp ? [firstUp] : [])].some((item) => item.version !== version)) {
-    invalid("物品与期次的归属");
+    invalid($t("tuning-history.text_483eede868"));
   }
   return {
-    version, status: text(row.status, "期次状态"), startAt: optionalCount(row.startAt, "期次开始时间"),
-    endAt: optionalCount(row.endAt, "期次结束时间"), leftStartAt: optionalCount(row.leftStartAt, "左侧期次开始时间"),
-    leftEndAt: optionalCount(row.leftEndAt, "左侧期次结束时间"),
+    version, status: text(row.status, $t("tuning-history.text_f4c41b2bb1")), startAt: optionalCount(row.startAt, $t("tuning-history.text_02c986c5e9")),
+    endAt: optionalCount(row.endAt, $t("tuning-history.text_07c7462827")), leftStartAt: optionalCount(row.leftStartAt, $t("tuning-history.text_d532ea4ce7")),
+    leftEndAt: optionalCount(row.leftEndAt, $t("tuning-history.text_60d3f60780")),
     // The old writer serialized the official string "0" as a record in this optional slot.
     firstUp: firstUp?.itemId === "0" ? null : firstUp, records, items,
   };
@@ -129,31 +132,31 @@ function consistentRecords(records: readonly TuningRecord[], periods: readonly P
 }
 
 function pool(value: unknown): Pool {
-  const row = object(value, "频段");
-  const type = text(row.type, "频段编号") as Pool["type"];
-  if (!Object.hasOwn(zzzTuningPools, type)) invalid("频段编号");
+  const row = object(value, $t("tuning-history.text_5c03c34bfa"));
+  const type = text(row.type, $t("tuning-history.text_b44f467aca")) as Pool["type"];
+  if (!Object.hasOwn(zzzTuningPools, type)) invalid($t("tuning-history.text_b44f467aca"));
   const { name } = zzzTuningPools[type];
-  if (row.name !== name) invalid("频段名称");
-  const totalDraws = count(row.totalDraws, `${name}总抽数`);
-  const totalS = count(row.totalS, `${name} S 级数量`);
-  const records = list(row.records, `${name} S 级明细`).map(item => record(item));
-  const periods = list(row.periods, `${name}期次列表`).map(period);
+  if (row.name !== name) invalid($t("tuning-history.text_77b1d61bd6"));
+  const totalDraws = count(row.totalDraws, $t("tuning-history.text_d6433d40b2", { "name": name }));
+  const totalS = count(row.totalS, $t("tuning-history.text_ce53d985a1", { "name": name }));
+  const records = list(row.records, $t("tuning-history.text_0f1889a8e5", { "name": name })).map(item => record(item));
+  const periods = list(row.periods, $t("tuning-history.text_8921b8bc15", { "name": name })).map(period);
   if (totalS > totalDraws || records.length !== totalS || records.some((item) => item.rarity !== "S" || !item.time || !item.count) ||
       !consistentRecords(records, periods)) {
-    invalid(`${name} S 级明细与官方汇总`);
+    invalid($t("tuning-history.text_23993de6f6", { "name": name }));
   }
   return {
-    type, name, totalDraws, totalS, upCount: optionalCount(row.upCount, "UP 次数"),
-    averageUp: optionalAverage(row.averageUp), pity: optionalCount(row.pity, "当前垫抽"),
-    guaranteedWithin: optionalCount(row.guaranteedWithin, "保底剩余抽数"), records, periods,
+    type, name, totalDraws, totalS, upCount: optionalCount(row.upCount, $t("tuning-history.text_4e121e3de2")),
+    averageUp: optionalAverage(row.averageUp), pity: optionalCount(row.pity, $t("tuning-history.text_a2442bb1af")),
+    guaranteedWithin: optionalCount(row.guaranteedWithin, $t("tuning-history.text_29c70a8821")), records, periods,
   };
 }
 
 function inventory(value: unknown): Inventory {
   const result: Inventory = {};
-  const row = object(value ?? {}, "库存");
+  const row = object(value ?? {}, $t("tuning-history.text_780c5fd5b1"));
   for (const key of inventoryKeys) {
-    if (Object.hasOwn(row, key)) result[key] = count(row[key], "库存数量");
+    if (Object.hasOwn(row, key)) result[key] = count(row[key], $t("tuning-history.text_fb5f4a3577"));
   }
   return result;
 }
@@ -161,26 +164,26 @@ function inventory(value: unknown): Inventory {
 export function readZzzTuningHistory(value: unknown, role: Role): ZzzTuningSnapshot | null {
   checkRole(role);
   if (value == null) return null;
-  const row = object(value, "内容");
-  if (row.version !== 1) invalid("格式版本");
+  const row = object(value, $t("tuning-history.text_7a68830642"));
+  if (row.version !== 1) invalid($t("tuning-history.text_98b04f00fe"));
   if (row.uid !== role.uid || row.region !== role.region) {
-    throw new Error("绝区零调频快照与当前角色 UID 或分区不一致。");
+    throw new Error($t("tuning-history.text_cfffef761a"));
   }
 
-  const pools = list(row.pools, "频段列表").map(pool);
+  const pools = list(row.pools, $t("tuning-history.text_9bf843218e")).map(pool);
   if (pools.length !== Object.keys(zzzTuningPools).length || new Set(pools.map(({ type }) => type)).size !== pools.length) {
-    invalid("六个频段");
+    invalid($t("tuning-history.text_3f60ea75b3"));
   }
-  const totalDraws = count(row.totalDraws, "总览抽数");
-  const totalS = count(row.totalS, "总览 S 级数量");
+  const totalDraws = count(row.totalDraws, $t("tuning-history.text_16d9466677"));
+  const totalS = count(row.totalS, $t("tuning-history.text_572c2fcc75"));
   const main = pools.filter(({ type }) => type !== "GACHA_TYPE_BANGBOO");
   if (main.reduce((sum, item) => sum + item.totalDraws, 0) !== totalDraws ||
       main.reduce((sum, item) => sum + item.totalS, 0) !== totalS) {
-    invalid("全频段官方总账");
+    invalid($t("tuning-history.text_fd0e88d7b5"));
   }
   return {
     version: 1, uid: role.uid, region: role.region, profileId: profileId(row.profileId),
-    currentVersion: text(row.currentVersion, "当前期次", true), totalDraws, totalS, pools,
+    currentVersion: text(row.currentVersion, $t("tuning-history.text_e9f64f95d0"), true), totalDraws, totalS, pools,
     inventory: inventory(row.inventory), updatedAt: updatedAt(row.updatedAt),
   };
 }
@@ -193,12 +196,12 @@ function countAdded(previous: readonly TuningRecord[], records: readonly TuningR
 export function prepareZzzTuningUpdate(previous: unknown, latest: unknown, identity: ZzzTuningIdentity) {
   const expectedProfile = profileId(identity.profileId);
   const stats = readZzzTuningHistory(latest, identity);
-  if (!stats) invalid("新数据");
-  if (stats.profileId !== expectedProfile) throw new Error("绝区零调频快照与当前档案编号不一致。");
+  if (!stats) invalid($t("tuning-history.text_36fca5315f"));
+  if (stats.profileId !== expectedProfile) throw new Error($t("tuning-history.text_875a6c08f0"));
 
   const saved = readZzzTuningHistory(previous, identity);
   if (saved && Date.parse(stats.updatedAt) < Date.parse(saved.updatedAt)) {
-    throw new Error("较早的绝区零调频快照无法覆盖已保存的较新快照。");
+    throw new Error($t("tuning-history.text_ee43021d57"));
   }
   const oldPools = new Map(saved?.pools.map((item) => [item.type, item]));
   const pools = stats.pools.map((item) => ({
