@@ -116,14 +116,15 @@ interface GachaContext extends ZzzRoleGalleryContext {
   reply(message: string | { readonly type: "image"; readonly file: Uint8Array }, quote?: boolean, options?: ReplyOptions): unknown;
 }
 
-export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderRuntime }: {
+export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderRuntime, hoyoTransport = fetch }: {
   signal: AbortSignal;
   lockFile: Parameters<typeof createZzzTuningSync>[3];
   zzzPanelRankRoles?: ZzzPanelRankRoleReader;
   zzzReminderRuntime?: ZzzReminderRuntime;
+  hoyoTransport?: Parameters<typeof createProfileHoyoClient>[1];
 }) {
   const profiles = createProfileStore(Bun.env.LOTUS_PROFILE_DIR || undefined);
-  const client = createProfileHoyoClient(profiles);
+  const client = createProfileHoyoClient(profiles, hoyoTransport);
   const inventory = createZzzInventoryQuery(profiles, client, signal);
   const legacyMonthly = Bun.env.LOTUS_ZZZ_LEGACY_MONTHLY_DIR?.trim();
   const monthly = createZzzMonthlyCommands(profiles, client,
