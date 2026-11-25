@@ -13,6 +13,7 @@
     "@lotus-yunzai/hoyo-client": "workspace:*",
     "@lotus-yunzai/skia": "workspace:*",
     "@lotus-yunzai/storage": "workspace:*",
-    "skia-canvas": "4.0.1"
+    "skia-canvas": "4.0.1",
+    "@lotus-yunzai/http": "workspace:*"
   }
 }

@@ -1,4 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
+import { withReadRetries } from "@lotus-yunzai/http";
 import { panelInteger, panelObject } from "./panel-detail.ts";
 
 const userAgent = "Lotus-Yunzai/ZZZ (+https://github.com/MOPELotus/Lotus-Yunzai-ZZZ)";
@@ -106,6 +107,7 @@ function rateLimited(seconds: number, reason: string) {
 }
 
 export function createZzzShowcaseClient(transport: Transport = fetch, now = Date.now) {
+  const request = withReadRetries(transport);
   const nextRequestByUid = new Map<string, number>();
   let inFlight: { uid: string; done: Promise<void> } | undefined;
   let nextRequest = 0, serviceBlockedUntil = 0;
@@ -135,10 +137,11 @@ export function createZzzShowcaseClient(transport: Transport = fetch, now = Date
       const submitted = now();
       nextRequest = submitted + 1000;
       nextRequestByUid.set(uid, submitted + minimumLifetime * 1000);
-      const response = await transport(new URL(`https://enka.network/api/zzz/uid/${uid}`), {
+      const response = await request(new URL(`https://enka.network/api/zzz/uid/${uid}`), {
         method: "GET", headers: { "User-Agent": userAgent, Accept: "application/json" },
         redirect: "error", credentials: "omit", referrerPolicy: "no-referrer",
         signal: AbortSignal.any([signal, AbortSignal.timeout(12_000)]),
+        readRetryGuard: beforeRequest,
       });
       if (!response.ok) {
         await response.body?.cancel().catch(() => undefined);
