@@ -5,259 +5,259 @@
   "description": "绝区零",
   "sections": {
     "card-theme": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零图片卡片主题配色与角色头像昵称绘制",
       "source": "plugins/zzz/card-theme.ts"
     },
     "challenge-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零战绩图片卡片渲染与图片大小限制处理",
       "source": "plugins/zzz/challenge-card.ts"
     },
     "challenge-rank": {
-      "description": "绝区零",
+      "description": "绝区零群挑战排名命令处理与可见性交互",
       "source": "plugins/zzz/challenge-rank.ts"
     },
     "challenge-rank-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零群排名图片卡片绘制与规则说明排版",
       "source": "plugins/zzz/challenge-rank-card.ts"
     },
     "challenge-rank-model": {
-      "description": "绝区零",
+      "description": "绝区零群排名模式名称映射与命令正则解析",
       "source": "plugins/zzz/challenge-rank-model.ts"
     },
     "challenge-rank-store": {
-      "description": "绝区零",
+      "description": "绝区零群排名配置校验与数据存储管理",
       "source": "plugins/zzz/challenge-rank-store.ts"
     },
     "challenge-reminder": {
-      "description": "绝区零",
+      "description": "绝区零式舆防卫战与危局强袭战挑战进度查询及全局/个人提醒设置处理模块",
       "source": "plugins/zzz/challenge-reminder.ts"
     },
     "challenge-reminder-runtime": {
-      "description": "绝区零：运行环境",
+      "description": "绝区零式舆防卫战与危局强袭战挑战提醒的定时推送运行时",
       "source": "plugins/zzz/challenge-reminder-runtime.ts"
     },
     "challenge-reminder-store": {
-      "description": "绝区零",
+      "description": "绝区零挑战提醒配置存储、提醒时间解析与用户设置持久化",
       "source": "plugins/zzz/challenge-reminder-store.ts"
     },
     "cinema": {
-      "description": "绝区零",
+      "description": "角色意象影画（命座）详情查询与信息卡片生成",
       "source": "plugins/zzz/cinema.ts"
     },
     "climbing-tower-card": {
-      "description": "绝区零：图片卡片",
+      "description": "拟真鏖战试炼（爬塔）个人战绩卡片生成与文本格式化",
       "source": "plugins/zzz/climbing-tower-card.ts"
     },
     "climbing-tower-rank-card": {
-      "description": "绝区零：图片卡片",
+      "description": "拟真鏖战试炼（爬塔）群内排行榜卡片绘制",
       "source": "plugins/zzz/climbing-tower-rank-card.ts"
     },
     "current-pool": {
-      "description": "绝区零",
+      "description": "绝区零当前调频卡池信息展示",
       "source": "plugins/zzz/current-pool.ts"
     },
     "deadly-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零危局强袭战战绩卡片渲染",
       "source": "plugins/zzz/deadly-card.ts"
     },
     "enka-panel-data": {
-      "description": "绝区零：面板",
+      "description": "绝区零 Enka 角色面板属性定义与解析",
       "source": "plugins/zzz/enka-panel-data.ts"
     },
     "enka-showcase": {
-      "description": "绝区零：角色展柜",
+      "description": "绝区零 Enka 公开展柜数据请求与校验",
       "source": "plugins/zzz/enka-showcase.ts"
     },
     "exploration-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零区域探索收集进度卡片渲染",
       "source": "plugins/zzz/exploration-card.ts"
     },
     "gacha-handback": {
-      "description": "绝区零：抽卡记录",
+      "description": "绝区零旧逐抽档案与新版链接逐抽档案的迁移核对与合并统计",
       "source": "plugins/zzz/gacha-handback.ts"
     },
     "gacha-legacy": {
-      "description": "绝区零：抽卡记录",
+      "description": "绝区零旧逐抽 JSON 档案的安全读取、字段校验与多源合并",
       "source": "plugins/zzz/gacha-legacy.ts"
     },
     "gacha-legacy-detail": {
-      "description": "绝区零：抽卡记录",
+      "description": "绝区零旧逐抽档案的各频段保底统计与详情数据构建",
       "source": "plugins/zzz/gacha-legacy-detail.ts"
     },
     "gacha-link-history": {
-      "description": "绝区零：抽卡记录",
+      "description": "绝区零链接逐抽档案的持久化存储校验与历史记录合并",
       "source": "plugins/zzz/gacha-link-history.ts"
     },
     "gacha-link-session": {
-      "description": "绝区零：抽卡记录 · 会话",
+      "description": "绝区零抽卡链接私聊录入交互会话引导与处理",
       "source": "plugins/zzz/gacha-link-session.ts"
     },
     "game-record-card": {
-      "description": "绝区零：游戏 · 图片卡片",
+      "description": "绝区零个人战绩（代理人、邦布及概览）图片卡片渲染",
       "source": "plugins/zzz/game-record-card.ts"
     },
     "hollow-zero-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零零号空洞战绩卡片渲染与文本摘要",
       "source": "plugins/zzz/hollow-zero-card.ts"
     },
     "holo-boss-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零拟境湮灭战个人战绩卡片渲染",
       "source": "plugins/zzz/holo-boss-card.ts"
     },
     "holo-boss-rank-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零拟境湮灭战群排行榜卡片渲染",
       "source": "plugins/zzz/holo-boss-rank-card.ts"
     },
     "index": {
-      "description": "绝区零",
+      "description": "绝区零指令入口：处理战绩、周期挑战及抽卡链接查询",
       "source": "plugins/zzz/index.ts"
     },
     "monthly-archive": {
-      "description": "绝区零：月历",
+      "description": "绝区零月报本地存档校验与管理",
       "source": "plugins/zzz/monthly-archive.ts"
     },
     "monthly-card": {
-      "description": "绝区零：月历 · 图片卡片",
+      "description": "绝区零月报图片卡片渲染",
       "source": "plugins/zzz/monthly-card.ts"
     },
     "monthly-command": {
-      "description": "绝区零：月历 · 命令",
+      "description": "绝区零月报查询与分页命令处理",
       "source": "plugins/zzz/monthly-command.ts"
     },
     "monthly-handback": {
-      "description": "绝区零：月历",
+      "description": "绝区零月报档案合并校验与旧版格式交还导出",
       "source": "plugins/zzz/monthly-handback.ts"
     },
     "monthly-model": {
-      "description": "绝区零：月历",
+      "description": "绝区零月报日期校验与收支奖励分类模型",
       "source": "plugins/zzz/monthly-model.ts"
     },
     "owned-buddy-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零已拥有邦布列表文本与图片卡片渲染",
       "source": "plugins/zzz/owned-buddy-card.ts"
     },
     "panel-command": {
-      "description": "绝区零：面板 · 命令",
+      "description": "绝区零角色面板更新与练度统计命令处理",
       "source": "plugins/zzz/panel-command.ts"
     },
     "panel-damage-card": {
-      "description": "绝区零：面板 · 图片卡片",
+      "description": "绝区零角色技能伤害拆解、乘区详情、增益统计及主副词条替换收益对比卡片数据生成",
       "source": "plugins/zzz/panel-damage-card.ts"
     },
     "panel-detail": {
-      "description": "绝区零：面板",
+      "description": "解析与展示绝区零角色面板详细属性",
       "source": "plugins/zzz/panel-detail.ts"
     },
     "panel-detail-card": {
-      "description": "绝区零：面板 · 图片卡片",
+      "description": "绝区零角色属性面板、音擎、驱动盘评分及内嵌伤害统计图片卡片渲染",
       "source": "plugins/zzz/panel-detail-card.ts"
     },
     "panel-interval-command": {
-      "description": "绝区零：面板 · 命令",
+      "description": "处理绝区零面板更新的逐角色请求间隔设置命令",
       "source": "plugins/zzz/panel-interval-command.ts"
     },
     "panel-list-card": {
-      "description": "绝区零：面板 · 图片卡片",
+      "description": "绘制绝区零角色面板列表图片卡片",
       "source": "plugins/zzz/panel-list-card.ts"
     },
     "panel-rank": {
-      "description": "绝区零：面板",
+      "description": "绝区零群聊角色面板排名查询、最强角色展示与榜单可见性管理",
       "source": "plugins/zzz/panel-rank.ts"
     },
     "panel-rank-card": {
-      "description": "绝区零：面板 · 图片卡片",
+      "description": "绘制绝区零角色面板群内排行榜图片卡片",
       "source": "plugins/zzz/panel-rank-card.ts"
     },
     "panel-rank-identity": {
-      "description": "绝区零：面板",
+      "description": "校验绝区零面板排行榜中的国际服账号档案状态",
       "source": "plugins/zzz/panel-rank-identity.ts"
     },
     "panel-score": {
-      "description": "绝区零：面板",
+      "description": "绝区零角色面板评分规则匹配与权重计算",
       "source": "plugins/zzz/panel-score.ts"
     },
     "panel-score-data": {
-      "description": "绝区零：面板",
+      "description": "绝区零驱动盘词条简称与角色面板评分规则数据定义",
       "source": "plugins/zzz/panel-score-data.ts"
     },
     "panel-storage": {
-      "description": "绝区零：面板",
+      "description": "绝区零角色面板与公开展柜数据本地归档及校验",
       "source": "plugins/zzz/panel-storage.ts"
     },
     "pool-history": {
-      "description": "绝区零",
+      "description": "角色及音擎卡池历史记录与未复刻统计查询",
       "source": "plugins/zzz/pool-history.ts"
     },
     "proficiency-card": {
-      "description": "绝区零：图片卡片",
+      "description": "代理人练度统计图片卡片渲染",
       "source": "plugins/zzz/proficiency-card.ts"
     },
     "recall-settings": {
-      "description": "绝区零：设置",
+      "description": "提示消息自动撤回时间设置命令",
       "source": "plugins/zzz/recall-settings.ts"
     },
     "role-alias-command": {
-      "description": "绝区零：命令",
+      "description": "代理人别名查询与增删管理命令",
       "source": "plugins/zzz/role-alias-command.ts"
     },
     "role-gallery": {
-      "description": "绝区零：图库",
+      "description": "绝区零代理人角色图库的添加、删除、分页查看与合并转发模块",
       "source": "plugins/zzz/role-gallery.ts"
     },
     "shiyu-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零式舆防卫战个人战绩图片卡片渲染模块",
       "source": "plugins/zzz/shiyu-card.ts"
     },
     "skills-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零代理人技能图鉴图片卡片渲染模块",
       "source": "plugins/zzz/skills-card.ts"
     },
     "skills-command": {
-      "description": "绝区零：命令",
+      "description": "绝区零技能查询命令处理模块",
       "source": "plugins/zzz/skills-command.ts"
     },
     "skills-data": {
-      "description": "绝区零",
+      "description": "绝区零技能数据解析与命令参数处理模块",
       "source": "plugins/zzz/skills-data.ts"
     },
     "tuning-detail": {
-      "description": "绝区零",
+      "description": "绝区零调频记录详情统计与库存格式化模块",
       "source": "plugins/zzz/tuning-detail.ts"
     },
     "tuning-detail-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零调频统计图片卡片渲染模块",
       "source": "plugins/zzz/tuning-detail-card.ts"
     },
     "tuning-history": {
-      "description": "绝区零",
+      "description": "调频历史快照校验与更新模块，用于解析、校验调频记录数据结构并处理历史快照对比更新。",
       "source": "plugins/zzz/tuning-history.ts"
     },
     "tuning-inventory-card": {
-      "description": "绝区零：清单 · 图片卡片",
+      "description": "绝区零调频库存信息图片卡片渲染",
       "source": "plugins/zzz/tuning-inventory-card.ts"
     },
     "tuning-inventory-command": {
-      "description": "绝区零：清单 · 命令",
+      "description": "绝区零调频库存查询命令处理",
       "source": "plugins/zzz/tuning-inventory-command.ts"
     },
     "tuning-profile": {
-      "description": "绝区零：档案",
+      "description": "绝区零调频档案账号与区服解析",
       "source": "plugins/zzz/tuning-profile.ts"
     },
     "tuning-result-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零调频更新结果与失败状态卡片渲染",
       "source": "plugins/zzz/tuning-result-card.ts"
     },
     "tuning-sync": {
-      "description": "绝区零",
+      "description": "绝区零调频历史同步与旧存档迁移",
       "source": "plugins/zzz/tuning-sync.ts"
     },
     "void-front-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零：临界推演战绩图片卡片渲染",
       "source": "plugins/zzz/void-front-card.ts"
     },
     "zenkov-card": {
-      "description": "绝区零：图片卡片",
+      "description": "绝区零探索模式总览、周常委托、地图战绩与探索记录的文本摘要及图片卡片渲染模块",
       "source": "plugins/zzz/zenkov-card.ts"
     }
   },
@@ -395,7 +395,7 @@
     "challenge-reminder.text_86182928fc": "刷新剩余: {value1}天{value2}小时",
     "challenge-reminder.text_89dcf7dc6c": "绝区零档案已变化，请重新查询挑战状态。",
     "challenge-reminder.text_8fd6f36099": "请先选择已认证的国服绝区零角色，再开启挑战提醒。",
-    "challenge-reminder.text_99b13fad14": "挑战状态暂支持国服绝区零角色。",
+    "challenge-reminder.text_99b13fad14": "挑战状态暂仅支持国服绝区零角色。",
     "challenge-reminder.text_9ab4bcdd35": "个人提醒时间尚未设置",
     "challenge-reminder.text_a69107d493": "全局防卫战/危局挑战提醒功能已禁用，请勿重复操作",
     "challenge-reminder.text_a957087b16": "查询失败，请稍后再试。",
@@ -764,12 +764,12 @@
     "monthly-card.text_b48d227bf4": "每月细则",
     "monthly-card.text_e31ac7c79b": "* 菲林收入不含充值获得底片后兑换的菲林",
     "monthly-command.text_343a2a43a7": "绝区零月报统计共 {last} 页。发送 {command} 页 {value3} 查看末页。",
-    "monthly-command.text_3caf242584": "请先登录 profile {profileId}。",
+    "monthly-command.text_3caf242584": "请先登录档案 {profileId}。",
     "monthly-command.text_43ad6fbdf0": "请从登录档案对应的 QQ 会话查询绝区零月报。",
     "monthly-command.text_45c8562b2b": "获取月报数据失败，请检查日期是否正确",
     "monthly-command.text_502c241aee": "发送 {command} 页 {page} 查看指定统计页。",
-    "monthly-command.text_5ead684d63": "请先在 profile {profileId} 绑定已核验的 HoYoLAB 账号。",
-    "monthly-command.text_65d5ab8c31": "profile {profileId} 没有同步绝区零 UID。",
+    "monthly-command.text_5ead684d63": "请先在档案 {profileId} 绑定已核验的 HoYoLAB 账号。",
+    "monthly-command.text_65d5ab8c31": "档案 {profileId} 没有同步绝区零 UID。",
     "monthly-command.text_71b7a354a9": "月报数据为空",
     "monthly-command.text_79ec8e7e87": "%月报统计{value1}",
     "monthly-command.text_a53ef5b37a": "绝区零档案已变化。",
@@ -1380,860 +1380,860 @@
   },
   "parameters": {
     "challenge-rank-card.text_85b772fa7e": {
-      "value1": "rankLabels[mode]"
+      "value1": "当前挑战模式名称"
     },
     "challenge-rank-card.text_80aa1820d6": {
-      "tie": "tie"
+      "tie": "同分同星等并列条件描述"
     },
     "challenge-rank-model.text_3bd7c85c4e": {
-      "deadly": "deadly",
-      "value2": "deadly"
+      "deadly": "危局强袭战的正则匹配模式",
+      "value2": "危局强袭战的正则匹配模式"
     },
     "challenge-rank.text_7ff656ddba": {
-      "value1": "rankLabels[ownedType]"
+      "value1": "挑战模式名称"
     },
     "challenge-rank.text_b09172acbf": {
-      "uid": "role.uid",
-      "value2": "command.types.map(type => rankLabels[type]).join(\"、\")",
-      "value3": "command.enabled ? \"显示\" : \"隐藏\""
+      "uid": "绝区零角色 UID",
+      "value2": "以顿号分隔的挑战类型名称列表",
+      "value3": "可见性状态（显示或隐藏）"
     },
     "challenge-rank.text_13c5673406": {
-      "name": "name"
+      "name": "挑战模式显示名称"
     },
     "challenge-rank.text_3b5f19a85b": {
-      "season": "season",
-      "value2": "season"
+      "season": "爬塔赛季编号",
+      "value2": "爬塔赛季编号"
     },
     "challenge-rank.text_2bdf276b7b": {
-      "name": "name",
-      "include": "include",
-      "value3": "include"
+      "name": "挑战模式名称",
+      "include": "用于显示排名命令的挑战模式简称",
+      "value3": "用于查询战绩命令的挑战模式简称"
     },
     "challenge-rank.text_75328387da": {
-      "name": "name"
+      "name": "挑战模式名称"
     },
     "challenge-rank.text_4933ee76a2": {
-      "member": "member",
-      "bonus": "row.bonus",
-      "value3": "holoBossDuration(row.score)",
-      "undamaged": "row.holo.undamaged"
+      "member": "排名序号与成员昵称",
+      "bonus": "获得的星级数量",
+      "value3": "格式化后的挑战耗时",
+      "undamaged": "无伤通关次数"
     },
     "challenge-rank.text_60ff550fcf": {
-      "score": "row.score"
+      "score": "挑战积分"
     },
     "challenge-rank.text_d1c41e0dde": {
-      "layer": "row.tower.layer"
+      "layer": "爬塔层数"
     },
     "challenge-rank.text_7fc38da62a": {
-      "noDamage": "row.tower.noDamage"
+      "noDamage": "无伤通关记录数值"
     },
     "challenge-reminder-runtime.text_6e20127c91": {
-      "text": "text"
+      "text": "挑战提醒正文内容"
     },
     "challenge-reminder-store.text_603abac298": {
-      "minute": "minute"
+      "minute": "分钟数"
     },
     "challenge-reminder-store.text_13f9d6888b": {
-      "value1": "match[1]",
-      "hour": "hour",
-      "value3": "minute ? `${minute}分` : \"\""
+      "value1": "提醒周期前缀（如每日或每周几）",
+      "hour": "规范化后的小时数",
+      "value3": "格式化后的分钟片段或空字符串"
     },
     "challenge-reminder.text_c1d6fc7537": {
-      "value1": "Math.min(abyssCheckLevel, 5)",
-      "value2": "abyssCheckLevel === 6 ? \"或第五层<S+评价\" : \"\""
+      "value1": "设定的S评级层数阈值",
+      "value2": "第五层S+评价附加条件（阈值为6时显示，否则为空）"
     },
     "challenge-reminder.text_f5c193154e": {
-      "deadlyStars": "deadlyStars"
+      "deadlyStars": "危局强袭战星数阈值"
     },
     "challenge-reminder.text_0a989797d0": {
-      "remindTime": "remindTime",
-      "abyss": "abyss",
-      "deadly": "deadly"
+      "remindTime": "生效的提醒时间",
+      "abyss": "式舆防卫战提醒阈值摘要",
+      "deadly": "危局强袭战提醒阈值摘要"
     },
     "challenge-reminder.text_001e45cbfe": {
-      "value1": "day(period.start)",
-      "value2": "day(period.end)"
+      "value1": "统计周期开始日期",
+      "value2": "统计周期结束日期"
     },
     "challenge-reminder.text_86182928fc": {
-      "value1": "Math.floor(hours / 24)",
-      "value2": "hours % 24"
+      "value1": "周期结束剩余的完整天数",
+      "value2": "扣除整天后剩余的小时数"
     },
     "challenge-reminder.text_fd669be8ec": {
-      "name": "name"
+      "name": "挑战名称"
     },
     "challenge-reminder.text_e48e8362c8": {
-      "value1": "count ?? \"—\"",
-      "value2": "passed ? \" ✓\" : \"\""
+      "value1": "已获得S评级的层数（无记录时为“—”）",
+      "value2": "达标标记（已达标时为“ ✓”，否则为空）"
     },
     "challenge-reminder.text_2b69096fc4": {
-      "value1": "fifth ?? \"无\"",
-      "value2": "passed && target === 6 ? \" ✓\" : \"\""
+      "value1": "第五层评价等级（无记录时为“无”）",
+      "value2": "达标标记（达到S+条件时为“ ✓”，否则为空）"
     },
     "challenge-reminder.text_5083419aa5": {
-      "value1": "stars ?? \"—\"",
-      "value2": "passed ? \" ✓\" : \"\""
+      "value1": "当前获得星数（无记录时为“—”）",
+      "value2": "达标标记（已达标时为“ ✓”，否则为空）"
     },
     "challenge-reminder.text_26fbdacd22": {
-      "remindTime": "global.remindTime"
+      "remindTime": "全局默认提醒时间"
     },
     "challenge-reminder.text_3a13d8e8df": {
-      "remindTime": "user.remindTime"
+      "remindTime": "用户设置的个人提醒时间"
     },
     "challenge-reminder.text_5cf51970d0": {
-      "remindTime": "global.remindTime"
+      "remindTime": "全局默认提醒时间"
     },
     "challenge-reminder.text_6721358145": {
-      "value1": "summary(effectiveChallengeReminder(global, user))"
+      "value1": "生效的提醒配置摘要"
     },
     "challenge-reminder.text_01d829ecc1": {
-      "time": "time",
-      "value2": "user.enable ? `开启\\n${summary(effectiveChallengeReminder(global, user))}` : \"关闭\""
+      "time": "当前生效的提醒时间说明",
+      "value2": "开启状态与设置摘要或关闭状态文本"
     },
     "challenge-reminder.text_44a4b3c65d": {
-      "value1": "command.enabled ? \"启用\" : \"禁用\""
+      "value1": "操作后的开关状态（“启用”或“禁用”）"
     },
     "challenge-reminder.text_d94391dc68": {
-      "value1": "summary(effectiveChallengeReminder(global, changed))"
+      "value1": "生效的提醒配置摘要"
     },
     "challenge-reminder.text_c13b40d772": {
-      "value1": "command.enabled ? `开启，${summary(effectiveChallengeReminder(global, changed))}` : \"关闭\""
+      "value1": "操作后的状态文本（开启含配置摘要，关闭为“关闭”）"
     },
     "challenge-reminder.text_ca0faafcf5": {
-      "value1": "shiyu ? \"防卫战\" : \"危局\"",
-      "max": "max"
+      "value1": "挑战模式简称（“防卫战”或“危局”）",
+      "max": "该挑战模式允许的最大阈值（防卫战为6，危局为9）"
     },
     "challenge-reminder.text_3a49cc2d72": {
-      "value1": "command.global ? \"全局默认\" : \"\"",
-      "value2": "shiyu ? \"式舆防卫战\" : \"危局强袭战\""
+      "value1": "作用域前缀（全局操作时为“全局默认”，个人操作时为空）",
+      "value2": "挑战模式名称（式舆防卫战或危局强袭战）"
     },
     "challenge-reminder.text_307bd805d6": {
-      "value1": "Math.min(5, command.value)",
-      "value2": "command.value === 6 ? \"或第五层<S+评价\" : \"\""
+      "value1": "设定的S评级层数阈值",
+      "value2": "第五层S+评价附加条件（阈值为6时显示，否则为空）"
     },
     "challenge-reminder.text_e06b50e03d": {
-      "value": "command.value"
+      "value": "设定的危局强袭战星数阈值"
     },
     "challenge-reminder.text_6ebd073589": {
-      "threshold": "threshold"
+      "threshold": "设定的触发提醒阈值条件"
     },
     "challenge-reminder.text_69ea8e3e98": {
-      "time": "parsed.time"
+      "time": "校验通过后的新提醒时间"
     },
     "challenge-reminder.text_b0db9143c5": {
-      "time": "parsed.time"
+      "time": "校验通过后的新提醒时间"
     },
     "cinema.text_1a921c3bf2": {
-      "query": "query"
+      "query": "查询的角色名称或别名"
     },
     "cinema.text_a75604690b": {
-      "name": "entry.name"
+      "name": "角色名称"
     },
     "cinema.text_cf5e650758": {
-      "name": "entry.name"
+      "name": "角色名称"
     },
     "climbing-tower-card.text_ab6a049061": {
-      "value1": "visibility.map((value, index) => `S${index + 1} ${state(value)}`).join(\" · \")"
+      "value1": "各赛季可见性状态列表"
     },
     "climbing-tower-rank-card.text_567826bb8d": {
-      "title": "title"
+      "title": "赛季标题"
     },
     "climbing-tower-rank-card.text_911a055379": {
-      "title": "title"
+      "title": "赛季标题"
     },
     "climbing-tower-rank-card.text_42f40f9c32": {
-      "season": "season"
+      "season": "赛季编号"
     },
     "climbing-tower-rank-card.text_cb2a958115": {
-      "season": "season",
-      "value2": "season",
-      "order": "order"
+      "season": "赛季编号",
+      "value2": "赛季编号",
+      "order": "排序规则说明"
     },
     "current-pool.text_ca82da30bc": {
-      "title": "period.title",
-      "time": "period.time",
-      "remaining": "remaining"
+      "title": "卡池公告标题",
+      "time": "卡池开放时间范围",
+      "remaining": "剩余天数"
     },
     "current-pool.text_d1c77ada3a": {
-      "value1": "kind === \"代理人\" ? \"角色\" : kind"
+      "value1": "卡池类型名称（角色或音擎）"
     },
     "deadly-card.text_26bc3e21d1": {
-      "value1": "room.clearedAt ? dateLabel(room.clearedAt) : \"—\""
+      "value1": "通关时间文本或占位符"
     },
     "deadly-card.text_e9438ab79d": {
-      "value1": "period ? `${dateLabel(period.start.slice(0, 10))} - ${dateLabel(period.end.slice(0, 10))}` : \"暂无记录\""
+      "value1": "统计起止日期范围或无记录提示"
     },
     "deadly-card.text_6322133b5c": {
-      "value1": "options.rankVisibility ? \"显示\" : \"隐藏\""
+      "value1": "当前排名显示状态（显示或隐藏）"
     },
     "enka-showcase.text_ad7fcbfa9b": {
-      "reason": "reason",
-      "value2": "Math.max(1, Math.ceil(seconds))"
+      "reason": "限流或等待原因说明",
+      "value2": "需等待的秒数"
     },
     "exploration-card.text_05a2a8504c": {
-      "command": "command",
-      "value2": "snapshot.page + 1"
+      "command": "查询探索进度的命令名",
+      "value2": "下一页页码"
     },
     "exploration-card.text_53f6a935c5": {
-      "page": "snapshot.page",
-      "pageCount": "snapshot.pageCount"
+      "page": "当前页码",
+      "pageCount": "总页数"
     },
     "gacha-legacy.text_c0a01888f2": {
-      "field": "field"
+      "field": "无效的档案字段或校验项名称"
     },
     "gacha-link-session.text_76720712c8": {
-      "profileId": "profileId"
+      "profileId": "档案 ID"
     },
     "gacha-link-session.text_4ea60872c8": {
-      "profileId": "profileId"
+      "profileId": "档案 ID"
     },
     "gacha-link-session.text_04a02a3f55": {
-      "alias": "alias"
+      "alias": "用于录入抽卡链接的私聊命令别名"
     },
     "game-record-card.text_d4813d01f4": {
-      "level": "item.level"
+      "level": "角色或邦布等级"
     },
     "hollow-zero-card.text_c438f4deb2": {
-      "value1": "data?.name || \"—\"",
-      "value2": "data?.heat ?? \"—\""
+      "value1": "最高难度名称",
+      "value2": "以太活性等级"
     },
     "holo-boss-card.text_e9438ab79d": {
-      "value1": "period ? `${format(period.start)} - ${format(period.end)}` : \"—\""
+      "value1": "统计周期的起止日期范围"
     },
     "holo-boss-card.text_d4896d0ba5": {
-      "status": "status"
+      "status": "群内排名显示状态（显示或隐藏）"
     },
     "index.text_1ad19c8a98": {
-      "name": "name",
-      "value2": "added[type]",
-      "value3": "records.find((pool) => pool.type === type)?.records.length ?? 0"
+      "name": "卡池名称",
+      "value2": "本次新增条数",
+      "value3": "合并后总条数"
     },
     "index.text_87a81e8170": {
-      "value1": "zzzCommandProfileSuffix(profileId)"
+      "value1": "档案编号后缀"
     },
     "index.text_32cdf01bcc": {
-      "command": "command"
+      "command": "查看命令"
     },
     "index.text_318d0fed8b": {
-      "subject": "subject"
+      "subject": "查询对象名称"
     },
     "index.text_c26b33d678": {
-      "value1": "\"avatars\" in record ? zzzGameRecordText(record) : zzzOwnedBuddyText(record)"
+      "value1": "降级输出的游戏记录或邦布列表文本"
     },
     "index.text_f4a9dc8367": {
-      "profileId": "profileId"
+      "profileId": "档案编号"
     },
     "index.text_47f3e3964b": {
-      "profileId": "profileId"
+      "profileId": "档案编号"
     },
     "index.text_76720712c8": {
-      "profileId": "profileId"
+      "profileId": "档案编号"
     },
     "index.text_acbd9b9ebe": {
-      "subject": "subject"
+      "subject": "查询对象名称（战绩或邦布）"
     },
     "index.text_10d85181ae": {
-      "value1": "zzzCommandProfileSuffix(profileId)"
+      "value1": "档案编号后缀"
     },
     "index.text_1abb50bdb0": {
-      "pageCount": "record.pageCount",
-      "command": "command",
-      "value3": "record.pageCount"
+      "pageCount": "总页数",
+      "command": "查询命令",
+      "value3": "末页页码"
     },
     "index.text_69c07d5803": {
-      "length": "nodes.length",
-      "value2": "followUp ? `\\n${followUp}` : \"\""
+      "length": "总页数",
+      "value2": "后续操作提示"
     },
     "index.text_e1cc153c64": {
-      "value1": "zzzCommandProfileSuffix(profileId)"
+      "value1": "档案编号指令后缀"
     },
     "index.text_c6e8269745": {
-      "pageCount": "record.pageCount",
-      "command": "command",
-      "value3": "record.pageCount"
+      "pageCount": "总页数",
+      "command": "带档案后缀的区域收集查询指令",
+      "value3": "末页页码"
     },
     "index.text_86b48550a7": {
-      "text": "text"
+      "text": "纯文本战绩内容"
     },
     "index.text_2d43673910": {
-      "length": "nodes.length"
+      "length": "总页数"
     },
     "index.text_20072b851c": {
-      "name": "name"
+      "name": "玩法名称"
     },
     "index.text_91fdc991b5": {
-      "period": "period",
-      "name": "name"
+      "period": "期数名称（如本期、上期）",
+      "name": "玩法模式名称"
     },
     "index.text_450b8c5716": {
-      "name": "name"
+      "name": "玩法名称"
     },
     "index.text_028f2c565d": {
-      "period": "period",
-      "name": "name"
+      "period": "查询的周期名称（如本期或上期）",
+      "name": "挑战玩法名称"
     },
     "index.text_71a331d410": {
-      "name": "name"
+      "name": "玩法名称"
     },
     "index.text_422aa73408": {
-      "value1": "snapshot.totalScore ?? \"—\""
+      "value1": "总分数值"
     },
     "index.text_4fbd96a211": {
-      "value1": "holoBossDuration(snapshot.totalDuration)",
-      "value2": "snapshot.totalStars ?? \"—\"",
-      "undamaged": "snapshot.undamaged"
+      "value1": "总用时",
+      "value2": "总星数",
+      "undamaged": "无伤次数或状态"
     },
     "index.text_59faa7ffd6": {
-      "value1": "boss.name ?? \"首领\"",
-      "value2": "holoBossDuration(boss.duration)",
-      "value3": "boss.stars ?? \"—\"",
-      "value4": "boss.undamaged ? \" · 无伤\" : \"\""
+      "value1": "首领名称",
+      "value2": "用时",
+      "value3": "星数",
+      "value4": "无伤标记"
     },
     "index.text_841c31ef32": {
-      "period": "period"
+      "period": "期数标签"
     },
     "index.text_94f5c06650": {
-      "totalScore": "snapshot.totalScore"
+      "totalScore": "试炼总分数"
     },
     "index.text_c6eac1ddc3": {
-      "totalStars": "snapshot.totalStars"
+      "totalStars": "试炼总星级数"
     },
     "index.text_22ca39a135": {
-      "value1": "room.name ?? \"首领\"",
-      "value2": "room.score ?? \"—\""
+      "value1": "关卡或首领名称",
+      "value2": "得分"
     },
     "index.text_4e10d31e79": {
-      "value1": "room.name ?? \"首领\"",
-      "value2": "room.score ?? \"—\""
+      "value1": "关卡或首领名称",
+      "value2": "得分"
     },
     "index.text_d90ec91ae9": {
-      "period": "period"
+      "period": "期数名称（如本期、上期）"
     },
     "index.text_f8227398b3": {
-      "score": "score",
-      "value2": "rating ? ` · ${rating}` : \"\""
+      "score": "式舆防卫战总分",
+      "value2": "可选的评价等级后缀（含前导分隔符）"
     },
     "index.text_0c53b24fef": {
-      "number": "layer.number",
-      "length": "layer.teams.length",
-      "value3": "layer.rating ? ` · ${layer.rating}` : \"\""
+      "number": "防线层数编号",
+      "length": "该防线出战队伍数量",
+      "value3": "可选的防线评级文本（含前导分隔符）"
     },
     "index.text_a72f794b97": {
-      "name": "name"
+      "name": "玩法模式名称"
     },
     "index.text_4ea60872c8": {
-      "profileId": "profileId"
+      "profileId": "档案编号"
     },
     "index.text_62a355e2fd": {
-      "value1": "zzzCommandProfileSuffix(profileId)",
-      "page": "page"
+      "value1": "档案编号后缀",
+      "page": "页码"
     },
     "index.text_48afbcd626": {
-      "profileId": "profileId"
+      "profileId": "档案编号"
     },
     "monthly-archive.text_648de7ec85": {
-      "subject": "subject"
+      "subject": "存档类型名称（绝区零月报档案）"
     },
     "monthly-card.text_05a2a8504c": {
-      "command": "view.command",
-      "value2": "view.page + 1"
+      "command": "当前月报查询指令",
+      "value2": "下一页页码"
     },
     "monthly-card.text_61d4f3bdb6": {
-      "value1": "dateTitle(view)"
+      "value1": "月份或月份范围标题"
     },
     "monthly-card.text_ab237dda44": {
-      "service": "service"
+      "service": "数据来源平台名称（米游社或 HoYoLAB）"
     },
     "monthly-command.text_79ec8e7e87": {
-      "value1": "zzzCommandProfileSuffix(profileId)"
+      "value1": "档案后缀文本"
     },
     "monthly-command.text_502c241aee": {
-      "command": "command",
-      "page": "options.page"
+      "command": "月报查询命令文本",
+      "page": "请求查看的页码"
     },
     "monthly-command.text_65d5ab8c31": {
-      "profileId": "profileId"
+      "profileId": "用户档案编号"
     },
     "monthly-command.text_5ead684d63": {
-      "profileId": "profileId"
+      "profileId": "用户档案编号"
     },
     "monthly-command.text_343a2a43a7": {
-      "last": "last",
-      "command": "command",
-      "value3": "last"
+      "last": "月报统计总页数",
+      "command": "月报查询命令文本",
+      "value3": "末页页码"
     },
     "monthly-command.text_3caf242584": {
-      "profileId": "profileId"
+      "profileId": "用户档案编号"
     },
     "monthly-model.text_c85dda8b58": {
-      "value1": "key.slice(0, 4)",
-      "value2": "Number(key.slice(-2))"
+      "value1": "四位年份",
+      "value2": "月份数字"
     },
     "owned-buddy-card.text_142e591ff1": {
-      "rank": "rank"
+      "rank": "邦布阶数"
     },
     "panel-command.text_2a779b6c39": {
-      "uid": "role.uid"
+      "uid": "当前档案绑定的游戏 UID"
     },
     "panel-command.text_16396605da": {
-      "uid": "role.uid"
+      "uid": "当前档案绑定的游戏 UID"
     },
     "panel-command.text_d080e2be29": {
-      "name": "command.name"
+      "name": "查询的角色名称"
     },
     "panel-command.text_3b7a008e6f": {
-      "name": "command.name"
+      "name": "查询的角色名称"
     },
     "panel-command.text_58d3b20941": {
-      "name": "command.name"
+      "name": "查询的角色名称"
     },
     "panel-command.text_465b7453fa": {
-      "length": "saved.length"
+      "length": "已保存的展柜角色数量"
     },
     "panel-command.text_00b8cd9c3d": {
-      "value1": "selected.missing.map(name => `【${name}】`).join(\"\")"
+      "value1": "未匹配到的角色名列表"
     },
     "panel-command.text_a24961be0f": {
-      "value1": "command.names.join(\"、\")"
+      "value1": "待更新的角色名称列表"
     },
     "panel-command.text_7adbf8ad9f": {
-      "size": "updatedIds.size"
+      "size": "本次更新的角色数量"
     },
     "panel-command.text_76720712c8": {
-      "profileId": "profileId"
+      "profileId": "用户档案编号"
     },
     "panel-command.text_4ea60872c8": {
-      "profileId": "profileId"
+      "profileId": "用户档案编号"
     },
     "panel-damage-card.text_d80d2c5223": {
-      "suffix": "suffix"
+      "suffix": "档案编号后缀"
     },
     "panel-damage-card.text_6dc6a2c598": {
-      "name": "name",
-      "value2": "skillIndex + 1",
-      "value3": "suffix ? ` 档案${suffix}` : \"\""
+      "name": "代理人名称",
+      "value2": "技能序号（从 1 开始）",
+      "value3": "可选的档案编号后缀"
     },
     "panel-damage-card.text_9891f22d71": {
-      "level": "level"
+      "level": "敌人等级"
     },
     "panel-damage-card.text_14fa51e9e3": {
-      "command": "command"
+      "command": "当前页面对应的查询指令文本"
     },
     "panel-damage-card.text_e109dbfcd1": {
-      "name": "selected.skill.name"
+      "name": "当前选中技能名称"
     },
     "panel-damage-card.text_3c348b34e3": {
-      "name": "name"
+      "name": "当前角色名称"
     },
     "panel-damage-card.text_0b4e7db6b1": {
-      "skill": "skill"
+      "skill": "暂无原版计算结果的技能名称"
     },
     "panel-detail-card.text_d4813d01f4": {
-      "level": "disc.level"
+      "level": "驱动盘强化等级"
     },
     "panel-detail-card.text_3dcb981cfc": {
-      "value1": "score.total.toFixed(2)"
+      "value1": "驱动盘总评分"
     },
     "panel-detail-card.text_6cf8b5c69a": {
-      "rule": "score.rule"
+      "rule": "评分规则名称"
     },
     "panel-detail-card.text_75abb7f5de": {
-      "useful": "score.useful",
-      "value2": "score.effective.toFixed(2)"
+      "useful": "有益词条数量",
+      "value2": "有效词条加权总数"
     },
     "panel-detail-card.text_8701766fa1": {
-      "star": "weapon.star"
+      "star": "音擎星级"
     },
     "panel-detail-card.text_a86d757b88": {
-      "profile": "profile"
+      "profile": "档案编号"
     },
     "panel-detail-card.text_82e4ecaacc": {
-      "name": "name",
-      "value2": "profile === 1 ? \"\" : ` 档案${profile}`"
+      "name": "代理人名称",
+      "value2": "可选的档案编号后缀"
     },
     "panel-detail-card.text_74abea9708": {
-      "level": "level"
+      "level": "敌人等级"
     },
     "panel-detail-card.text_cd63b65ea3": {
-      "skillCommand": "skillCommand"
+      "skillCommand": "查询指定技能伤害的指令文本"
     },
     "panel-detail-card.text_0b4e7db6b1": {
-      "skill": "skill"
+      "skill": "无法计算的技能名称"
     },
     "panel-interval-command.text_b960d43924": {
-      "roleInterval": "values.roleInterval"
+      "roleInterval": "已设置的逐角色请求间隔毫秒数"
     },
     "panel-list-card.text_80a0745d27": {
-      "length": "rows.length"
+      "length": "已保存的角色数量"
     },
     "panel-list-card.text_62d158342b": {
-      "size": "options.updatedIds.size"
+      "size": "本次更新的角色数量"
     },
     "panel-list-card.text_ad62774c4b": {
-      "length": "rows.length"
+      "length": "角色总数"
     },
     "panel-rank-card.text_c091ad7c71": {
-      "uid": "row.uid",
-      "rank": "row.avatar.rank"
+      "uid": "玩家游戏 UID",
+      "rank": "角色影画等级"
     },
     "panel-rank-card.text_626d751f37": {
-      "value1": "row.weapon.level ?? \"—\"",
-      "value2": "row.weapon.star ?? \"—\""
+      "value1": "音擎等级",
+      "value2": "音擎星级"
     },
     "panel-rank-card.text_2cb43eac24": {
-      "next": "options.next"
+      "next": "下一页的翻页命令提示"
     },
     "panel-rank.text_3b488823cb": {
-      "uid": "viewer.uid"
+      "uid": "玩家国际服游戏 UID"
     },
     "panel-rank.text_4baf68b300": {
-      "label": "label",
-      "value2": "command.international ? \"国际服\" : \"\"",
-      "profileId": "command.profileId"
+      "label": "已开启的排名类型说明",
+      "value2": "国际服标识或空字符串",
+      "profileId": "账号档案编号"
     },
     "panel-rank.text_63ace66ab0": {
-      "value1": "results.length - missing - failed",
-      "missing": "missing",
-      "failed": "failed"
+      "value1": "成功入榜的 UID 数量",
+      "missing": "未公开展示该角色的 UID 数量",
+      "failed": "刷新未确认的 UID 数量"
     },
     "panel-rank.text_6c424aa2fc": {
-      "overview": "overview"
+      "overview": "本次群榜查询结果的统计概览文本"
     },
     "panel-rank.text_b6a3984d7d": {
-      "maxPage": "maxPage"
+      "maxPage": "当前榜单的总页数"
     },
     "panel-rank.text_a005ac788c": {
-      "name_mi18n": "strongest.avatar.name_mi18n",
-      "uid": "strongest.uid",
-      "value3": "strongest.drive.toFixed(2)"
+      "name_mi18n": "榜首代理人的角色名称",
+      "uid": "榜首玩家的绝区零UID",
+      "value3": "榜首代理人的驱动盘评分（保留两位小数）"
     },
     "panel-rank.text_65394218f3": {
-      "example": "example",
-      "value2": "command.page + 1"
+      "example": "翻页查询命令示例",
+      "value2": "下一页的页码"
     },
     "panel-rank.text_0bcdffed52": {
-      "leader": "leader",
-      "overview": "overview"
+      "leader": "榜首角色信息摘要",
+      "overview": "公开展柜数据统计概览"
     },
     "panel-rank.text_2cb43eac24": {
-      "next": "next"
+      "next": "下一页的翻页命令提示"
     },
     "pool-history.text_0c97c23704": {
-      "rank": "request.rank",
-      "kind": "kind"
+      "rank": "稀有度等级",
+      "kind": "卡池类型名称"
     },
     "pool-history.text_8f6813a539": {
-      "item": "row.item",
-      "value2": "String(row.days).padStart(3, \" \")"
+      "item": "角色或音擎名称",
+      "value2": "未复刻天数"
     },
     "pool-history.text_e1e89d5874": {
-      "value1": "calendar(snapshot).slice(0, 10)",
-      "value2": "calendar(lastEnd).slice(0, 10)"
+      "value1": "统计基准日期（YYYY-MM-DD）",
+      "value2": "数据来源覆盖的最后卡池结束日期（YYYY-MM-DD）"
     },
     "pool-history.text_c80542283c": {
-      "title": "title"
+      "title": "版本编号或单阶段卡池名称"
     },
     "pool-history.text_c76cf8aff6": {
-      "value1": "calendar(rows.at(-1)!.end).slice(0, 10)"
+      "value1": "数据来源覆盖的最后卡池结束日期（YYYY-MM-DD）"
     },
     "pool-history.text_212dc0c820": {
-      "version": "request.version",
-      "value2": "request.phase ?? \"\"",
-      "coverage": "coverage"
+      "version": "版本号",
+      "value2": "版本阶段（上半或下半）",
+      "coverage": "数据覆盖范围说明"
     },
     "pool-history.text_ad8c7ba357": {
-      "value1": "calendar(last).slice(0, 10)",
-      "value2": "Math.max(0, -delta)"
+      "value1": "数据截止日期",
+      "value2": "未复刻天数"
     },
     "pool-history.text_d7693df1b7": {
-      "value1": "-delta"
+      "value1": "距最近一次卡池结束已过去的天数"
     },
     "pool-history.text_c613201f2a": {
-      "next": "next"
+      "next": "距离下期卡池开启的天数"
     },
     "pool-history.text_7ce659fe3f": {
-      "delta": "delta"
+      "delta": "距离卡池结束的剩余天数"
     },
     "pool-history.text_cd98cf1512": {
-      "value1": "delta ? `还有${delta}天` : \"今天\""
+      "value1": "距当期卡池结束的剩余时间文案（如“还有N天”或“今天”）"
     },
     "pool-history.text_36e70d44f3": {
-      "version": "row.version"
+      "version": "卡池所属版本"
     },
     "pool-history.text_404bad945d": {
-      "title": "row.title"
+      "title": "卡池名称"
     },
     "pool-history.text_28e6eb5466": {
-      "headliner": "row.headliner"
+      "headliner": "S级UP角色或音擎名称"
     },
     "pool-history.text_f256dfa79d": {
-      "value1": "row.items.join(\"，\")"
+      "value1": "当期A级UP对象名称列表（以中文逗号分隔）"
     },
     "pool-history.text_9e6b4b8e54": {
-      "value1": "calendar(row.start)"
+      "value1": "卡池开始时间"
     },
     "pool-history.text_fa829d0387": {
-      "value1": "calendar(row.end)"
+      "value1": "卡池结束日期时间字符串"
     },
     "pool-history.text_e817f4b6dc": {
-      "label": "label"
+      "label": "查询的目标角色或项目名称"
     },
     "pool-history.text_d7c5ca85c9": {
-      "label": "label",
-      "until": "until"
+      "label": "解析后的查询目标名称或原始输入词",
+      "until": "数据来源覆盖的最后卡池结束日期（YYYY-MM-DD）"
     },
     "pool-history.text_18677466e9": {
-      "display": "display",
-      "value2": "display === first.headliner ? \"S\" : \"A\"",
-      "kind": "kind"
+      "display": "角色或音擎显示名称",
+      "value2": "稀有度等级",
+      "kind": "卡池类型名称"
     },
     "pool-history.text_517932d56c": {
-      "until": "until"
+      "until": "数据截止日期"
     },
     "proficiency-card.text_68b16e68e7": {
-      "rank": "avatar.rank"
+      "rank": "代理人影画等级数字"
     },
     "proficiency-card.text_9d86d2df73": {
-      "star": "weapon.star"
+      "star": "音擎星级（精炼等级）数字"
     },
     "recall-settings.text_29a1b7bb7b": {
-      "maxZzzRecallSeconds": "maxZzzRecallSeconds"
+      "maxZzzRecallSeconds": "允许设置的最大撤回时间上限（秒）"
     },
     "recall-settings.text_0d86667f23": {
-      "next": "next"
+      "next": "新设置的自动撤回秒数"
     },
     "role-alias-command.text_197881ba6a": {
-      "name": "role.name",
-      "length": "list.length",
-      "value3": "list.join(\"、\")"
+      "name": "角色标准名称",
+      "length": "该角色当前已配置的别名数量",
+      "value3": "以顿号分隔的角色别名列表"
     },
     "role-alias-command.text_277e11e2e9": {
-      "name": "role.name"
+      "name": "角色标准名称"
     },
     "role-alias-command.text_721f893eab": {
-      "role": "configured[0]!.role",
-      "alias": "command.alias"
+      "role": "被删除别名对应的角色名称",
+      "alias": "已删除的角色别名"
     },
     "role-alias-command.text_2a09470b5e": {
-      "alias": "command.alias"
+      "alias": "用户尝试添加的角色别名"
     },
     "role-alias-command.text_6144c59d4c": {
-      "name": "role.name",
-      "alias": "command.alias"
+      "name": "角色标准名称",
+      "alias": "新增的角色别名"
     },
     "role-gallery.text_645777035d": {
-      "name": "role.name",
-      "added": "added",
-      "duplicates": "duplicates",
-      "value4": "images.length - added - duplicates"
+      "name": "代理人名称",
+      "added": "成功添加的图片数",
+      "duplicates": "重复图片数",
+      "value4": "未添加的图片数"
     },
     "role-gallery.text_f8522e0bb9": {
-      "value1": "removed.join(\"、\")"
+      "value1": "已删除的角色图编号列表"
     },
     "role-gallery.text_b2f061c373": {
-      "value1": "missing.join(\"、\")"
+      "value1": "无法删除的角色图编号列表"
     },
     "role-gallery.text_7dfe6501a8": {
-      "name": "role.name"
+      "name": "代理人名称"
     },
     "role-gallery.text_25d7dcd198": {
-      "pages": "pages"
+      "pages": "角色图总页数"
     },
     "role-gallery.text_61c6cc3bdf": {
-      "name": "role.name",
-      "page": "command.page",
-      "pages": "pages"
+      "name": "代理人名称",
+      "page": "当前页码",
+      "pages": "总页数"
     },
     "role-gallery.text_79fcc39cf1": {
-      "id": "id"
+      "id": "角色图编号"
     },
     "role-gallery.text_11d4132897": {
-      "title": "title",
-      "value2": "index + 1",
-      "length": "batches.length"
+      "title": "分页标题",
+      "value2": "当前分段序号",
+      "length": "总分段数"
     },
     "role-gallery.text_eb833b8e8c": {
-      "value1": "index + 1"
+      "value1": "当前分段序号"
     },
     "role-gallery.text_de79d52d9c": {
-      "value1": "index + 1"
+      "value1": "当前分段序号"
     },
     "shiyu-card.text_29577cdb93": {
-      "value1": "numberWords[teamIndex]"
+      "value1": "队伍中文序号"
     },
     "shiyu-card.text_d23d0c445b": {
-      "value1": "team.challengeTime ?? \"—\""
+      "value1": "队伍通关时间或默认短横线"
     },
     "shiyu-card.text_e75b3723fe": {
-      "buff": "team.buff"
+      "buff": "队伍增益名称"
     },
     "shiyu-card.text_9f28482a09": {
-      "value1": "names[layer.number]"
+      "value1": "防线中文序号"
     },
     "shiyu-card.text_36a0838b7a": {
-      "challengeTime": "layer.challengeTime"
+      "challengeTime": "节点通关时间"
     },
     "shiyu-card.text_8222f5440b": {
-      "value1": "duration(summary.battleTime)"
+      "value1": "格式化后的总战斗时长"
     },
     "shiyu-card.text_bb1aebf777": {
-      "cycle": "cycle"
+      "cycle": "周期时间范围或无记录提示"
     },
     "shiyu-card.text_e6bc2686a5": {
-      "value1": "options.rankVisibility ? \"显示\" : \"隐藏\""
+      "value1": "群排名当前可见状态（显示或隐藏）"
     },
     "skills-command.text_98c70549e8": {
-      "name": "name"
+      "name": "查询的角色名称"
     },
     "skills-command.text_f11a55782f": {
-      "name": "entry.name"
+      "name": "代理人名称"
     },
     "skills-command.text_36fcfe9b7c": {
-      "name": "entry.name"
+      "name": "代理人名称"
     },
     "skills-command.text_cfd049d3f5": {
-      "name": "entry.name",
-      "length": "images.length"
+      "name": "代理人名称",
+      "length": "图片页数"
     },
     "tuning-detail-card.text_3a196e5dc8": {
-      "totalCount": "row.totalCount"
+      "totalCount": "该记录的抽取次数"
     },
     "tuning-detail.text_7a5b6bef58": {
-      "value1": "dates[0]",
-      "value2": "dates.at(-1)"
+      "value1": "首条 S 级调频记录的日期",
+      "value2": "末条 S 级调频记录的日期"
     },
     "tuning-detail.text_0c56f6bb3a": {
-      "profileId": "profileId",
-      "uid": "uid"
+      "profileId": "档案编号",
+      "uid": "游戏UID"
     },
     "tuning-history.text_32e486ab14": {
-      "field": "field"
+      "field": "校验失败的字段或数据项名称"
     },
     "tuning-history.text_d6433d40b2": {
-      "name": "name"
+      "name": "调频频段名称"
     },
     "tuning-history.text_ce53d985a1": {
-      "name": "name"
+      "name": "调频频段名称"
     },
     "tuning-history.text_0f1889a8e5": {
-      "name": "name"
+      "name": "调频频段名称"
     },
     "tuning-history.text_8921b8bc15": {
-      "name": "name"
+      "name": "调频频段名称"
     },
     "tuning-history.text_23993de6f6": {
-      "name": "name"
+      "name": "调频频段名称"
     },
     "tuning-inventory-command.text_1397b2ffaf": {
-      "profileId": "profileId",
-      "uid": "uid"
+      "profileId": "档案编号",
+      "uid": "游戏 UID"
     },
     "tuning-inventory-command.text_76720712c8": {
-      "profileId": "profileId"
+      "profileId": "档案编号"
     },
     "tuning-inventory-command.text_f4a9dc8367": {
-      "profileId": "profileId"
+      "profileId": "档案编号"
     },
     "tuning-result-card.text_e747eddef9": {
-      "qq": "qq",
-      "profileId": "profileId",
-      "uid": "uid"
+      "qq": "QQ 号",
+      "profileId": "档案编号",
+      "uid": "游戏 UID"
     },
     "tuning-result-card.text_dc7677bc1d": {
-      "name": "name",
-      "totalDraws": "totalDraws",
-      "total": "total",
-      "added": "added",
-      "value5": "pity ?? \"—\""
+      "name": "卡池名称",
+      "totalDraws": "总抽数",
+      "total": "S 级总数",
+      "added": "新增抽数",
+      "value5": "当前垫抽数"
     },
     "tuning-result-card.text_7a351db5c1": {
-      "qq": "qq",
-      "profileId": "profileId",
-      "value3": "failureMessages[reason]"
+      "qq": "QQ 号",
+      "profileId": "档案编号",
+      "value3": "失败原因文本"
     },
     "void-front-card.text_379b38e2e5": {
-      "value1": "stage.ratio ?? \"—\""
+      "value1": "关卡得分倍率"
     },
     "void-front-card.text_d23d0c445b": {
-      "value1": "stage.clearedAt ?? \"—\""
+      "value1": "关卡通关时间"
     },
     "void-front-card.text_99534f0824": {
-      "value1": "visibility ? \"显示\" : \"隐藏\""
+      "value1": "排名显示状态（显示或隐藏）"
     },
     "void-front-card.text_442c37936d": {
-      "value1": "snapshot.start ?? \"起始未知\"",
-      "value2": "snapshot.end ?? \"结束未知\""
+      "value1": "统计起始时间",
+      "value2": "统计结束时间"
     },
     "void-front-card.text_e9a4798f8e": {
-      "value1": "i + (snapshot.finalStage ? 0 : 1)"
+      "value1": "关卡序号"
     },
     "zenkov-card.text_05a2a8504c": {
-      "command": "command",
-      "value2": "snapshot.firstPage + renderedPages"
+      "command": "查询命令",
+      "value2": "下一页页码"
     },
     "zenkov-card.text_63c4ff4f1e": {
-      "days": "days"
+      "days": "剩余天数"
     },
     "zenkov-card.text_952f1ba039": {
-      "value1": "String(days).padStart(2, \"0\")",
-      "value2": "String(Math.floor(seconds / 3600) % 24).padStart(2, \"0\")"
+      "value1": "剩余天数",
+      "value2": "剩余小时数"
     },
     "zenkov-card.text_c11255961c": {
-      "value1": "rankText(snapshot.rank)"
+      "value1": "格式化后的最高排名文本"
     },
     "zenkov-card.text_2f718c2d22": {
-      "value1": "snapshot.maps.length + snapshot.hiddenMaps - 8"
+      "value1": "未展示的剩余地图数量"
     },
     "zenkov-card.text_2affa47f29": {
-      "value1": "outcome(row.success)",
-      "value2": "duration(row.seconds)",
-      "value3": "amount(row.value)"
+      "value1": "探索结果",
+      "value2": "探索耗时",
+      "value3": "累计带出价值"
     },
     "zenkov-card.text_7682e042ee": {
-      "firstPage": "snapshot.firstPage",
-      "pageCount": "snapshot.pageCount"
+      "firstPage": "当前页码",
+      "pageCount": "总页数"
     },
     "zenkov-card.text_bb174407bd": {
-      "value1": "season?.id ?? \"—\"",
-      "value2": "season?.level ?? \"—\"",
-      "value3": "remaining(season?.remaining, false)"
+      "value1": "当前赛季编号（缺失时为破折号）",
+      "value2": "当前赛季等级（缺失时为破折号）",
+      "value3": "赛季剩余时间"
     },
     "zenkov-card.text_90ca1f28a7": {
-      "value1": "season?.stage ?? \"—\"",
-      "value2": "progress(season?.quest)",
-      "value3": "progress(season?.coin)"
+      "value1": "赛季阶段",
+      "value2": "委托完成进度",
+      "value3": "获取上限进度"
     },
     "zenkov-card.text_df436f2c38": {
-      "value1": "remaining(snapshot.weeklyRemaining, true)"
+      "value1": "周常委托本周剩余时间"
     },
     "zenkov-card.text_f63cc5db09": {
-      "value1": "progress(snapshot.medals)"
+      "value1": "勋章墙收集进度"
     },
     "zenkov-card.text_6013118dbf": {
-      "value1": "progress(snapshot.goods)"
+      "value1": "收藏品收集进度"
     },
     "zenkov-card.text_a500b5268a": {
-      "hiddenMaps": "snapshot.hiddenMaps"
+      "hiddenMaps": "未展示的剩余地图数量"
     },
     "zenkov-card.text_f56dc77490": {
-      "value1": "duration(run.seconds)"
+      "value1": "格式化后的单场探索耗时"
     },
     "zenkov-card.text_4dc648b440": {
-      "hiddenLoot": "run.hiddenLoot"
+      "hiddenLoot": "未展示的剩余战利品数量"
     },
     "zenkov-card.text_ed413f2c05": {
-      "totalRecords": "snapshot.totalRecords"
+      "totalRecords": "探索记录总场次"
     },
     "zenkov-card.text_3ccf734617": {
-      "value1": "season?.stage ?? \"—\""
+      "value1": "赛季委托阶段"
     },
     "zenkov-card.text_4298212e3f": {
-      "value1": "season?.id ?? \"—\""
+      "value1": "赛季编号"
     },
     "zenkov-card.text_deff9fcd12": {
-      "value1": "remaining(snapshot.weeklyRemaining, true)"
+      "value1": "周常委托本周剩余时间"
     },
     "zenkov-card.text_ca88e64e61": {
-      "hiddenItems": "view.hiddenItems"
+      "hiddenItems": "卡片中未完全展示的隐藏物品数量"
     }
   }
 }
