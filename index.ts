@@ -221,14 +221,14 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       });
       if (!source || overseasRegion(source.role)) {
         const international = await profiles.internationalRoleContext(qq, profileId, "zzz");
-        if (!source && !international) return `profile ${profileId} 未选中已认证的绝区零 UID。`;
+        if (!source && !international) return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
         if (buddyOnly) return "邦布持有查询支持国服绝区零档案。";
         if (context.message_type !== "private" || context.isDelegated || !context.privateCredentialSignal) {
           return "绝区零国际服战绩请从本人私聊查询。";
         }
         activeSignal = AbortSignal.any([activeSignal, context.privateCredentialSignal]);
         if (activeSignal.aborted) return [];
-        if (!international) return `请先在 profile ${profileId} 绑定已核验的 HoYoLAB 账号。`;
+        if (!international) return `请先在 档案 ${profileId} 绑定已核验的 HoYoLAB 账号。`;
         if (source && source.revision !== international.revision) return changed;
         const { revision } = international;
         async function verifyProfile() {
@@ -253,8 +253,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     } catch (error) {
       if (activeSignal.aborted || context.privateCredentialSignal?.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `profile ${profileId} 未选中已认证的绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+        if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -299,8 +299,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `profile ${profileId} 未选中已认证的绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+        if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -370,8 +370,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `profile ${profileId} 未选中已认证的绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+        if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -468,8 +468,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `profile ${profileId} 未选中已认证的绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+        if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || (error instanceof HoyoRequestError && error.code === "refresh")) {
         return error.message;
@@ -580,8 +580,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     } catch (error) {
       if (signal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+        if (error.code === "role-missing") return `档案 ${profileId} 没有同步绝区零 UID。`;
       }
       if (error instanceof HoyoRequestError && error.code === "invalid-input") return error.message;
       if (error instanceof HoyoRequestError && error.code === "profile-changed") return "绝区零档案角色已变化，请重新查询。";
@@ -708,12 +708,12 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         if (active.aborted) return;
         try {
           const url = await getLink(String(context.user_id), profileId, undefined, active);
-          if (!active.aborted) return url ?? "该档案正在获取绝区零抽卡链接，请稍后再试。";
+          if (!active.aborted) return url ?? "该档案正在获取绝区零抽卡链接。";
         } catch (error) {
           if (active.aborted) return;
           if (error instanceof ProfileError) {
-            if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-            if (error.code === "role-missing") return `profile ${profileId} 未选中已认证的绝区零 UID。`;
+            if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+            if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
             if (error.code === "changed") return "绝区零档案角色已变化，请重新获取。";
           }
           if (error instanceof HoyoRequestError) {
@@ -747,8 +747,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (!update) return view(qq, profileId, context, linkedOnly !== null);
       try {
         const result = await gachaUpdate(qq, profileId, () =>
-          context.reply(`正在为 profile ${profileId} 更新绝区零抽卡记录。`));
-        if (!result) return "该档案的绝区零抽卡记录正在更新，请稍后再试。";
+          context.reply(`正在更新绝区零抽卡记录（档案 ${profileId}）。`));
+        if (!result) return "该档案的绝区零抽卡记录正在更新。";
         try {
           const { png } = await renderZzzTuningResult(qq, result);
           return { type: "image" as const, file: png };
@@ -760,8 +760,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         if (error instanceof ZzzManualGachaLinkRequired) return recall.transient(linkSession(context, profileId));
         if (error instanceof ZzzTuningHistoryChangedError) return "该角色的绝区零抽卡记录已由另一条请求更新。";
         if (error instanceof ProfileError) {
-          if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-          if (error.code === "role-missing") return `profile ${profileId} 未选中已认证的绝区零 UID。`;
+          if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+          if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
         }
         const reason = error instanceof ZzzTuningRateLimitError ? "rate-limited"
           : (error instanceof ProfileError && error.code === "changed") ||

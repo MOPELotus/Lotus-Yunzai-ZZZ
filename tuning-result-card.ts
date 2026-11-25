@@ -23,7 +23,7 @@ interface TuningCardFailure {
 export function renderZzzTuningResult(
   qq: string, { uid, profileId, pools, stats }: TuningCardResult, options?: StatusCardOptions,
 ) {
-  const lead = `QQ ${qq} · Profile ${profileId} · UID ${uid}\n已同步米游社全历史调频统计与 S 级记录。`;
+  const lead = `QQ ${qq} · 档案 ${profileId} · UID ${uid}`;
   const contents = pools.length ? pools.map(({ name, totalDraws, total, added, pity }) =>
     `${name}：共 ${totalDraws} 抽 · S 级 ${total}（新增 ${added}）· 当前垫 ${pity ?? "—"}`) : ["卡池：无新增记录"];
   return renderStatusCard(title, lead, contents, new Date(stats.updatedAt), options);
@@ -32,9 +32,8 @@ export function renderZzzTuningResult(
 export function renderZzzTuningFailure(
   { qq, profileId, reason = "request-failed", at = new Date() }: TuningCardFailure, options?: StatusCardOptions,
 ) {
-  const lead = `QQ ${qq} · Profile ${profileId}\n${failureMessages[reason]}`;
+  const lead = `QQ ${qq} · 档案 ${profileId}\n${failureMessages[reason]}`;
   return renderStatusCard(title, lead, [
-    "阶段：绝区零调频记录同步",
-    "建议：检查 profile 的绝区零 UID 和米游社登录状态。",
+    "检查档案的绝区零 UID 和米游社登录状态。",
   ], at, options);
 }

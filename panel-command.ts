@@ -373,13 +373,13 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       }
       if (region !== "prod_gf_cn" && region !== "prod_qd_cn") return "米游社面板更新目前支持国服绝区零角色。";
       const key = `${region}:${role.uid}`;
-      if (running.has(key)) return "该角色的绝区零面板正在更新，请稍后再试。";
+      if (running.has(key)) return "该角色的绝区零面板正在更新。";
       running.add(key);
       try {
         const { roleInterval } = parseZzzPanelConfig(await readZzzPanelConfigDocument(resources));
         const selected = command.names.length ? await targets(command.names, resources) : undefined;
         if (selected?.missing.length) return `角色${selected.missing.map(name => `【${name}】`).join("")}不存在，请确保角色名称/别称存在。`;
-        await context.reply(command.names.length ? `正在更新${command.names.join("、")}面板，请稍候...` : "正在更新面板列表，请稍候...");
+        await context.reply(command.names.length ? `正在更新${command.names.join("、")}面板。` : "正在更新面板列表。");
         const result = await client.fetchZzzPanel(source, { ids: selected?.ids, signal, roleInterval });
         if (result.uid !== role.uid || result.region !== region) throw new ProfileError("changed", "绝区零档案角色已变化。");
         if (!result.avatars.length) return "未能获取角色的面板数据，请确认已拥有对应角色。";
@@ -404,8 +404,8 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       if (error instanceof ZzzDamageUnavailable) return error.message;
       if (error instanceof ProfileError) {
         if (error.code === "changed") return "绝区零档案角色已变化，请重新操作。";
-        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+        if (error.code === "role-missing") return `档案 ${profileId} 没有同步绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || error instanceof HoyoRequestError && ["refresh", "invalid-input"].includes(error.code)) {
         return error.message;

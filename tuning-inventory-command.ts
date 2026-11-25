@@ -52,7 +52,7 @@ export function createZzzInventoryQuery(
         name, value: result.inventory[field]?.toLocaleString("zh-CN") ?? "—",
       }));
       const { uid, nickname, level } = latest.role;
-      const text = ["绝区零调频库存", `Profile ${profileId} · UID ${uid}`, ...rows.map(({ name, value }) => `${name}：${value}`)].join("\n");
+      const text = ["绝区零调频库存", `档案 ${profileId} · UID ${uid}`, ...rows.map(({ name, value }) => `${name}：${value}`)].join("\n");
       const configured = Bun.env.LOTUS_SKIA_MODE;
       const inlineImageByteLimit = context.inlineImageByteLimit ?? 16 * 1024 * 1024;
       const output = await render({ qq, uid, nickname, level, rows }, {
@@ -71,8 +71,8 @@ export function createZzzInventoryQuery(
     } catch (error) {
       if (signal.aborted) return;
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `profile ${profileId} 未选中已认证的绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+        if (error.code === "role-missing") return `档案 ${profileId} 未选中已认证的绝区零 UID。`;
         if (error.code === "changed") return changed;
       }
       if (error instanceof ZzzTuningRateLimitError) return "读取调频库存过于频繁，请稍后再试。";

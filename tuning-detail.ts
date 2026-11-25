@@ -146,5 +146,5 @@ export function buildZzzTuningInventoryReply({ uid, profileId, live }: {
   });
   if (!fields.length) return;
   const rows = [fields.slice(0, 2), fields.slice(2)].filter((line) => line.length).map((line) => line.join(" · "));
-  return [`Profile ${profileId}（UID: ${uid}）`, "当前库存：", ...rows].join("\n");
+  return [`档案 ${profileId}（UID: ${uid}）`, "当前库存：", ...rows].join("\n");
 }

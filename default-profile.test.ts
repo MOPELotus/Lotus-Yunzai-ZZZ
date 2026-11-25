@@ -60,19 +60,19 @@ test("本人战绩和调频从模块实际聊天派发读取默认档号", async
       "#绝区零逐抽记录", "#绝区零抽卡记录", "#绝区零更新抽卡记录"];
     for (const entry of entries) {
       await withGameCommandProfiles(scope, async () => {
-        expect(JSON.stringify(await reply(entry))).toContain("profile 4");
-        expect(JSON.stringify(await reply(entry + "1"))).toContain("profile 1");
+        expect(JSON.stringify(await reply(entry))).toContain("档案 4");
+        expect(JSON.stringify(await reply(entry + "1"))).toContain("档案 1");
       });
     }
     await withGameCommandProfiles(scope, async () => {
-      for (const alias of ["zzz角色", "/zzz角色", "/绝区零角色"]) expect(await reply(alias)).toContain("profile 4");
+      for (const alias of ["zzz角色", "/zzz角色", "/绝区零角色"]) expect(await reply(alias)).toContain("档案 4");
       expect(await reply("#绝区零月报 页2")).toContain("%月报统计4 页 2");
       expect(await reply("#绝区零月报1 页2")).toContain("%月报统计1 页 2");
       expect(await reply("#绝区零迷宫1 页2")).toContain("%迷宫战绩1 页 2");
       expect(JSON.stringify(await reply("#绝区零抽卡链接1", "group"))).toContain("%抽卡链接1");
     });
-    expect(await withGameCommandProfiles({ ...scope, isCurrent: () => false }, () => reply("#绝区零卡片"))).toContain("profile 1");
-    expect(await reply("#绝区零卡片")).toContain("profile 1");
+    expect(await withGameCommandProfiles({ ...scope, isCurrent: () => false }, () => reply("#绝区零卡片"))).toContain("档案 1");
+    expect(await reply("#绝区零卡片")).toContain("档案 1");
   } finally {
     if (previous === undefined) delete Bun.env.LOTUS_PROFILE_DIR;
     else Bun.env.LOTUS_PROFILE_DIR = previous;

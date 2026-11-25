@@ -31,8 +31,8 @@ function validId(id: number | undefined): id is number {
 
 function describeFailure(error: unknown, profileId: number): string {
   if (error instanceof ProfileError) {
-    if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
-    if (error.code === "role-missing") return `profile ${profileId} 没有同步绝区零 UID。`;
+    if (error.code === "missing" || error.code === "login-required") return `请先登录档案 ${profileId}。`;
+    if (error.code === "role-missing") return `档案 ${profileId} 没有同步绝区零 UID。`;
     if (error.code === "changed") return "绝区零档案角色已变化，请重新录入。";
   }
   if (error instanceof ZzzGachaLinkError) {
@@ -105,7 +105,7 @@ export function createZzzGachaLinkSession({ signal, savedRole, importLink }: {
 
     const { qq: requestQq, profileId: requestProfileId } = request;
     const key = `${requestQq}/${requestProfileId}`;
-    if (active.has(key)) return "该档案的抽卡链接正在处理，请稍后再试。";
+    if (active.has(key)) return "该档案的抽卡链接正在处理。";
     active.add(key);
     try {
       const role = await request.role;
@@ -119,7 +119,7 @@ export function createZzzGachaLinkSession({ signal, savedRole, importLink }: {
       }
       await verifyProfile();
       const link = parseZzzGachaLink(text, role);
-      await context.reply("正在读取绝区零逐抽记录，请稍候。");
+      await context.reply("正在更新绝区零逐抽记录。");
       const result = await importLink(requestQq, requestProfileId, link, verifyProfile);
       if (!signal.aborted) return result;
     } catch (error) {
