@@ -1,3 +1,4 @@
+import { brandTextColor } from "@lotus-yunzai/skia/brand-color";
 import { builtinResourceDirectory } from "../../lib/builtin-resources.ts";
 import { constants } from "node:fs";
 import { open, realpath } from "node:fs/promises";
@@ -99,7 +100,7 @@ export function label(context: Context, text: string, x: number, y: number, size
   context.textBaseline = "middle";
   context.textAlign = align;
   context.font = `${weight} ${size}px ${font}`;
-  context.fillStyle = color;
+  context.fillStyle = text === zzzCardFooter ? brandTextColor(context, text, x, y, maxWidth) : color;
   if (maxWidth !== undefined) {
     const width = context.measureText(text).width;
     if (!ellipsis && width > maxWidth) {

@@ -130,6 +130,6 @@ export async function renderZzzInventoryCard(model: InventoryCard, {
     context.shadowColor = "#252525";
     context.shadowBlur = 1;
     context.shadowOffsetY = 0.6;
-    text(context, zzzCardFooter, width / 2, 369, 10, "#fff", "center");
+    text(context, zzzCardFooter, width / 2, 369, 10, "#000", "center");
   }, 4, inlineImageByteLimit, { allowHalfScale: true, mode });
 }
