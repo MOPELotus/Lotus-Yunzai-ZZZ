@@ -8,10 +8,16 @@ type TuningCardResult = Pick<SyncResult, "uid" | "profileId" | "pools"> & {
 
 const title = "绝区零抽卡记录";
 const failureMessages = {
-  "rate-limited": "访问过于频繁，请稍后再试。",
-  "profile-changed": "保存绝区零调频历史时档案已变更，请重新发起请求。",
+  "rate-limited": "访问过于频繁。",
+  "network-failed": "网络连接失败。",
+  "service-unavailable": "官方服务暂时不可用。",
+  "profile-changed": "档案已变更，请重新更新抽卡记录。",
   "request-failed": "绝区零抽卡记录更新失败。",
 } as const;
+
+export function zzzTuningFailureText(reason: keyof typeof failureMessages) {
+  return failureMessages[reason];
+}
 
 interface TuningCardFailure {
   readonly qq: string;
@@ -33,7 +39,5 @@ export function renderZzzTuningFailure(
   { qq, profileId, reason = "request-failed", at = new Date() }: TuningCardFailure, options?: StatusCardOptions,
 ) {
   const lead = `QQ ${qq} · 档案 ${profileId}\n${failureMessages[reason]}`;
-  return renderStatusCard(title, lead, [
-    "检查档案的绝区零 UID 和米游社登录状态。",
-  ], at, options);
+  return renderStatusCard(title, lead, [], at, options);
 }

@@ -49,7 +49,7 @@ import { buildZzzTuningDetail, buildZzzTuningInventoryReply } from "./tuning-det
 import { sameZzzTuningProfile, zzzTuningProfile } from "./tuning-profile.ts";
 import { renderZzzTuningDetail } from "./tuning-detail-card.ts";
 import { createZzzInventoryQuery, zzzInventoryCommand } from "./tuning-inventory-command.ts";
-import { renderZzzTuningFailure, renderZzzTuningResult } from "./tuning-result-card.ts";
+import { renderZzzTuningFailure, renderZzzTuningResult, zzzTuningFailureText } from "./tuning-result-card.ts";
 import { createZzzTuningSync, ZzzTuningHistoryChangedError } from "./tuning-sync.ts";
 import { renderZzzZenkov, zzzZenkovFollowUp, zzzZenkovText } from "./zenkov-card.ts";
 import { zzzCommandProfileSuffix } from "./profile-command.ts";
@@ -765,12 +765,15 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         }
         const reason = error instanceof ZzzTuningRateLimitError ? "rate-limited"
           : (error instanceof ProfileError && error.code === "changed") ||
-            (error instanceof HoyoRequestError && error.code === "profile-changed") ? "profile-changed" : "request-failed";
+            (error instanceof HoyoRequestError && error.code === "profile-changed") ? "profile-changed"
+          : error instanceof HoyoRequestError && error.code === "transport" ? "network-failed"
+          : error instanceof HoyoRequestError && error.status !== undefined && error.status >= 500 && error.status <= 599
+            ? "service-unavailable" : "request-failed";
         try {
           const { png } = await renderZzzTuningFailure({ qq, profileId, reason });
           return { type: "image" as const, file: png };
         } catch {
-          return "绝区零抽卡记录更新失败，请检查档案登录状态与绝区零 UID。";
+          return zzzTuningFailureText(reason);
         }
       }
     },
