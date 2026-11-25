@@ -192,7 +192,7 @@ export async function renderZzzProficiency(model: Proficiency, role: GameRole, o
       align: "center", color: options.source === "showcase" ? "#f3c858" : "#b8b5bd",
     });
     for (const [index, row] of model.rows.entries()) drawRow(context, row, art.art[index]!, art, listTop + (rowHeight + gap) * index);
-    label(context, zzzCardFooter, 420, height - 48, 17, { align: "center", color: "#a09ca3" });
+    label(context, zzzCardFooter, 420, height - 48, 17, { align: "center", color: "#fff" });
   }
 
   const standard = nativeImageRasterScale() === 4;

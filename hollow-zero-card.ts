@@ -131,7 +131,7 @@ export async function renderZzzHollowZero(snapshot: ZzzHollowSnapshot, role: Gam
       }
       y += h + 20;
     }
-    label(context, zzzCardFooter, width / 2, height - 33, 17, { align: "center", color: "#a09ca3" });
+    label(context, zzzCardFooter, width / 2, height - 33, 17, { align: "center", color: "#fff" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }
 

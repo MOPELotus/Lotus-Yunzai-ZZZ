@@ -186,6 +186,6 @@ export async function renderZzzDeadly(snapshot: ZzzDeadlySnapshot, nickname: str
       `本群危局强袭战排名：${options.rankVisibility ? "显示" : "隐藏"}，可用 %显示危局排名 或 %隐藏危局排名 切换`;
     label(context, caption,
       width / 2, footer + 49, 19.2, { align: "center", weight: 700 });
-    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#fff", align: "center" });
   }, scale, inlineImageByteLimit);
 }

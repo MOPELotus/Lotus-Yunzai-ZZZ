@@ -217,7 +217,7 @@ export async function renderZzzZenkov(snapshot: ZzzZenkovSnapshot, role: GameRol
         y += recordHeight(run) + 11;
       }
       if (followUp) label(ctx, followUp, 62, y + 17, 22, { color: gold, maxWidth: 700 });
-      label(ctx, zzzCardFooter, 420, height - 17, 15, { align: "center", color: "#a09ca3" });
+      label(ctx, zzzCardFooter, 420, height - 17, 15, { align: "center", color: "#fff" });
     }, 4, options.inlineImageByteLimit, { allowHalfScale: true }).catch((error: unknown) => {
       if (!(error instanceof ZzzInlineImageLimitError)) throw error;
       const page = { ...snapshot, firstPage: snapshot.firstPage + index, records: runs };
@@ -426,6 +426,6 @@ async function renderZenkovSummary(snapshot: Summary, role: GameRole, art: Asset
         top += collectionLayout(view, medal).height + summaryGap;
       }
     }
-    label(ctx, zzzCardFooter, summaryWidth / 2, height - 45, 16.8, { align: "center", color: "#797979" });
+    label(ctx, zzzCardFooter, summaryWidth / 2, height - 45, 16.8, { align: "center", color: "#fff" });
   }, 4, inlineImageByteLimit, { allowHalfScale: true });
 }

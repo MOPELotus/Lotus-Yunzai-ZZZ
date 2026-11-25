@@ -289,6 +289,6 @@ export async function renderChallengeRank(mode: RankMode, rows: readonly RankRow
     if (voidFront) {
       label(context, `• 使用 %显示临界排名 或 %隐藏临界排名 设置本群可见性`, 74, noteY + (voidFront ? 63 : 78), 19.2, { color: "#f3cb45" });
     }
-    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#fff", align: "center" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

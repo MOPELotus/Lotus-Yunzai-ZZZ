@@ -105,7 +105,7 @@ function renderZzzExploration(snapshot: ZzzExplorationSnapshot, role: GameRole, 
       y += layout.height + 36;
     }
     if (follow) label(ctx, follow, side, panelEnd - 45, 21.6, { color: orange, maxWidth: 750 });
-    label(ctx, zzzCardFooter, width / 2, height - 45, 16.8, { align: "center", color: "#797979" });
+    label(ctx, zzzCardFooter, width / 2, height - 45, 16.8, { align: "center", color: "#fff" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }
 

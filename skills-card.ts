@@ -347,7 +347,7 @@ export async function renderZzzSkills(sections: readonly SkillSection[], source:
         y += block.height + sectionGap;
       }
       label(context, "数据来源于 Nanoka", width / 2, end + 64, 24, { color: "#a09ca3", align: "center" });
-      label(context, zzzCardFooter, width / 2, end + 139, 16.8, { color: "#a09ca3", align: "center" });
+      label(context, zzzCardFooter, width / 2, end + 139, 16.8, { color: "#fff", align: "center" });
     }, 4, inlineImageByteLimit, { allowHalfScale: true }));
   }
   return result;

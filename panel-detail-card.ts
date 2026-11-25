@@ -503,7 +503,7 @@ export async function renderZzzPanelDetail(avatar: ZzzPanelAvatar, uid: string,
       }
       if (inlineDamage.length) drawInlineDamage(context, inlineDamage, gridBottom);
     }
-    label(context, zzzCardFooter, width / 2, height - 22, 17, { color: muted, align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 22, 17, { color: "#fff", align: "center" });
   }, "gpu", { allowHalfScale: standard && scale === 4 });
   let rendered = await render(4);
   if (options.inlineImageByteLimit !== undefined && rendered.png.byteLength > options.inlineImageByteLimit) {

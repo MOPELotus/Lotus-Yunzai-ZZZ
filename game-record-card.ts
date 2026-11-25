@@ -166,6 +166,6 @@ export async function renderZzzGameRecord(record: ZzzGameRecordSnapshot, role: G
     drawGrid(context, record.avatars, agents, badges, startGrid, "影");
     title(context, nextGrid - 48, "BANGBOO", "邦布信息");
     drawGrid(context, record.buddies, buddies, badges, nextGrid, "命");
-    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#fff", align: "center" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

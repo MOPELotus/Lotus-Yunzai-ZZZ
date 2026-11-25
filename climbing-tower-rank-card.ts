@@ -155,6 +155,6 @@ export async function renderClimbingTowerRank(season: Season, rows: readonly Ran
     heading(context, title, season, width);
     rows.forEach((row, index) => playerRow(context, season, row, rowTop + index * rowHeight, images[index]!));
     notes(context, title, season, noteTop, noteHeight, notesBg);
-    label(context, zzzCardFooter, width / 2, height - 44, 16.8, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 44, 16.8, { color: "#fff", align: "center" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

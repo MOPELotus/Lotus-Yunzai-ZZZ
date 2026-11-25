@@ -121,6 +121,6 @@ export async function renderZzzPanelList(rows: readonly ZzzPanelAvatar[], role: 
       if (rare) contain(context, rare, x + 42.5, y + 100.7, 17, 17);
       else label(context, row.rarity, x + 51, y + 109.2, 13, { align: "center", color: "#efd368" });
     });
-    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 42, 17, { color: "#fff", align: "center" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

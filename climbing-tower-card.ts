@@ -197,6 +197,6 @@ export async function renderZzzClimbingTower(snapshot: ZzzClimbingTowerSnapshot,
       label(context, "，以参与对", suffixX, noteY + 37, 19.2);
       label(context, "应群的拟真鏖战试炼排名", 67.2, noteY + 63, 19.2);
     }
-    label(context, zzzCardFooter, width / 2, height - 44.5, 16.8, { align: "center", color: "#a09ca3" });
+    label(context, zzzCardFooter, width / 2, height - 44.5, 16.8, { align: "center", color: "#fff" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

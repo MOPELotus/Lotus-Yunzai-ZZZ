@@ -134,5 +134,5 @@ export function paintHoloRank(context: Context, art: HoloRankArt, rows: readonly
   instruction(context, notesY + 35.2);
   label(context, "•  排名依据：1. 星数（更多优先）  2. 三间用时总和（更少优先）  3. 无伤间数（更多优先）  4. 战绩记录时间（更早优先）",
     72, notesY + 74.4, 24, { color: "#979797", maxWidth: 2050 });
-  label(context, zzzCardFooter, holoRankWidth / 2, notesY + 145, 16.8, { color: "#a09ca3", align: "center" });
+  label(context, zzzCardFooter, holoRankWidth / 2, notesY + 145, 16.8, { color: "#fff", align: "center" });
 }

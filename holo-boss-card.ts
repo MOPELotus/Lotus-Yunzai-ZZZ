@@ -192,6 +192,6 @@ export async function renderZzzHoloBoss(snapshot: ZzzHoloBossSnapshot, _role: Ga
       label(context, `• 本群拟境排名已${status}`, 94, notes + 49, 19.2);
       label(context, "%显示拟境排名 / %隐藏拟境排名", 288, notes + 49, 19.2, { color: "#ffd700" });
     }
-    label(context, zzzCardFooter, width / 2, height - 44.5, 16.8, { align: "center", color: "#a09ca3" });
+    label(context, zzzCardFooter, width / 2, height - 44.5, 16.8, { align: "center", color: "#fff" });
   }, 4, options.inlineImageByteLimit, { allowHalfScale: true });
 }

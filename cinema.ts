@@ -128,7 +128,7 @@ async function renderCinema(name: string, fullName: string, ranks: Role["ranks"]
       context.restore();
     }
     label(context, "数据来源于 Nanoka", width / 2, height - 71, 20, { color: "#a09ca3", align: "center" });
-    label(context, zzzCardFooter, width / 2, height - 28, 18, { color: "#a09ca3", align: "center" });
+    label(context, zzzCardFooter, width / 2, height - 28, 18, { color: "#fff", align: "center" });
   }, 4, inlineImageByteLimit, { allowHalfScale: true });
 }
 
