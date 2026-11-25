@@ -404,8 +404,8 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
       if (error instanceof ZzzDamageUnavailable) return error.message;
       if (error instanceof ProfileError) {
         if (error.code === "changed") return "绝区零档案角色已变化，请重新操作。";
-        if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
-        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
+        if (error.code === "role-missing") return `profile ${profileId} 没有同步绝区零 UID。`;
       }
       if (error instanceof GameRecordRequestError || error instanceof HoyoRequestError && ["refresh", "invalid-input"].includes(error.code)) {
         return error.message;

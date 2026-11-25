@@ -64,7 +64,7 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
       let archiveAccess: () => Promise<boolean>;
       const overseas = !source || source.role.gameBiz === "nap_global";
       const international = overseas ? await profiles.internationalRoleContext(qq, profileId, "zzz") : undefined;
-      if (!source && !international) return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+      if (!source && !international) return `profile ${profileId} 没有同步绝区零 UID。`;
       if (overseas) {
         if (context.message_type !== "private" || !context.privateCredentialSignal) {
           return "绝区零国际服月报请从本人私聊查询。";
@@ -96,7 +96,7 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
         const account = previewRedeemIdentity(source);
         query = async () => {
           if (overseas) {
-            throw new HoyoRequestError("invalid-input", `[zzz] 请先在 profile ${profileId} 绑定已核验的 HoYoLAB 账号。`);
+            throw new HoyoRequestError("invalid-input", `请先在 profile ${profileId} 绑定已核验的 HoYoLAB 账号。`);
           }
           const result = await client.fetchZzzMonthly(source, { month, collect: options.collect, signal });
           revision = result.revision;
@@ -160,9 +160,9 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
     } catch (error) {
       if (activeSignal.aborted) return [];
       if (error instanceof ProfileError) {
-        if (error.code === "missing" || error.code === "login-required") return `[zzz] 请先登录 profile ${profileId}。`;
+        if (error.code === "missing" || error.code === "login-required") return `请先登录 profile ${profileId}。`;
         if (error.code === "changed") return changed;
-        if (error.code === "role-missing") return `[zzz] profile ${profileId} 没有同步绝区零 UID。`;
+        if (error.code === "role-missing") return `profile ${profileId} 没有同步绝区零 UID。`;
       }
       if (error instanceof HoyoRequestError && error.code === "profile-changed") return changed;
       if (error instanceof GameRecordRequestError) return error.message;
