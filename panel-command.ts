@@ -259,6 +259,9 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
     }
     const qq = String(user);
     const resources = zzzResourceDirectory();
+    // Bundled artwork is independent from the version-checked damage data.
+    // Only an explicit legacy resource override selects the old calculation tree.
+    const damageResources = Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR?.trim();
     if (command.kind === "original") return originalPicture(context, qq, resources, command.sharedCommand === true);
     const { profileId } = command;
     try {
@@ -313,9 +316,9 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         if (!row) return command.kind === "showcase-detail"
           ? $t("panel-command.text_3b7a008e6f", { "name": command.name })
           : $t("panel-command.text_58d3b20941", { "name": command.name });
-        const damage = command.kind === "damage" ? await readDamage(row, resources, command.skill) : undefined;
+        const damage = command.kind === "damage" ? await readDamage(row, damageResources, command.skill) : undefined;
         const damageSummary = command.kind === "damage" ? undefined :
-          await readDamage.summary(row, resources).catch(() => undefined);
+          await readDamage.summary(row, damageResources).catch(() => undefined);
         const { png, original } = await renderZzzPanelDetail(row, identity.uid, {
           ...theme, ...portraitOptions, showcase: !privateIds.has(row.id), damage, damageSummary, profileId,
         });
