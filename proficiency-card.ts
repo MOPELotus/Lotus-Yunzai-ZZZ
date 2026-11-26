@@ -1,19 +1,22 @@
+import { rankLabelLayout } from "../../lib/rank-label-layout.ts";
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
 import type { GameRole } from "@lotus-yunzai/account";
 import { ImageSizeLimitError, nativeImageRasterScale, renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
-import { box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzCardFooter, zzzScoreColors } from "./card-theme.ts";
+import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzResourceDirectory, zzzCardFooter, zzzScoreColors } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
 import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
 import type { ZzzAtlasPortraitReader } from "./panel-original.ts";
 import { panelObject } from "./panel-detail.ts";
+import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
 import type { buildZzzProficiency } from "./proficiency.ts";
 
 type Proficiency = ReturnType<typeof buildZzzProficiency>;
 type Row = Proficiency["rows"][number];
 type Options = {
+  readonly qq?: string;
   readonly source: "local" | "showcase";
   readonly legacyResources?: string;
   readonly signal?: AbortSignal;
@@ -33,7 +36,8 @@ const skillNames = [$t("proficiency-card.text_a223d4521a"), $t("proficiency-card
 async function loadProficiencyArt(model: Proficiency, options: Options) {
   const local = await openZzzCardTheme(options);
   const [partners, weapons, background, frame, skill, player] = await Promise.all([
-    readPanelArtMap(options.legacyResources, "PartnerId2Data"), readPanelArtMap(options.legacyResources, "WeaponId2Data"),
+    readPanelArtMap(options.legacyResources ?? zzzResourceDirectory(), "PartnerId2Data"),
+    readPanelArtMap(options.legacyResources ?? zzzResourceDirectory(), "WeaponId2Data"),
     local("common/images/bg.jpg"), local("proficiency/images/BgFrame.png"), local("proficiency/images/skill_bg.png"),
     loadZzzCardPlayer(local, options),
   ]);
@@ -41,17 +45,24 @@ async function loadProficiencyArt(model: Proficiency, options: Options) {
     .concat(["S", "A", "B"].map(rarity => `common/images/Rarity_${rarity}.png`)))];
   const badges = new Map(await Promise.all(paths.map(async path => [path, await local(path)] as const)));
   const art: RowArtwork[] = [];
+  async function official(value: unknown) {
+    if (typeof value !== "string") return;
+    return await artwork(fetchZzzOfficialArtwork(value, options.signal)) ??
+      await artwork(fetchZzzOfficialArtwork(value, options.signal));
+  }
   for (let offset = 0; offset < model.rows.length; offset += 8) {
     options.signal?.throwIfAborted();
     art.push(...await Promise.all(model.rows.slice(offset, offset + 8).map(async ({ avatar, weapon }) => {
       const sprite = panelSpriteName(panelObject(partners[avatar.id]).sprite_id);
       const [portrait, icon] = await Promise.all([
         firstCachedPanelImage(local, [
-          ...(sprite ? [`images/hakush/role_general/IconRoleGeneral${sprite}.webp`, `images/role_general/IconRoleGeneral${sprite}.png`,
-            `images/nanoka/role_general/IconRoleGeneral${sprite}.webp`] : []),
+          ...(sprite ? [`images/hakush/role_general/IconRoleGeneral${sprite}.webp`, `images/role_general/IconRoleGeneral${sprite}.webp`,
+            `images/role_general/IconRoleGeneral${sprite}.png`, `images/nanoka/role_general/IconRoleGeneral${sprite}.webp`] : []),
           `images/square_avatar/role_square_avatar_${avatar.id}.png`,
-        ]).then(async cached => cached ?? (await options.atlasPortrait?.(avatar.id, true))?.image),
-        weapon ? cachedPanelWeaponImage(local, weapons[weapon.id]) : undefined,
+        ])
+          .then(async cached => cached ?? (await options.atlasPortrait?.(avatar.id, true, true))?.image ??
+            await official(avatar.role_square_url)),
+        weapon ? Promise.resolve(cachedPanelWeaponImage(local, weapons[weapon.id])).then(async cached => cached ?? await official(panelObject(avatar.weapon).icon)) : undefined,
       ]);
       return { portrait, weapon: icon };
     })));
@@ -81,7 +92,7 @@ function skewedBox(context: Context, x: number, y: number, w: number, h: number,
   context.restore();
 }
 
-function artTile(context: Context, image: Image | undefined, x: number, y: number, w: number, h: number, stroke: string) {
+function artTile(context: Context, image: Image | undefined, x: number, y: number, w: number, h: number, stroke: string, head = false) {
   const offset = h * skew;
   context.save();
   context.transform(1, 0, -skew, 1, x + offset / 2, y);
@@ -90,7 +101,10 @@ function artTile(context: Context, image: Image | undefined, x: number, y: numbe
   context.clip();
   context.transform(1, 0, skew, 1, -offset / 2, 0);
   box(context, "#211f25", 0, 0, w + offset, h);
-  if (image) cover(context, image, 0, 0, w + offset, h);
+  if (image) {
+    if (head) contain(context, image, 0, 0, w + offset, h);
+    else cover(context, image, 0, 0, w + offset, h);
+  }
   context.restore();
   context.save();
   context.transform(1, 0, -skew, 1, x + offset / 2, y);
@@ -103,7 +117,7 @@ function drawRow(context: Context, row: Row, images: RowArtwork, art: Awaited<Re
   const { avatar, weapon, element, driveDiscGrade } = row;
   const stroke = rarityBorder[avatar.rarity];
   skewedBox(context, 60, y, 720, rowHeight, "#131216d9", stroke, 10);
-  artTile(context, images.portrait, 93, y + 1, 119, rowHeight - 2, stroke);
+  artTile(context, images.portrait, 93, y + 1, 119, rowHeight - 2, stroke, !images.portrait || images.portrait.width / images.portrait.height < 2);
   if (!images.portrait) label(context, avatar.name_mi18n, 154, y + 27, 17, { align: "center", maxWidth: 88 });
   skewedBox(context, 80, y + 2, 55, 19, rankColor[avatar.rank]!);
   label(context, $t("proficiency-card.text_68b16e68e7", { "rank": avatar.rank }), 107, y + 11, 13, { align: "center" });
@@ -127,7 +141,9 @@ function drawRow(context: Context, row: Row, images: RowArtwork, art: Awaited<Re
   else {
     const badge = weapon.rarity && art.badges.get(`common/images/Rarity_${weapon.rarity}.png`);
     if (badge) contain(context, badge, 573, y + 4, 20, 20);
-    label(context, weapon.name, 596, y + 15, 15, { maxWidth: 95 });
+    context.font = '12px "LotusZzzRecordHongmeng", "Noto Sans CJK SC", sans-serif';
+    const name = rankLabelLayout(weapon.name, 95, value => context.measureText(value).width, 12);
+    name.lines.forEach((line, index) => label(context, line, 596, y + 8 + index * 12, name.size));
     const stars = weapon.star === undefined ? $t("proficiency-card.text_066a62e797") : $t("proficiency-card.text_9d86d2df73", { "star": weapon.star });
     const level = weapon.level === undefined ? "Lv—" : `Lv${weapon.level}`;
     skewedBox(context, 569, y + 30, 49, 18, rankColor[weapon.star ?? 0]!);

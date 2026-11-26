@@ -17,7 +17,7 @@ export interface PanelOriginal {
   readonly snapshot?: string;
 }
 
-export type ZzzAtlasPortraitReader = (roleId: number, preferIcon?: boolean) =>
+export type ZzzAtlasPortraitReader = (roleId: number, preferIcon?: boolean, iconOnly?: boolean) =>
   Promise<{ readonly path: string; readonly bytes: Uint8Array; readonly image: Image } | undefined>;
 
 interface OriginalContext {
@@ -148,11 +148,11 @@ export async function findZzzAtlasCharacter(atlas: ReturnType<typeof createAtlas
 }
 
 export function createZzzAtlasPortraitReader(atlas: ReturnType<typeof createAtlasRuntimeCatalog>): ZzzAtlasPortraitReader {
-  return async (roleId, preferIcon) => {
+  return async (roleId, preferIcon, iconOnly) => {
     const entry = await findZzzAtlasCharacter(atlas, roleId);
     if (!entry) return;
     const { artwork, icon } = (await atlas.roleDetails(entry).catch(() => undefined))?.overview ?? {};
-    for (const path of new Set(preferIcon ? [icon, artwork] : [artwork, icon])) {
+    for (const path of new Set(iconOnly ? [icon] : preferIcon ? [icon, artwork] : [artwork, icon])) {
       if (!atlasPortraitPath(path)) continue;
       const bytes = await readAtlasGalleryImage(atlas.assetRoot(entry), "zzz", path, 8 * 1024 * 1024).catch(() => undefined);
       const image = bytes && await loadImage(Buffer.from(bytes)).catch(() => undefined);

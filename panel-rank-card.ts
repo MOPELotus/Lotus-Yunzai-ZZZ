@@ -1,3 +1,4 @@
+import { rankLabelLayout } from "../../lib/rank-label-layout.ts";
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
@@ -130,7 +131,9 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
       }
       const weaponImage = weaponImages[index];
       if (weaponImage) contain(ctx, weaponImage, weaponX, y + 16, 36, 36);
-      text(ctx, row.weapon?.name ?? $t("panel-rank-card.text_1f8a33dc16"), weaponX + 40, y + 10, 108, 13, theme.text, gold);
+      ctx.font = `13px ${theme.text}`;
+      const name = rankLabelLayout(row.weapon?.name ?? $t("panel-rank-card.text_1f8a33dc16"), 108, value => ctx.measureText(value).width, 13);
+      name.lines.forEach((line, index) => text(ctx, line, weaponX + 40, y + 10 + index * 16, 108, name.size, theme.text, gold));
       if (row.weapon) text(ctx, $t("panel-rank-card.text_626d751f37", { "value1": row.weapon.level ?? "—", "value2": row.weapon.star ?? "—" }),
         weaponX + 40, y + 47, 108, 12, theme.text);
       text(ctx, options.weighted ? $t("panel-rank-card.text_e6b3a9f5d6") : $t("panel-rank-card.text_9700898065"), scoreX, y + 12, 165, 12, theme.text, "#aaa");

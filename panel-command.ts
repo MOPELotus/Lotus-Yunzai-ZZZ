@@ -283,7 +283,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
         if (!rows.length) return command.showcase ? $t("panel-command.text_fbee8127aa") :
           $t("panel-command.text_e990c3f994");
         const { png } = await renderZzzProficiency(buildZzzProficiency(rows), display, {
-          legacyResources: resources, signal, atlasPortrait, source: local.length ? "local" : "showcase",
+          qq, legacyResources: resources, signal, atlasPortrait, source: local.length ? "local" : "showcase",
           inlineImageByteLimit: context.inlineImageByteLimit,
         });
         await sameRole();
