@@ -1,3 +1,4 @@
+import { panelQueryUser } from "../../lib/panel-query-target.ts";
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
@@ -251,7 +252,8 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   }
 
   const handle = async (command: NonNullable<ReturnType<typeof zzzPanelCommand>>, context: PanelContext) => {
-    const user = context.user_id;
+    const user = ["list", "detail", "showcase-detail", "damage", "proficiency"].includes(command.kind)
+      ? panelQueryUser(context) : context.user_id;
     if ((context.message_type !== "group" && context.message_type !== "private") || context.isDelegated ||
         typeof user !== "number" || !Number.isSafeInteger(user) || user < 1) {
       if (command.kind === "original" && command.sharedCommand) return;
