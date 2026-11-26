@@ -110,8 +110,8 @@ test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首�
     for (const command of ["%安比排名", "%安比综合榜"]) {
       const rank = zzzPanelRankCommand(command)!;
       const reply = await ranks({ ...context, inlineImageByteLimit: 16 * 1024 * 1024 }, rank);
-      expect(reply && typeof reply === "object" && "nodes" in reply ? reply.type : undefined).toBe("forward");
-      const file = reply && typeof reply === "object" && "nodes" in reply ? reply.nodes[0]?.file : undefined;
+      expect(reply && typeof reply === "object" && "file" in reply ? reply.type : undefined).toBe("image");
+      const file = reply && typeof reply === "object" && "file" in reply ? reply.file : undefined;
       expect(file && Buffer.from(file).readUInt32BE(16)).toBe(3280);
       const fallback = await ranks(context, rank);
       expect(fallback).toEqual(expect.stringContaining("2 个 UID 可入榜"));
