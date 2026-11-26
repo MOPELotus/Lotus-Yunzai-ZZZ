@@ -960,10 +960,10 @@
     "panel-rank.text_2cb43eac24": "下一页 {next}",
     "panel-rank.text_3b488823cb": "国际服角色面板排名（UID {uid}）",
     "panel-rank.text_3f2718ee46": "本地游戏资料暂无法核验该代理人。",
-    "panel-rank.text_4baf68b300": "本群已显示该档案的{label}。查榜时将通过已绑定的米游社账号刷新完整面板。发送 %隐藏{value2}角色面板排名{profileId} 可撤回。",
+    "panel-rank.text_4baf68b300": "本群已显示该档案的{label}，群榜读取本地缓存并由后台定期刷新，发送 %隐藏{value2}角色面板排名{profileId} 可撤回",
     "panel-rank.text_54f686811a": "本群已隐藏该档案的国际服角色面板排名。",
     "panel-rank.text_58dcbef92f": "榜单成员、档案或可见状态已变化。",
-    "panel-rank.text_63ace66ab0": "米游社面板：{value1} 个 UID 入榜，{missing} 个未取得该角色，{failed} 个未登录或刷新失败。",
+    "panel-rank.text_63ace66ab0": "缓存面板：{value1} 个 UID 可入榜，{missing} 个未取得角色，{failed} 个档案变化或读取失败",
     "panel-rank.text_65394218f3": "{example} 页{value2}",
     "panel-rank.text_6570a98f28": "排名",
     "panel-rank.text_6c424aa2fc": "{overview}\n本次没有确认可入榜的角色面板。",
@@ -1381,7 +1381,7 @@
     "zenkov-card.text_f81ff55de1": "进度",
     "zenkov-card.text_fd0694b6d0": "撤离结果未知",
     "card-theme.text_0ddf78c06d": "Lotus-Yunzai · ZZZ",
-    "group-rank.refreshing": "正在刷新本群 {count} 个绝区零 UID 的完整面板，稍后生成排行。"
+    "group-rank.refreshing": "正在读取本群 {count} 个 UID 的绝区零面板缓存..."
   },
   "parameters": {
     "challenge-rank-card.text_85b772fa7e": {

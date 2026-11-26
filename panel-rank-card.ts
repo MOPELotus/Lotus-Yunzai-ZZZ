@@ -1,3 +1,4 @@
+import { loadGroupRankQqAvatars } from "../../lib/group-rank-qq-avatars.ts";
 import { rankLabelLayout } from "../../lib/rank-label-layout.ts";
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
@@ -9,12 +10,12 @@ import { openProfileCardTheme } from "@lotus-yunzai/skia/profile";
 import { Canvas, loadImage, type CanvasRenderingContext2D as Context } from "skia-canvas";
 import { artwork, cover, openZzzCardTheme, zzzCardFooter, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound, renderZzzBattlePng } from "./challenge-card.ts";
-import { cachedPanelWeaponImage, readPanelArtMap } from "./panel-artwork.ts";
+import { loadPanelWeaponImage, readPanelArtMap } from "./panel-artwork.ts";
 import { panelObject } from "./panel-detail.ts";
 import { loadPanelPortraits } from "./panel-list-card.ts";
 import { createZzzAtlasPortraitReader } from "./panel-original.ts";
 import type { ZzzPanelRankRow } from "./panel-rank-model.ts";
-import { createZzzRecordPortraits, fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
+import { createZzzRecordPortraits } from "./tuning-artwork.ts";
 
 const width = 820;
 const gold = "#d3bc8e";
@@ -65,18 +66,18 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
     readRankTheme(),
     openZzzCardTheme(options), readPanelArtMap(options.legacyResources, "WeaponId2Data"),
   ]);
+  const qqFaces = await loadGroupRankQqAvatars(rows.map(row => row.qq), options.signal);
   const [portraits, weaponImages] = await Promise.all([
     loadPanelPortraits(rows.map(row => row.avatar), local, { ...options, atlasPortrait }),
     Promise.all(rows.map(async ({ avatar, weapon }) => {
       if (!weapon) return;
-      const cached = await cachedPanelWeaponImage(local, weapons[weapon.id]);
-      const icon = panelObject(avatar.weapon).icon;
-      const official = !cached && typeof icon === "string" ? await artwork(fetchZzzOfficialArtwork(icon, options.signal)) : undefined;
-      if (cached || official) return cached ?? official;
+      const icon = await loadPanelWeaponImage(local, weapons[weapon.id], panelObject(avatar.weapon).icon, options.signal);
+      if (icon) return icon;
       const key = atlasWeapons.resolveIcon({ itemId: String(weapon.id), name: weapon.name });
       return key ? await artwork(atlasWeapons.loadArtwork(key)) : undefined;
     })),
   ]);
+  const awaitQqFaces = new Map(await Promise.all([...qqFaces].map(async ([qq, bytes]) => [qq, await loadImage(bytes).catch(() => undefined)] as const)));
   options.signal?.throwIfAborted();
   const measure = new Canvas(1, 1).getContext("2d");
   const strips = rows.map(row => {
@@ -107,7 +108,8 @@ export async function renderZzzPanelRank(title: string, rows: readonly ZzzPanelR
       const { lines, height: h } = strips[index]!;
       fillRound(ctx, "#0008", x, y, width - 25, h, 10);
       text(ctx, String(options.offset + index + 1), x + 19, y + 24, 32, 18, theme.text, gold, "center");
-      const portrait = portraits[index];
+      const qq = row.qq;
+      const portrait = (qq && qqFaces.has(qq) ? awaitQqFaces.get(qq) : undefined) ?? portraits[index];
       if (portrait) {
         ctx.save();
         ctx.beginPath();

@@ -59,4 +59,4 @@ export function buildZzzPanelRankRow(avatar: ZzzPanelAvatar) {
   const weighted = detail.weapon ? drive + weaponRank + levelBonus + refinements + fit + Math.min(3, sets.size) * 2 : drive;
   return { avatar, drive, weighted, skills: detail.skills, weapon: detail.weapon };
 }
-export type ZzzPanelRankRow = ReturnType<typeof buildZzzPanelRankRow> & { readonly uid: string };
+export type ZzzPanelRankRow = ReturnType<typeof buildZzzPanelRankRow> & { readonly uid: string; readonly qq?: string };

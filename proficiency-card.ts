@@ -7,7 +7,7 @@ import { ImageSizeLimitError, nativeImageRasterScale, renderPng } from "@lotus-y
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { artwork, box, cover, drawZzzCardPlayer, label, loadZzzCardPlayer, openZzzCardTheme, zzzResourceDirectory, zzzCardFooter, zzzScoreColors } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
-import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
+import { loadPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
 import type { ZzzAtlasPortraitReader } from "./panel-original.ts";
 import { panelObject } from "./panel-detail.ts";
 import { fetchZzzOfficialArtwork } from "./tuning-artwork.ts";
@@ -62,7 +62,7 @@ async function loadProficiencyArt(model: Proficiency, options: Options) {
         ])
           .then(async cached => cached ?? (await options.atlasPortrait?.(avatar.id, true, true))?.image ??
             await official(avatar.role_square_url)),
-        weapon ? Promise.resolve(cachedPanelWeaponImage(local, weapons[weapon.id])).then(async cached => cached ?? await official(panelObject(avatar.weapon).icon)) : undefined,
+        weapon ? loadPanelWeaponImage(local, weapons[weapon.id], panelObject(avatar.weapon).icon, options.signal) : undefined,
       ]);
       return { portrait, weapon: icon };
     })));

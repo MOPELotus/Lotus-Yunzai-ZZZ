@@ -1,4 +1,5 @@
-import { createZzzOfficialGroupPanels } from "./panel-rank-official.ts";
+import { createZzzPanelCacheRefresh } from "./panel-cache-runtime.ts";
+import { createZzzCachedGroupPanels } from "./panel-rank-official.ts";
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
@@ -139,7 +140,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
   const requestShowcase = createZzzShowcaseClient();
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal, requestShowcase);
   const panelRanks = createZzzPanelRanks(profiles, zzzPanelRankRoles ?? client.openHoYoLabZzzCheckin, signal, requestShowcase,
-    { renderStrongest: panelCommands.renderPublic, official: createZzzOfficialGroupPanels(profiles, client, lockFile) });
+    { renderStrongest: panelCommands.renderPublic, official: createZzzCachedGroupPanels(profiles, client, lockFile) });
   const roleAliases = createZzzRoleAliasCommands(signal);
   const roleGallery = createZzzRoleGallery(signal);
   const recall = createZzzRecallSettings(signal);
@@ -598,7 +599,11 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     }
   }
 
-  const dispose = zzzReminderRuntime && startZzzChallengeReminders(profiles, client, zzzReminderRuntime, signal);
+  const stopReminders = zzzReminderRuntime && startZzzChallengeReminders(profiles, client, zzzReminderRuntime, signal);
+  const cacheSignal = zzzReminderRuntime ? AbortSignal.any([signal, zzzReminderRuntime.disconnect]) : signal;
+  const refreshPanelCache = createZzzPanelCacheRefresh(profiles, client, lockFile, cacheSignal);
+  const stopPanelCache = zzzReminderRuntime?.registerPanelCacheTask?.(async () => { await refreshPanelCache(); });
+  const dispose = async () => { await Promise.all([stopReminders?.(), stopPanelCache?.()]); };
   return {
     commands: {},
     dispose,

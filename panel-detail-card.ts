@@ -7,7 +7,7 @@ import { nativeImageRasterScale, renderPng } from "@lotus-yunzai/skia";
 import type { CanvasRenderingContext2D as Context, Image } from "skia-canvas";
 import { box, cover, drawTag, label, openZzzCardTheme, zzzCardFooter, zzzScoreColors, type ZzzCardOptions } from "./card-theme.ts";
 import { contain, fillRound } from "./challenge-card.ts";
-import { cachedPanelWeaponImage, firstCachedPanelImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
+import { loadPanelWeaponImage, loadPanelDiscImage, panelSpriteName, readPanelArtMap } from "./panel-artwork.ts";
 import { drawPanelDamage, panelDamageHeight, panelDamageSections } from "./panel-damage-card.ts";
 import type { PanelDamage, PanelDamageSummary } from "./panel-damage.ts";
 import { buildZzzPanelDetail, panelObject, type PanelStat } from "./panel-detail.ts";
@@ -111,11 +111,12 @@ async function loadPanelDetailArt(avatar: ZzzPanelAvatar, model: Detail, options
     galleryPortrait(avatar.id, partner, options)
       .then(gallery => gallery ?? loadZzzPanelOriginal(options.legacyResources, portraitPaths))
       .then(legacy => legacy ?? loadZzzAtlasPanelOriginal(options.atlasPortrait, avatar.id)),
-    cachedPanelWeaponImage(local, weapons?.[model.weapon?.id ?? 0]),
+    loadPanelWeaponImage(local, weapons?.[model.weapon?.id ?? 0], panelObject(avatar.weapon).icon, options.signal),
     Promise.all(model.discs.map(item => {
-      const disc = panelSpriteName(panelObject(suits?.[item?.suitId ?? 0]).sprite_file);
-      if (disc) return firstCachedPanelImage(local, [`images/suit/${disc}.png`, `images/hakush/suit/${disc}.webp`,
-        `images/nanoka/suit/${disc}.webp`]);
+      if (!item) return;
+      const raw = (Array.isArray(avatar.equip) ? avatar.equip : [avatar.equip])
+        .map(panelObject).find(row => String(row.id) === String(item.id));
+      return loadPanelDiscImage(local, suits?.[item.suitId ?? 0], raw?.icon, options.signal);
     })),
   ]);
   const portrait = fullPortrait?.image ?? await local(`images/square_avatar/role_square_avatar_${avatar.id}.png`);
