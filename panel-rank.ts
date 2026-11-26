@@ -1,3 +1,4 @@
+import { renderRankPages } from "../../lib/rank-pages.ts";
 import type { OfficialGroupPanels, GroupPanelAccount } from "../../lib/group-panel-accounts.ts";
 import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
@@ -15,7 +16,6 @@ import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
 import { panelObject } from "./panel-detail.ts";
 import type { createZzzShowcaseClient } from "./enka-showcase.ts";
 import { readZzzRoleAliases, zzzRoleAlias, zzzRoleName } from "./role-alias.ts";
-import { zzzCommandProfileSuffix } from "./profile-command.ts";
 
 const rankKey = (group: string) => `lotus-yunzai:zzz-panel-ranks:${group}:owners`;
 const hideInternational = `
@@ -166,22 +166,16 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       if (!unique.length) return $t("panel-rank.text_6c424aa2fc", { "overview": overview });
       const mode = command.weighted ? "weighted" : "drive";
       unique.sort((a, b) => b[mode] - a[mode] || byOwner(a, b));
-      const maxPage = Math.ceil(unique.length / settings.maximum);
-      if (command.page > maxPage) return $t("panel-rank.text_b6a3984d7d", { "maxPage": maxPage });
-      const first = (command.page - 1) * settings.maximum;
       const strongest = command.kind === "strongest" ? unique[0]! : undefined;
-      const selected = strongest ? [strongest] : unique.slice(first, first + settings.maximum);
+      const selected = strongest ? [strongest] : unique;
       const leader = strongest && $t("panel-rank.text_a005ac788c", { "name_mi18n": strongest.avatar.name_mi18n, "uid": strongest.uid, "value3": strongest.drive.toFixed(2) });
       const title = `${selected[0]!.avatar.name_mi18n}${command.weighted ? $t("panel-rank.text_a885a22d16") : $t("panel-rank.text_6570a98f28")}`;
-      const example = `%${command.name}${command.weighted ? $t("panel-rank.text_a885a22d16") : $t("panel-rank.text_6570a98f28")}${zzzCommandProfileSuffix(command.profileId)}`;
-      const next = command.page < maxPage ? $t("panel-rank.text_65394218f3", { "example": example, "value2": command.page + 1 }) : undefined;
-      const image = await (strongest
-        ? renderStrongest(strongest.avatar, strongest.uid, { showcase: !official, legacyResources: resources, signal,
-          inlineImageByteLimit: context.inlineImageByteLimit })
-        : renderZzzPanelRank(title, selected,
-          { offset: first, weighted: command.weighted, overview, next, legacyResources: resources, signal,
-            inlineImageByteLimit: context.inlineImageByteLimit }))
-        .catch(() => undefined);
+      const image = strongest ? await renderStrongest(strongest.avatar, strongest.uid,
+        { showcase: !official, legacyResources: resources, signal, inlineImageByteLimit: context.inlineImageByteLimit }).catch(() => undefined) : undefined;
+      const pages = strongest ? undefined : await renderRankPages(selected, (page, pagination) =>
+        renderZzzPanelRank(title + (pagination.total > 1 ? ` · ${pagination.page}/${pagination.total}` : ""), page,
+          { offset: pagination.offset, weighted: command.weighted, overview, legacyResources: resources, signal,
+            inlineImageByteLimit: context.inlineImageByteLimit }), signal);
       if (signal.aborted) return;
       const [currentMembers, currentRequester, currentSettings, activeRows] = await Promise.all([
         rankMembership(context, actor), official ? undefined : verifyViewer(), readRankConfig(group),
@@ -193,9 +187,8 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       if (visible.some((value, index) => official ? value === "hidden" : value !== selected[index]!.value)) return changed;
       if (signal.aborted) return;
       if (leader) return image ? [`${leader}\n${overview}`, { type: "image" as const, file: image.png }] : $t("panel-rank.text_0bcdffed52", { "leader": leader, "overview": overview });
-      if (image) return [overview, { type: "image" as const, file: image.png }];
-      return [title, overview, ...selected.map((row, index) => `${first + index + 1}. ${row.uid} · ${row[mode].toFixed(2)}`),
-        ...(next ? [$t("panel-rank.text_2cb43eac24", { "next": next })] : [])].join("\n");
+      if (pages) return pages;
+      return [title, overview, ...selected.map((row, index) => `${index + 1}. ${row.uid} · ${row[mode].toFixed(2)}`)].join("\n");
     } catch {
       if (!signal.aborted) return $t("panel-rank.text_b82cead464");
     }
