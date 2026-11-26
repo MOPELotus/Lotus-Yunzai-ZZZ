@@ -259,6 +259,10 @@
     "zenkov-card": {
       "description": "绝区零探索模式总览、周常委托、地图战绩与探索记录的文本摘要及图片卡片渲染模块",
       "source": "plugins/zzz/zenkov-card.ts"
+    },
+    "group-rank": {
+      "description": "绝区零群聊角色面板排名查询、最强角色展示与榜单可见性管理",
+      "source": "plugins/zzz/panel-rank.ts"
     }
   },
   "messages": {
