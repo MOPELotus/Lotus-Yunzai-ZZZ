@@ -956,14 +956,14 @@
     "panel-rank.text_2cb43eac24": "下一页 {next}",
     "panel-rank.text_3b488823cb": "国际服角色面板排名（UID {uid}）",
     "panel-rank.text_3f2718ee46": "本地游戏资料暂无法核验该代理人。",
-    "panel-rank.text_4baf68b300": "本群已显示该档案的{label}。查榜时仅将游戏 UID 发给 Enka 请求公开展柜。发送 %隐藏{value2}角色面板排名{profileId} 可撤回。",
+    "panel-rank.text_4baf68b300": "本群已显示该档案的{label}。查榜时将通过已绑定的米游社账号刷新完整面板。发送 %隐藏{value2}角色面板排名{profileId} 可撤回。",
     "panel-rank.text_54f686811a": "本群已隐藏该档案的国际服角色面板排名。",
     "panel-rank.text_58dcbef92f": "榜单成员、档案或可见状态已变化。",
-    "panel-rank.text_63ace66ab0": "Enka 公开展柜：{value1} 个 UID 入榜，{missing} 个未公开展示该角色，{failed} 个刷新未确认。",
+    "panel-rank.text_63ace66ab0": "米游社面板：{value1} 个 UID 入榜，{missing} 个未取得该角色，{failed} 个未登录或刷新失败。",
     "panel-rank.text_65394218f3": "{example} 页{value2}",
     "panel-rank.text_6570a98f28": "排名",
     "panel-rank.text_6c424aa2fc": "{overview}\n本次没有确认可入榜的角色面板。",
-    "panel-rank.text_7183b53f9b": "本地游戏资料无法核验所查角色的公开展柜。",
+    "panel-rank.text_7183b53f9b": "本地游戏资料无法核验所查角色的面板数据。",
     "panel-rank.text_79ddd1a4ad": "有多个同名代理人，请输入完整名称。",
     "panel-rank.text_866216e6ce": "当前群角色面板排名功能已关闭！",
     "panel-rank.text_895076daad": "本群已隐藏该档案的角色面板排名。",
@@ -975,7 +975,7 @@
     "panel-rank.text_b6a3984d7d": "当前榜单共 {maxPage} 页。",
     "panel-rank.text_b82cead464": "角色面板排名暂时不可用。",
     "panel-rank.text_bc0c8082f8": "榜单成员、档案或可见状态已变化，请重新查询。",
-    "panel-rank.text_bf3e1ea9a3": "绝区零公开展柜所需的本地游戏资料不可用。",
+    "panel-rank.text_bf3e1ea9a3": "绝区零面板数据所需的本地游戏资料不可用。",
     "panel-rank.text_dc4e925566": "请在群聊中使用该命令！",
     "panel-rank.text_f9fd277d3d": "暂无法核对当前群成员，请稍后重试。",
     "panel-score-data.text_0c3adf1f61": "辅助·异常",
@@ -1376,7 +1376,8 @@
     "zenkov-card.text_f63cc5db09": "勋章墙 {value1}",
     "zenkov-card.text_f81ff55de1": "进度",
     "zenkov-card.text_fd0694b6d0": "撤离结果未知",
-    "card-theme.text_0ddf78c06d": "Lotus-Yunzai · ZZZ"
+    "card-theme.text_0ddf78c06d": "Lotus-Yunzai · ZZZ",
+    "group-rank.refreshing": "正在刷新本群 {count} 个绝区零 UID 的完整面板，稍后生成排行。"
   },
   "parameters": {
     "challenge-rank-card.text_85b772fa7e": {

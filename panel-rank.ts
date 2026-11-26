@@ -1,3 +1,5 @@
+import type { OfficialGroupPanels, GroupPanelAccount } from "../../lib/group-panel-accounts.ts";
+import type { ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
@@ -24,14 +26,14 @@ end
 return 0
 `;
 
-type RegisteredPanel = ZzzPanelRankIdentity & { readonly field: string; readonly qq: string; readonly profileId: number };
+type RegisteredPanel = ZzzPanelRankIdentity & { readonly field: string; readonly qq: string; readonly profileId: number; readonly owner?: GroupPanelAccount };
 type StrongestRenderer = (...args: Parameters<typeof renderZzzPanelDetail>) => Promise<{ readonly png: Uint8Array }>;
 
 export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileStore>,
   openHoYoLabZzzCheckin: ZzzPanelRankRoleReader, signal: AbortSignal, showcase: ReturnType<typeof createZzzShowcaseClient>,
-  { renderStrongest = renderZzzPanelDetail }: { readonly renderStrongest?: StrongestRenderer } = {}) {
+  { renderStrongest = renderZzzPanelDetail, official }: { readonly renderStrongest?: StrongestRenderer; readonly official?: OfficialGroupPanels<ZzzPanelAvatar[]> } = {}) {
   // Enka uses a single request slot across public panel updates and all group queries.
-  const refresh = createGroupRankRefresh(1);
+  const refresh = createGroupRankRefresh(official ? 3 : 1);
 
   return async (context: ChallengeRankContext, command: NonNullable<ReturnType<typeof zzzPanelRankCommand>>) => {
     const scope = rankGroup(context);
@@ -55,7 +57,8 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
           await redis.eval(hideInternational, { keys: [key], arguments: [participant] });
           return $t("panel-rank.text_54f686811a");
         }
-        await redis.hDel(key, participant);
+        if (official) await redis.hSet(key, participant, "hidden");
+        else await redis.hDel(key, participant);
         return $t("panel-rank.text_895076daad");
       }
       if (command.kind === "visibility") {
@@ -65,24 +68,25 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
           $t("panel-rank.text_ad858b391d");
         if (signal.aborted) return;
         await redis.hSet(key, participant, viewer.value);
-        const label = panelRankMode(viewer.value) === "cn" ? $t("panel-rank.text_a98f99ed89") : $t("panel-rank.text_3b488823cb", { "uid": viewer.uid });
+        const label = panelRankMode(viewer!.value) === "cn" ? $t("panel-rank.text_a98f99ed89") : $t("panel-rank.text_3b488823cb", { "uid": viewer.uid });
         return $t("panel-rank.text_4baf68b300", { "label": label, "value2": command.international ? $t("panel-rank.text_970d688dd6") : "", "profileId": command.profileId });
       }
 
-      const localViewer = await roleFor(actor, command.profileId, "cn");
-      const viewerRegistration = localViewer ? undefined : await redis.hGet(key, participant);
-      const viewer = localViewer ?? (viewerRegistration
+      const localViewer = official ? undefined : await roleFor(actor, command.profileId, "cn");
+      const viewerRegistration = official || localViewer ? undefined : await redis.hGet(key, participant);
+      const viewer = official ? undefined : localViewer ?? (viewerRegistration
         ? await roleFor.registered(actor, command.profileId, viewerRegistration)
         : await roleFor(actor, command.profileId, "selected") ?? await roleFor(actor, command.profileId, "international"));
-      if (!viewer) return $t("panel-rank.text_ad858b391d");
+      if (!official && !viewer) return $t("panel-rank.text_ad858b391d");
       const verifyViewer = () => viewerRegistration
         ? redis.hGet(key, participant).then(value => value === viewerRegistration
-          ? roleFor.registered(actor, command.profileId, viewerRegistration, viewer.revision) : undefined)
-        : roleFor(actor, command.profileId, panelRankMode(viewer.value), viewer.revision);
+          ? roleFor.registered(actor, command.profileId, viewerRegistration, viewer!.revision) : undefined)
+        : roleFor(actor, command.profileId, panelRankMode(viewer!.value), viewer!.revision);
 
       const aliases = await readZzzRoleAliases(resources).catch(() => undefined);
       const name = zzzRoleName(zzzRoleAlias(aliases, command.name) ?? command.name);
       const registered: RegisteredPanel[] = [];
+      if (!official) {
       for await (const { field, value } of redis.hScanIterator(key, { COUNT: 100 })) {
         if (signal.aborted) return;
         const owner = /^([1-9]\d{0,15}):([1-9]\d{0,2})$/u.exec(field);
@@ -90,6 +94,16 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
         const [qq, profileId] = [owner[1]!, Number(owner[2])];
         const identity = await roleFor.registered(qq, profileId, value);
         if (identity) registered.push({ ...identity, field, qq, profileId });
+      }
+      }
+      if (official) {
+        registered.length = 0;
+        for (const owner of await official.list(new Set([...members].map(Number)), signal)) {
+          const qq = String(owner.qq), field = `${qq}:${owner.profileId}`;
+          if (await redis.hGet(key, field) === "hidden") continue;
+          registered.push({ owner, qq, field, profileId: owner.profileId, uid: owner.role.uid,
+            region: owner.role.region, value: `${owner.role.region}:${owner.role.uid}`, revision: "" });
+        }
       }
       if (!registered.length) return $t("panel-rank.text_0dbaeff610");
       const tables = await loadEnkaPanelTables(resources);
@@ -109,7 +123,16 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
         seen.add(identity);
         return true;
       });
+      if (official) await Promise.resolve().then(() => context.reply?.($t("group-rank.refreshing", { count: entries.length }))).catch(() => {});
       const verify = async (entry: RegisteredPanel) => {
+        if (official && entry.owner) {
+          const [role, currentMembers, policy, visible] = await Promise.all([
+            profiles.savedRole(entry.qq, entry.profileId, "zzz"), rankMembership(context, actor), readRankConfig(group), redis.hGet(key, entry.field),
+          ]);
+          if (!policy.allowed || !currentMembers?.has(entry.qq) || visible === "hidden" || role.uid !== entry.uid ||
+              role.region !== entry.owner.role.region || role.gameBiz !== entry.owner.role.gameBiz) throw new Error("group-panel-account-changed");
+          return;
+        }
         const [current, currentMembers, visible, policy] = await Promise.all([
           roleFor.registered(entry.qq, entry.profileId, entry.value, entry.revision),
           rankMembership(context, actor), redis.hGet(key, entry.field), readRankConfig(group),
@@ -119,6 +142,12 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
         }
       };
       const results = await refresh(entries, async (entry, requestSignal) => {
+        if (official && entry.owner) {
+          const rows = await official.read(entry.owner, requestSignal, () => verify(entry), undefined);
+          const matched = rows.filter(row => characterIds.has(String(row.id)));
+          if (!matched.length) return;
+          return matched.map(avatar => ({ ...buildZzzPanelRankRow(avatar), ...entry }));
+        }
         const publicData = await showcase.forGroupRank(entry, requestSignal, () => verify(entry));
         await verify(entry);
         const matched = publicData?.rows.filter(raw => characterIds.has(String(raw.Id)));
@@ -147,7 +176,7 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
       const example = `%${command.name}${command.weighted ? $t("panel-rank.text_a885a22d16") : $t("panel-rank.text_6570a98f28")}${zzzCommandProfileSuffix(command.profileId)}`;
       const next = command.page < maxPage ? $t("panel-rank.text_65394218f3", { "example": example, "value2": command.page + 1 }) : undefined;
       const image = await (strongest
-        ? renderStrongest(strongest.avatar, strongest.uid, { showcase: true, legacyResources: resources, signal,
+        ? renderStrongest(strongest.avatar, strongest.uid, { showcase: !official, legacyResources: resources, signal,
           inlineImageByteLimit: context.inlineImageByteLimit })
         : renderZzzPanelRank(title, selected,
           { offset: first, weighted: command.weighted, overview, next, legacyResources: resources, signal,
@@ -155,13 +184,13 @@ export function createZzzPanelRanks(profiles: ReturnType<typeof createProfileSto
         .catch(() => undefined);
       if (signal.aborted) return;
       const [currentMembers, currentRequester, currentSettings, activeRows] = await Promise.all([
-        rankMembership(context, actor), verifyViewer(), readRankConfig(group),
-        Promise.all(selected.map(row => roleFor.registered(row.qq, row.profileId, row.value, row.revision))),
+        rankMembership(context, actor), official ? undefined : verifyViewer(), readRankConfig(group),
+        Promise.all(selected.map(row => official ? verify(row).then(() => row).catch(() => undefined) : roleFor.registered(row.qq, row.profileId, row.value, row.revision))),
       ]);
-      if (!currentMembers || currentRequester?.value !== viewer.value || !currentSettings.allowed ||
+      if (!currentMembers || (!official && currentRequester?.value !== viewer!.value) || !currentSettings.allowed ||
           selected.some((row, index) => !currentMembers.has(row.qq) || row.value !== activeRows[index]?.value)) return changed;
       const visible = await redis.hmGet(key, selected.map(row => row.field));
-      if (visible.some((value, index) => value !== selected[index]!.value)) return changed;
+      if (visible.some((value, index) => official ? value === "hidden" : value !== selected[index]!.value)) return changed;
       if (signal.aborted) return;
       if (leader) return image ? [`${leader}\n${overview}`, { type: "image" as const, file: image.png }] : $t("panel-rank.text_0bcdffed52", { "leader": leader, "overview": overview });
       if (image) return [overview, { type: "image" as const, file: image.png }];

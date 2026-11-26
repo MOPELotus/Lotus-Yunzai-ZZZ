@@ -1,3 +1,6 @@
+import { createOfficialGroupPanels } from "../../lib/group-panel-accounts.ts";
+import { formatEnkaPanel, loadEnkaPanelTables } from "./enka-panel-data.ts";
+import { zzzResourceDirectory } from "./card-theme.ts";
 import { expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -116,6 +119,83 @@ test("最强角色每次重查已授权群成员的 UID，只渲染当次榜首�
       expect(fallback).toEqual(expect.stringContaining(second));
     }
     expect(queried.slice(-4)).toEqual([first, second, first, second]);
+  } finally {
+    globalThis.redis = previousRedis;
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete Bun.env[key];
+      else Bun.env[key] = value;
+    }
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("验证群成员通过米游社刷新面板排行及单人有效角色正常出图", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lotus-zzz-strongest-"));
+  const profileDirectory = join(root, "profiles");
+  const config = join(root, "rank.yaml");
+  const previous = Object.fromEntries(["LOTUS_ZZZ_LEGACY_RESOURCES_DIR", "LOTUS_ZZZ_RANK_CONFIG",
+    "LOTUS_ATLAS_THEME_DIR", "LOTUS_PASSPORT_QR_RESOURCES"].map(key => [key, Bun.env[key]]));
+  const previousRedis = globalThis.redis;
+  try {
+    const first = "12345678", second = "23456789", outsider = "34567890", region = "prod_gf_cn";
+    const owners = new Map([["42:1", `${region}:${first}`], ["43:1", `${region}:${second}`], ["44:1", `${region}:${outsider}`]]);
+    let enabled = true;
+    globalThis.redis = {
+      async mGet(keys: string[]) {
+        return keys.map(key => key === "lotus-yunzai:zzz-challenge-ranks:allow-group" ? (enabled ? "1" : "0") : null);
+      },
+      async *hScanIterator() { for (const [field, value] of owners) yield { field, value }; },
+      async hGet(_key: string, field: string) { return owners.get(field) ?? null; },
+      async hmGet(_key: string, fields: readonly string[]) { return fields.map(field => owners.get(field) ?? null); },
+    } as unknown as NonNullable<typeof globalThis.redis>;
+    delete Bun.env.LOTUS_ZZZ_LEGACY_RESOURCES_DIR;
+    Bun.env.LOTUS_ZZZ_RANK_CONFIG = config;
+    Bun.env.LOTUS_ATLAS_THEME_DIR = root;
+    Bun.env.LOTUS_PASSPORT_QR_RESOURCES = root;
+    await Promise.all([mkdir(profileDirectory), writeFile(config, "allow_group: true\n")]);
+    await Promise.all([
+      ...([[42, first], [43, second], [44, outsider]] as const).map(([qq, uid]) =>
+        writeFile(join(profileDirectory, `${qq}.yaml`), Bun.YAML.stringify({
+          user: { qq: String(qq) }, profile: { id: 1 }, enabled: true,
+          account: {
+            stuid: String(qq), stoken: "rank-fixture-stoken", cookie: `account_id=${qq}; cookie_token=rank-fixture`,
+            game_roles: { zzz: [{ uid, region, game_biz: "nap_cn" }] }, current_uid: { zzz: uid },
+          },
+        }), { mode: 0o600 })),
+    ]);
+
+    owners.clear();
+    Object.assign(globalThis.redis!, { async hSet(_key: string, field: string, value: string) { owners.set(field, value); } });
+    const queried: string[] = [], rendered: number[] = [];
+    const tables = await loadEnkaPanelTables(zzzResourceDirectory());
+    expect(tables).toBeDefined();
+    const avatar = formatEnkaPanel({ Id: 1011, Level: 60, TalentLevel: 2,
+      Weapon: { Id: 13101, Level: 60, UpgradeLevel: 1, BreakLevel: 5 },
+      EquippedList: [{ Slot: 1, Equipment: { Id: 31041, Level: 15,
+        MainPropertyList: [{ PropertyId: 11103, PropertyValue: 550 }],
+        RandomPropertyList: [{ PropertyId: 20103, PropertyValue: 240, PropertyLevel: 5 }] } }],
+    }, tables!);
+    expect(avatar).toBeDefined();
+    const profiles = createProfileStore(profileDirectory);
+    const official = createOfficialGroupPanels(profiles, "zzz", async source => {
+      queried.push(source.role.uid);
+      return { revision: source.revision, rows: source.role.uid === first ? [avatar!] : [] };
+    }, async result => result.rows);
+    const png = new Uint8Array([1]);
+    const ranks = createZzzPanelRanks(profiles, async () => { throw Error("unexpected HoYoLAB"); }, new AbortController().signal,
+      createZzzShowcaseClient(async () => { throw Error("public showcase must not be used"); }), {
+        official, async renderStrongest(row, uid, options) {
+          expect(options?.showcase).toBe(false); expect(uid).toBe(first); rendered.push(row.id); return { png };
+        },
+      });
+    const context = { user_id: 55, group_id: 99, message_type: "group", adapter: "milky",
+      async listCheckinGroupMembers() { return [42, 43, 55].map(id => ({ id })); } };
+    const result = await ranks(context, zzzPanelRankCommand("%最强安比")!);
+    expect(result).toEqual([expect.stringContaining(first), { type: "image", file: png }]);
+    expect(queried.sort()).toEqual([first, second]); expect(rendered).toEqual([1011]);
+    owners.set("42:1", "hidden");
+    expect(typeof await ranks(context, zzzPanelRankCommand("%最强安比")!)).toBe("string");
+    expect(queried).toHaveLength(3);
   } finally {
     globalThis.redis = previousRedis;
     for (const [key, value] of Object.entries(previous)) {

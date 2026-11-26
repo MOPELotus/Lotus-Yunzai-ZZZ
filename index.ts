@@ -1,3 +1,4 @@
+import { createZzzOfficialGroupPanels } from "./panel-rank-official.ts";
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
@@ -138,7 +139,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
   const requestShowcase = createZzzShowcaseClient();
   const panelCommands = createZzzPanelCommands(profiles, client, lockFile, signal, requestShowcase);
   const panelRanks = createZzzPanelRanks(profiles, zzzPanelRankRoles ?? client.openHoYoLabZzzCheckin, signal, requestShowcase,
-    { renderStrongest: panelCommands.renderPublic });
+    { renderStrongest: panelCommands.renderPublic, official: createZzzOfficialGroupPanels(profiles, client, lockFile) });
   const roleAliases = createZzzRoleAliasCommands(signal);
   const roleGallery = createZzzRoleGallery(signal);
   const recall = createZzzRecallSettings(signal);

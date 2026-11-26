@@ -13,6 +13,7 @@ import { holoBossDuration } from "./holo-boss-card.ts";
 import { renderChallengeRank } from "./challenge-rank-card.ts";
 
 export interface ChallengeRankContext {
+  readonly reply?: (message: string) => unknown;
   readonly user_id?: number;
   readonly group_id?: number;
   readonly message_type?: string;

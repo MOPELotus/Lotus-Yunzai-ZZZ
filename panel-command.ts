@@ -429,6 +429,6 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
   };
   return Object.assign(handle, {
     renderPublic: (avatar: ZzzPanelAvatar, uid: string, options: Parameters<typeof renderZzzPanelDetail>[2]) =>
-      renderZzzPanelDetail(avatar, uid, { ...options, ...portraitOptions, showcase: true }),
+      renderZzzPanelDetail(avatar, uid, { ...options, ...portraitOptions, showcase: options?.showcase ?? true }),
   });
 }
