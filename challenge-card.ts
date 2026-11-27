@@ -118,7 +118,7 @@ export async function renderZzzBattlePng(width: number, height: number, draw: (c
     return renderPng(width * density, height * density, context => {
       context.scale(density, density);
       draw(context);
-    }, mode, { allowHalfScale: standard && density === 4 && allowHalfScale });
+    }, mode, { renderScale: density, allowHalfScale: standard && density === 4 && allowHalfScale });
   }
 
   const image = await render(standard ? scale : 4);
