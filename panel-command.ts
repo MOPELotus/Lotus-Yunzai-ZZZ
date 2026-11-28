@@ -379,7 +379,7 @@ export function createZzzPanelCommands(profiles: ReturnType<typeof createProfile
           if (hasCookie || hasStoken) throw new ProfileError("changed", $t("panel-command.text_df7439bc97"));
         });
       }
-      if (region !== "prod_gf_cn" && region !== "prod_qd_cn") return $t("panel-command.text_52e48d2d22");
+      if (region !== "prod_gf_cn" && region !== "prod_qd_cn" && !source.international) return $t("panel-command.text_52e48d2d22");
       const key = `${region}:${role.uid}`;
       if (running.has(key)) return $t("panel-command.text_e24d8a9b63");
       running.add(key);

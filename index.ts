@@ -582,7 +582,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       async function flatArchiveRevision() {
         // A selected UID can come from an unverified field. The account's role catalog is required for flat files.
         const source = await profiles.requestContext(qq, profileId, "zzz", uid).catch(() => undefined);
-        if (!source || !profileCookieAccountId(source.account)) return;
+        if (!source || (!source.international && !profileCookieAccountId(source.account))) return;
         const archiveRole = resolveZzzGachaLinkRole(source.role);
         if (archiveRole.region !== region || archiveRole.gameBiz !== resolveZzzGachaLinkRole(role).gameBiz) return;
         return source.revision;

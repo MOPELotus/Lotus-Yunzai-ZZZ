@@ -99,7 +99,8 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
         if (!source) throw profileChanged();
         role = source.role;
         let revision = source.revision;
-        const account = previewRedeemIdentity(source);
+        const legacyAccount = overseas ? await profiles.accountContext(qq, profileId).catch(() => undefined) : source;
+        const account = legacyAccount && legacyAccount.revision === source.revision ? previewRedeemIdentity(legacyAccount) : undefined;
         query = async () => {
           if (overseas) {
             throw new HoyoRequestError("invalid-input", $t("monthly-command.text_5ead684d63", { "profileId": profileId }));
@@ -114,7 +115,8 @@ export function createZzzMonthlyCommands(profiles: ReturnType<typeof createProfi
           if (!active || active.revision !== revision || active.role.uid !== role.uid || active.role.region !== role.region ||
               active.role.gameBiz !== role.gameBiz) throw profileChanged();
           activeSignal.throwIfAborted();
-          return Boolean(account && previewRedeemIdentity(active) === account);
+          const currentAccount = overseas ? await profiles.accountContext(qq, profileId).catch(() => undefined) : active;
+          return Boolean(account && currentAccount?.revision === revision && previewRedeemIdentity(currentAccount) === account);
         };
       }
       const { uid, region } = resolveZzzGachaLinkRole(role);
