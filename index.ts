@@ -1,4 +1,4 @@
-import { splitGachaPoolPages, subdivideGachaPage } from "../../lib/gacha-pool-pages.ts";
+import { splitGachaPoolPages } from "../../lib/gacha-pool-pages.ts";
 import { gachaImageReply } from "../../lib/gacha-image-reply.ts";
 import { sendCommandReply } from "../../lib/commands.ts";
 import { createZzzPanelCacheRefresh } from "./panel-cache-runtime.ts";
@@ -510,9 +510,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       const sent = await context.forward!(nodes); delivered ||= sent; return sent;
     });
     const reply = await gachaImageReply({ total: pages.length, title: model.uid, signal: active,
-      inlineImageByteLimit: context.inlineImageByteLimit, forward, verifyRole,
+      forward, verifyRole,
       changedRoleMessage: $t("index.text_ffa6a35fe8"),
-      splitPage: page => subdivideGachaPage(pages, page, "data", "list"),
       render: (page, scale) => renderZzzTuningDetail(pages[page - 1]!.model, { ...options, inlineImageByteLimit: undefined, scale }),
     });
     if (reply && typeof reply === "object" && "type" in reply && reply.type === "forward") {
