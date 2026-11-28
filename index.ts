@@ -657,7 +657,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
   const stopReminders = zzzReminderRuntime && startZzzChallengeReminders(profiles, client, zzzReminderRuntime, signal);
   const cacheSignal = zzzReminderRuntime ? AbortSignal.any([signal, zzzReminderRuntime.disconnect]) : signal;
   const refreshPanelCache = createZzzPanelCacheRefresh(profiles, client, lockFile, cacheSignal);
-  const stopPanelCache = zzzReminderRuntime?.registerPanelCacheTask?.(async () => { await refreshPanelCache(); });
+  const stopPanelCache = zzzReminderRuntime?.registerPanelCacheTask?.(refreshPanelCache);
   const dispose = async () => { await Promise.all([stopReminders?.(), stopPanelCache?.()]); };
   return {
     commands: {},

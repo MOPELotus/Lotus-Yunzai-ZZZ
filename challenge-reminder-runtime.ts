@@ -10,7 +10,7 @@ import { effectiveChallengeReminder, renderZzzChallengeStatus } from "./challeng
 export interface ZzzReminderRuntime {
   readonly disconnect: AbortSignal;
   registerTask(run: () => Promise<void>): () => Promise<void>;
-  registerPanelCacheTask?(run: () => Promise<void>): () => Promise<void>;
+  registerPanelCacheTask?(run: () => Promise<import("../../lib/runtime-trace.ts").PanelCacheSummary | void>): () => Promise<void>;
   route(userId: number, botId: number | undefined, signal: AbortSignal): Promise<{
     readonly botId: number;
     send(text: string): Promise<"confirmed" | "rejected" | "unknown">;

@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import type { createProfileStore } from "@lotus-yunzai/account";
+import { isCaptchaResourceBusy } from "@lotus-yunzai/hoyo-client";
 import type { createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
 import { createRoleJsonArchive, type AcquireRoleArchiveLock } from "@lotus-yunzai/storage";
 import { createZzzOfficialGroupPanels } from "./panel-rank-official.ts";
@@ -11,11 +12,11 @@ export function createZzzPanelCacheRefresh(profiles: ReturnType<typeof createPro
     now = Date.now }: { readonly directory?: string; readonly panelDirectory?: string; readonly now?: () => number } = {}) {
   const source = createZzzOfficialGroupPanels(profiles, client, lock, panelDirectory);
   const state = createRoleJsonArchive(directory, lock, { subject: "zzz-panel-refresh", lockSuffix: "panel-refresh", maxBytes: 4096 });
-  let running: Promise<{ refreshed: number; failed: number; skipped: number }> | undefined;
+  let running: Promise<{ refreshed: number; failed: number; busy: number; skipped: number }> | undefined;
   return () => {
     if (running) return running;
     const task = async () => {
-      const counts = { refreshed: 0, failed: 0, skipped: 0 };
+      const counts = { refreshed: 0, failed: 0, busy: 0, skipped: 0 };
       signal.throwIfAborted();
       const slots = (await profiles.listCheckinProfiles()).filter(row => row.loggedIn);
       const loggedIn = new Set(slots.map(row => `${row.qq}:${row.profileId}`));
@@ -38,8 +39,9 @@ export function createZzzPanelCacheRefresh(profiles: ReturnType<typeof createPro
             await source.read(entry, signal, async () => { signal.throwIfAborted(); }, undefined);
             refreshedAt = now();
             counts.refreshed++;
-          } catch {
+          } catch (error) {
             if (signal.aborted) break;
+            if (isCaptchaResourceBusy(error)) { counts.busy++; continue; }
             counts.failed++;
           }
           await state.update(identity, async () => { signal.throwIfAborted(); }, () => ({
@@ -48,6 +50,7 @@ export function createZzzPanelCacheRefresh(profiles: ReturnType<typeof createPro
         }
       };
       await Promise.all(Array.from({ length: Math.min(3, entries.length) }, worker));
+      signal.throwIfAborted();
       return counts;
     };
     running = task().finally(() => { running = undefined; });

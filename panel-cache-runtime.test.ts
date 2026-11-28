@@ -3,6 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { createProfileStore, ProfileRequestContext } from "@lotus-yunzai/account";
+import { CaptchaResourceBusyError } from "@lotus-yunzai/hoyo-client";
 import type { createProfileHoyoClient, ZzzPanelAvatar } from "@lotus-yunzai/hoyo-client";
 import { lockFile } from "../../lib/file-lock.ts";
 import { createZzzPanelCacheRefresh } from "./panel-cache-runtime.ts";
@@ -11,7 +12,7 @@ import { createZzzCachedGroupPanels } from "./panel-rank-official.ts";
 test("绝区零面板缓存：查询零远程请求及后台刷新去重、限频与失败保留旧缓存", async () => {
   const root = await mkdtemp(join(tmpdir(), "lotus-zzz-cache-"));
   const signal = new AbortController().signal;
-  let clock = 1_000_000, calls = 0, requests = 0, fail = false, loggedIn = true;
+  let clock = 1_000_000, calls = 0, requests = 0, fail = false, busy = false, loggedIn = true;
   const role = (qq: string) => ({ uid: String(10000000 + Number(qq)), region: "prod_gf_cn", gameBiz: "nap_cn", nickname: "", chosen: true });
   const profiles = {
     async listCheckinProfiles() { return [{ qq: "42", profileId: 1, loggedIn }, { qq: "42", profileId: 2, loggedIn }, { qq: "43", profileId: 1, loggedIn }]; },
@@ -25,6 +26,7 @@ test("绝区零面板缓存：查询零远程请求及后台刷新去重、限�
   const client = { async fetchZzzPanel(source: ProfileRequestContext) {
     calls++;
     await Bun.sleep(10);
+    if (busy) throw new CaptchaResourceBusyError();
     if (fail && source.qq === "43") throw Error("upstream offline");
     const avatar: ZzzPanelAvatar = { id: 1011, name_mi18n: "安比", rarity: "A", rank: 0, level: fail ? 60 : 30 };
     return { uid: source.role.uid, region: source.role.region, avatars: [avatar], missingIds: [], revision: source.revision };
@@ -34,13 +36,17 @@ test("绝区零面板缓存：查询零远程请求及后台刷新去重、限�
     const refresh = createZzzPanelCacheRefresh(profiles, client, lockFile, signal, options);
     const first = refresh();
     expect(refresh()).toBe(first);
-    expect(await first).toEqual({ refreshed: 2, failed: 0, skipped: 0 });
+    expect(await first).toEqual({ refreshed: 2, failed: 0, busy: 0, skipped: 0 });
     expect(calls).toBe(2);
-    expect(await refresh()).toEqual({ refreshed: 0, failed: 0, skipped: 2 });
+    expect(await refresh()).toEqual({ refreshed: 0, failed: 0, busy: 0, skipped: 2 });
     clock += 3_600_000; fail = true;
-    expect(await refresh()).toEqual({ refreshed: 1, failed: 1, skipped: 0 });
+    expect(await refresh()).toEqual({ refreshed: 1, failed: 1, busy: 0, skipped: 0 });
     const restart = createZzzPanelCacheRefresh(profiles, client, lockFile, signal, options);
-    expect(await restart()).toEqual({ refreshed: 0, failed: 0, skipped: 2 });
+    expect(await restart()).toEqual({ refreshed: 0, failed: 0, busy: 0, skipped: 2 });
+    clock += 3_600_000; busy = true;
+    expect(await restart()).toEqual({ refreshed: 0, failed: 0, busy: 2, skipped: 0 });
+    busy = false;
+    expect(await restart()).toEqual({ refreshed: 1, failed: 1, busy: 0, skipped: 0 });
     const cached = createZzzCachedGroupPanels(profiles, client, lockFile, options.panelDirectory);
     const entries = await cached.list(new Set([42, 43]), signal);
     const before = { calls, requests };
