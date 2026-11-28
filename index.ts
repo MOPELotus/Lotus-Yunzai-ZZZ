@@ -12,7 +12,7 @@ import type { InboundSegment, ReplyOptions, MessageEvent, MessageReply } from ".
 import { createProfileStore, gameCommandProfileId, MAX_PROFILE_ID, ProfileError, profileCookieAccountId, type GameRole, type ProfileRequestContext } from "@lotus-yunzai/account";
 import { createGachaUpdater } from "@lotus-yunzai/gacha/update";
 import {
-  createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
+  createProfileHoyoClient, GameRecordRequestError, HoyoRequestError, isZzzGachaLinkMessage, parseZzzGachaLink, readZzzGachaLink, resolveZzzGachaLinkRole, resolveZzzTuningRegion,
   splitZzzExploration, ZzzManualGachaLinkRequired, ZzzTuningRateLimitError, type ZzzExplorationSnapshot, type ZzzGameRecordSnapshot,
   type ZzzHollowMode, type ZzzOwnedBuddyRoster, type ZzzZenkovMode,
 } from "@lotus-yunzai/hoyo-client";
@@ -159,7 +159,11 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     sync.sync(qq, profileId, { signal: workflow ? AbortSignal.any([signal, workflow]) : signal }));
   async function gachaUpdate(qq: string, profileId: number, notify?: () => unknown, _isDelegated?: boolean, workflow?: AbortSignal) {
     const role = await profiles.savedRole(qq, profileId, "zzz");
-    if (overseasRegion(role)) throw new ZzzManualGachaLinkRequired();
+    if (overseasRegion(role)) {
+      const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
+      if (!source.international) throw new ZzzManualGachaLinkRequired();
+      return syncInternational(qq, profileId, notify, workflow);
+    }
     return syncOfficial(qq, profileId, notify, workflow);
   }
   const legacyOverride = Bun.env.LOTUS_ZZZ_LEGACY_HISTORY_DIR;
@@ -167,6 +171,31 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
   const readLegacy = (qq: string, uid: string) =>
     readZzzLegacyGachaSources(legacyOverride || legacyHistoryDirectory, legacySources, qq, uid);
   const linkHistory = createZzzLinkHistory(linkHistoryDirectory, lockFile);
+  const syncInternational = createGachaUpdater(async (qq, profileId, workflow?: AbortSignal) => {
+    const active = workflow ? AbortSignal.any([signal, workflow]) : signal;
+    const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
+    const key = await client.fetchZzzGachaAuthKey(source, { signal: active });
+    const verify = async () => {
+      active.throwIfAborted();
+      const current = await profiles.requestSelectedContext(qq, profileId, "zzz");
+      if (current.revision !== key.revision || current.role.uid !== key.uid || current.role.region !== key.region) {
+        throw new ProfileError("changed", $t("index.text_9cf98a9cde"));
+      }
+    };
+    const link = parseZzzGachaLink(key.url.href, source.role);
+    const latest = await readZzzGachaLink(link, hoyoTransport ?? fetch, { signal: active }, verify);
+    const old = await linkHistory.read(qq, latest);
+    const known = new Set(old?.pools.flatMap(pool => pool.records.map(row => row.id)) ?? []);
+    const { stats } = await linkHistory.merge({ qq, uid: key.uid, region: key.region }, latest, verify);
+    const pools = stats.pools.map(pool => {
+      const rows = [...pool.records].sort((a, b) => BigInt(a.id) > BigInt(b.id) ? -1 : 1);
+      const s = rows.filter(row => row.rank === "4");
+      const index = rows.findIndex(row => row.rank === "4");
+      return { type: pool.type, name: pool.name, total: s.length, added: s.filter(row => !known.has(row.id)).length,
+        totalDraws: rows.length, pity: index < 0 ? rows.length : index };
+    });
+    return { uid: key.uid, profileId, pools, stats: { updatedAt: new Date().toISOString() } };
+  });
   const getLink = createGachaUpdater(async (qq, profileId, active?: AbortSignal) => {
     const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
     const result = await client.fetchZzzGachaAuthKey(source, { signal: active });

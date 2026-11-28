@@ -44,7 +44,7 @@ function validWallTime(value: unknown): value is string {
 
 function storedDraw(input: unknown): ZzzLegacyGachaDraw {
   const { id, itemId, gachaId, count, time, name, lang, itemType, rank } = object(input);
-  if (!identifier(id) || !identifier(itemId) || !identifier(gachaId) ||
+  if (!identifier(id) || !identifier(itemId) || (gachaId !== "0" && !identifier(gachaId)) ||
       typeof count !== "number" || !Number.isSafeInteger(count) || count < 1 || !validWallTime(time) ||
       typeof name !== "string" || !name.trim() || !name.isWellFormed() || Buffer.byteLength(name) > 512 ||
       /[\x00-\x1F\x7F]|https?:\/\//iu.test(name) ||
