@@ -314,7 +314,7 @@ export async function renderZzzTuningDetail(
   const images = await loadArt(model, loadArtwork);
 
   const standard = nativeImageRasterScale() === 4;
-  const zoom = standard ? (height * scale > 24_000 ? Math.min(2, scale) : scale) : 4;
+  const zoom = Math.min(standard ? scale : 2, height > 2_800 ? 1 : 2);
   const inlineLimit = new ImageSizeLimitError($t("tuning-detail-card.text_b873026a86"));
   if (standard && height * zoom > 24_000) throw inlineLimit;
   const render = (density: number) => renderPng(Math.round(width * density), Math.round(height * density), (ctx) => {
@@ -336,11 +336,12 @@ export async function renderZzzTuningDetail(
     }
     text(ctx, zzzCardFooter, width / 2, top + 11, 16.8, white, "center");
   }, mode, { allowHalfScale: standard && density === 4 });
-  const image = await render(zoom);
-  if (inlineImageByteLimit === undefined || image.png.byteLength <= inlineImageByteLimit) return image;
-  if (standard && zoom === 4 && !image.reducedScaleReason) {
-    const reduced = await render(2);
-    if (reduced.png.byteLength <= inlineImageByteLimit) return reduced;
+  // Keep the encoded OneBot payload below common WebSocket / QQ image limits.
+  const byteLimit = Math.min(inlineImageByteLimit ?? 4 * 1024 * 1024, 4 * 1024 * 1024);
+  for (const density of new Set([zoom, Math.min(2, zoom), 1])) {
+    if (height * density > 12_000) continue;
+    const image = await render(density);
+    if (image.png.byteLength <= byteLimit) return image;
   }
   throw inlineLimit;
 }
