@@ -300,7 +300,7 @@ export async function renderZzzTuningDetail(
   options: TuningDetailCardOptions = {},
 ) {
   const {
-    mode = "auto", scale = 4, inlineImageByteLimit,
+    mode = "auto", scale = nativeImageRasterScale(), inlineImageByteLimit,
     themeDirectory = Bun.env.LOTUS_ZZZ_GACHA_THEME_DIR?.trim() || defaultTheme,
     loadArtwork,
   } = options;
@@ -314,7 +314,7 @@ export async function renderZzzTuningDetail(
   const images = await loadArt(model, loadArtwork);
 
   const standard = nativeImageRasterScale() === 4;
-  const zoom = Math.min(standard ? scale : 2, height > 2_800 ? 1 : 2);
+  const zoom = scale;
   const inlineLimit = new ImageSizeLimitError($t("tuning-detail-card.text_b873026a86"));
   if (standard && height * zoom > 24_000) throw inlineLimit;
   const render = (density: number) => renderPng(Math.round(width * density), Math.round(height * density), (ctx) => {
@@ -335,13 +335,8 @@ export async function renderZzzTuningDetail(
       top = next + layouts[index]!;
     }
     text(ctx, zzzCardFooter, width / 2, top + 11, 16.8, white, "center");
-  }, mode, { allowHalfScale: standard && density === 4 });
-  // Keep the encoded OneBot payload below common WebSocket / QQ image limits.
-  const byteLimit = Math.min(inlineImageByteLimit ?? 4 * 1024 * 1024, 4 * 1024 * 1024);
-  for (const density of new Set([zoom, Math.min(2, zoom), 1])) {
-    if (height * density > 12_000) continue;
-    const image = await render(density);
-    if (image.png.byteLength <= byteLimit) return image;
-  }
-  throw inlineLimit;
+  }, mode, { allowHalfScale: false });
+  const image = await render(zoom);
+  if (inlineImageByteLimit !== undefined && image.png.byteLength > inlineImageByteLimit) throw inlineLimit;
+  return image;
 }

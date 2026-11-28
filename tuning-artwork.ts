@@ -148,7 +148,7 @@ function createArtwork<T extends ArtRecord>({
   }
 
   let snapshot: Promise<Awaited<ReturnType<typeof catalog.read>> | undefined> | undefined;
-  async function loadArtwork(key: string) {
+  async function readArtwork(key: string) {
     if (signal?.aborted) return;
     if (key === avatarKey) return fetchZzzQqAvatar(qq, signal, transport);
     const source = sources.get(key);
@@ -163,6 +163,13 @@ function createArtwork<T extends ArtRecord>({
     const candidates = entries?.filter(({ name }) => name === record.name) ?? [];
     const entry = candidates.find(({ id }) => id === record.itemId) ?? (candidates.length === 1 ? candidates[0] : undefined);
     return entry && localArtwork(entry, kind);
+  }
+
+  const loaded = new Map<string, ReturnType<typeof readArtwork>>();
+  function loadArtwork(key: string) {
+    let pending = loaded.get(key);
+    if (!pending) { pending = readArtwork(key); loaded.set(key, pending); }
+    return pending;
   }
 
   return { avatar: avatarKey, resolveIcon, loadArtwork };

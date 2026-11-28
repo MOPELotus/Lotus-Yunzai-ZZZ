@@ -1,3 +1,6 @@
+import { splitGachaPoolPages, subdivideGachaPage } from "../../lib/gacha-pool-pages.ts";
+import { gachaImageReply } from "../../lib/gacha-image-reply.ts";
+import { sendCommandReply } from "../../lib/commands.ts";
 import { createZzzPanelCacheRefresh } from "./panel-cache-runtime.ts";
 import { createZzzCachedGroupPanels } from "./panel-rank-official.ts";
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
@@ -5,7 +8,7 @@ import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
 import { zzzResourceDirectory } from "./card-theme.ts";
 import { fileURLToPath } from "node:url";
-import type { InboundSegment, ReplyOptions } from "../../lib/messages.ts";
+import type { InboundSegment, ReplyOptions, MessageEvent, MessageReply } from "../../lib/messages.ts";
 import { createProfileStore, gameCommandProfileId, MAX_PROFILE_ID, ProfileError, profileCookieAccountId, type GameRole, type ProfileRequestContext } from "@lotus-yunzai/account";
 import { createGachaUpdater } from "@lotus-yunzai/gacha/update";
 import {
@@ -61,7 +64,7 @@ import { renderZzzZenkov, zzzZenkovFollowUp, zzzZenkovText } from "./zenkov-card
 import { zzzCommandProfileSuffix } from "./profile-command.ts";
 
 const updateCommand = /^#绝区零(?:更新|刷新)抽卡(?:记录|链接)?([1-9]\d{0,2})?$/u;
-const viewCommand = /^#绝区零抽卡(?:记录|分析|统计)([1-9]\d{0,2})?$/u;
+const viewCommand = /^#绝区零(?:(?:抽卡|全部)(?:记录|分析|统计)|(?:全部)?(角色|代理人|武器|音擎|常驻|邦布|角色回响|武器回响|音擎回响)池?(?:全部)?(?:记录|分析|统计))([1-9]\d{0,2})?$/u;
 const linkedViewCommand = /^#绝区零逐抽记录([1-9]\d{0,2})?$/u;
 const linkCommand = /^#绝区零抽卡链接([1-9]\d{0,2})?$/u;
 const generateLinkCommand = /^#绝区零获取抽卡链接([1-9]\d{0,2})?$/u;
@@ -77,8 +80,9 @@ const hollowHelp = /^#绝区零(?:零号空洞|零号|空洞)$/u;
 const hollowCommand = /^#绝区零(枯萎苗圃|枯萎|苗圃|迷失之地|迷失)\s*([1-9]\d{0,2})?$/u;
 const zenkovCommand = /^#绝区零(?:迷宫诡域|迷宫|诡域|搜打撤|塔科夫|塔可夫|塔克夫|鸭科夫|绝科夫)(战绩|记录|详情|回顾)?\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,5}))?$/u;
 const explorationCommand = /^#绝区零(?:区域收集|收集|探索度|探索)\s*([1-9]\d{0,2})?(?:\s*页\s*([1-9]\d{0,5}))?$/u;
-const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|逐抽记录|card|卡片|个人信息|角色|拟真鏖战试炼|鏖战|爬塔|枯萎|苗圃|迷失|零号|空洞|迷宫|诡域|搜打撤|塔[科可克]夫|鸭科夫|绝科夫|区域收集|收集|探索|monthly|菲林|邦布券|收入|月报|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
+const legacyPrefix = /^(?:[#/](?:zzz|绝区零)(?:zzz|绝区零)?|[%％](?:zzz|绝区零)?|zzz|绝区零)(?=(?:更新|刷新|获取)?抽卡|(?:全部|武器|音擎|常驻|邦布|代理人)|逐抽记录|card|卡片|个人信息|角色|拟真鏖战试炼|鏖战|爬塔|枯萎|苗圃|迷失|零号|空洞|迷宫|诡域|搜打撤|塔[科可克]夫|鸭科夫|绝科夫|区域收集|收集|探索|monthly|菲林|邦布券|收入|月报|(?:本期|当期|上期|往期)?(?:式舆|深渊|防卫|危局|强袭|拟境|湮灭|临界|推演))/iu;
 const help = [
+  $t("index.gacha_pool_help"),
   $t("index.text_8efe873b92"),
   $t("index.text_bc6853ff0f"),
   $t("index.text_cccc574501"),
@@ -110,7 +114,8 @@ function overseasRegion({ uid, region, gameBiz }: GameRole) {
   }
 }
 
-interface GachaContext extends ZzzRoleGalleryContext, OwnOperationContext {
+interface GachaContext extends Omit<ZzzRoleGalleryContext, "forward">, OwnOperationContext {
+  readonly forward?: MessageEvent["forward"];
   readonly adapter?: string;
   readonly normalizedMessage: string;
   readonly inlineImageByteLimit?: number;
@@ -119,7 +124,7 @@ interface GachaContext extends ZzzRoleGalleryContext, OwnOperationContext {
   readonly message_type?: string;
   readonly groupActivitySignal?: AbortSignal;
   readonly message?: readonly InboundSegment[];
-  reply(message: string | { readonly type: "image"; readonly file: Uint8Array }, quote?: boolean, options?: ReplyOptions): unknown;
+  reply(...args: Parameters<MessageEvent["reply"]>): unknown;
 }
 
 export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderRuntime, hoyoTransport = fetch }: {
@@ -490,7 +495,39 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     }
   }
 
-  async function viewOfficialTuning(source: ProfileRequestContext, profileId: number, context: GachaContext) {
+  async function replyTuningPools(model: Parameters<typeof renderZzzTuningDetail>[0], options: Parameters<typeof renderZzzTuningDetail>[1],
+    context: GachaContext, verifyRole: () => Promise<boolean>, active: AbortSignal, pool?: string) {
+    const types: Record<string, string[]> = {
+      角色: ["GACHA_TYPE_CHARACTER_UP"], 代理人: ["GACHA_TYPE_CHARACTER_UP"],
+      武器: ["GACHA_TYPE_WEAPON_UP"], 音擎: ["GACHA_TYPE_WEAPON_UP"],
+      常驻: ["GACHA_TYPE_PERMANENT"], 邦布: ["GACHA_TYPE_BANGBOO"],
+      角色回响: ["GACHA_TYPE_CHARACTER_RETURN"], 武器回响: ["GACHA_TYPE_WEAPON_RETURN"], 音擎回响: ["GACHA_TYPE_WEAPON_RETURN"],
+    };
+    const selected = pool ? { ...model, data: model.data.filter(item => types[pool]?.includes(item.type)) } : model;
+    const pages = splitGachaPoolPages(selected, "data", "list").map(model => ({ model }));
+    let delivered = false;
+    const forward: MessageEvent["forward"] = context.forward && (async nodes => {
+      const sent = await context.forward!(nodes); delivered ||= sent; return sent;
+    });
+    const reply = await gachaImageReply({ total: pages.length, title: model.uid, signal: active,
+      inlineImageByteLimit: context.inlineImageByteLimit, forward, verifyRole,
+      changedRoleMessage: $t("index.text_ffa6a35fe8"),
+      splitPage: page => subdivideGachaPage(pages, page, "data", "list"),
+      render: (page, scale) => renderZzzTuningDetail(pages[page - 1]!.model, { ...options, inlineImageByteLimit: undefined, scale }),
+    });
+    if (reply && typeof reply === "object" && "type" in reply && reply.type === "forward") {
+      if (forward) await forward(reply.nodes as readonly MessageReply[]);
+      return delivered;
+    }
+    if (reply !== undefined) await sendCommandReply({ forward,
+      reply: async (content, quote, opts) => (await context.reply(content, quote, { ...opts, onDelivered: async id => {
+        delivered = true; await opts?.onDelivered?.(id);
+      } })) !== false,
+    }, reply);
+    return delivered;
+  }
+
+  async function viewOfficialTuning(source: ProfileRequestContext, profileId: number, context: GachaContext, pool?: string) {
     const { qq, role } = source;
     const identity = zzzTuningProfile(source);
     const { uid, region } = identity;
@@ -503,17 +540,11 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     const { avatar, resolveIcon, loadArtwork } = createZzzTuningArtwork(stats, qq, active);
     const model = buildZzzTuningDetail({ stats, player: { nickname: role.nickname || $t("index.text_4efe2edb6d"), avatar }, resolveIcon });
     const level = role.level === undefined ? undefined : Number(role.level);
-    const { png } = await renderZzzTuningDetail(model, {
+    const delivered = await replyTuningPools(model, {
       level: Number.isFinite(level) ? level : undefined,
       regionName: zzzRegionName(region, role.regionName), inlineImageByteLimit: context.inlineImageByteLimit, loadArtwork,
-    });
-    const current = await selected();
-    if (active.aborted) return [];
-    if (!current || !sameZzzTuningProfile(current, identity, revision)) return $t("index.text_ffa6a35fe8");
-
-    let delivered = false;
-    const accepted = await context.reply({ type: "image", file: png }, false, { onDelivered: () => { delivered = true; } });
-    if (accepted === false || !delivered || active.aborted) return [];
+    }, context, async () => sameZzzTuningProfile(await selected(), identity, revision), active, pool);
+    if (!delivered || active.aborted) return [];
     const confirmed = await selected();
     if (active.aborted || !confirmed || !sameZzzTuningProfile(confirmed, identity, revision)) return [];
     const live = await client.fetchZzzTuningInventory(confirmed, { signal: active }).catch(() => undefined);
@@ -525,7 +556,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
     return context.message_type === "group" ? [{ type: "at" as const, qq }, inventory] : inventory;
   }
 
-  async function view(qq: string, profileId: number, context: GachaContext, linkedOnly: boolean) {
+  async function view(qq: string, profileId: number, context: GachaContext, linkedOnly: boolean, pool?: string) {
     try {
       const role = await profiles.savedRole(qq, profileId, "zzz");
       const { uid } = role;
@@ -537,7 +568,7 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
         if (source.role.uid !== uid || regionOf(source.role) !== region) {
           return $t("index.text_ffa6a35fe8");
         }
-        return await viewOfficialTuning(source, profileId, context);
+        return await viewOfficialTuning(source, profileId, context, pool);
       }
 
       async function roleMatches() {
@@ -578,12 +609,8 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (!stats) return linkedOnly ? $t("index.text_c5fb434ef4") : $t("index.text_77cd087915");
       const { avatar, resolveIcon, loadArtwork } = createZzzLegacyGachaArtwork(qq, signal);
       const model = buildZzzLegacyDetail({ stats, player: { nickname, avatar }, resolveIcon });
-      const { png } = await renderZzzTuningDetail(model, { ...display, loadArtwork });
-      if (signal.aborted) return [];
-      if (!await roleMatches() || (flatRevision && await flatArchiveRevision() !== flatRevision)) {
-        return $t("index.text_ffa6a35fe8");
-      }
-      if (!signal.aborted) await context.reply({ type: "image", file: png });
+      await replyTuningPools(model, { ...display, loadArtwork }, context,
+        async () => await roleMatches() && (!flatRevision || await flatArchiveRevision() === flatRevision), signal, pool);
       return [];
     } catch (error) {
       if (signal.aborted) return [];
@@ -747,16 +774,17 @@ export function createModule({ signal, lockFile, zzzPanelRankRoles, zzzReminderR
       if (continuation !== undefined) return recall.transient(continuation);
       const update = updateCommand.exec(command);
       const linkedOnly = linkedViewCommand.exec(command);
-      const matched = update ?? linkedOnly ?? viewCommand.exec(command);
+      const viewing = viewCommand.exec(command);
+      const matched = update ?? linkedOnly ?? viewing;
       if (!matched) return;
-      const profileId = gameCommandProfileId("zzz", matched[1]);
+      const profileId = gameCommandProfileId("zzz", viewing && !update && !linkedOnly ? viewing[2] : matched[1]);
       if (profileId > MAX_PROFILE_ID) return;
       const { user_id } = context;
       if (typeof user_id !== "number" || !Number.isSafeInteger(user_id) || user_id < 1) {
         return $t("index.text_af07d075a4");
       }
       const qq = String(user_id);
-      if (!update) return view(qq, profileId, context, linkedOnly !== null);
+      if (!update) return view(qq, profileId, context, linkedOnly !== null, viewing?.[1]);
       try {
         const result = await gachaUpdate(qq, profileId, () =>
           context.reply($t("index.text_48afbcd626", { "profileId": profileId })));

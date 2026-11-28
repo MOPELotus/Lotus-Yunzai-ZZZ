@@ -1381,7 +1381,8 @@
     "zenkov-card.text_f81ff55de1": "进度",
     "zenkov-card.text_fd0694b6d0": "撤离结果未知",
     "card-theme.text_0ddf78c06d": "Lotus-Yunzai · ZZZ",
-    "group-rank.refreshing": "正在读取本群 {count} 个 UID 的绝区零面板缓存..."
+    "group-rank.refreshing": "正在读取本群 {count} 个 UID 的绝区零面板缓存...",
+    "index.gacha_pool_help": "%抽卡记录 / %全部记录：查看全部卡池；%角色记录 / %武器记录 / %音擎记录 / %常驻记录 / %邦布记录：查看对应单个卡池；%角色回响记录 / %音擎回响记录 / %武器回响记录：查看对应回响卡池。后缀加数字可指定档案。"
   },
   "parameters": {
     "challenge-rank-card.text_85b772fa7e": {
