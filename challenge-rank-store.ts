@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import { normalizeZzzClimbingTower, normalizeZzzDeadly, normalizeZzzHoloBoss, normalizeZzzShiyu, normalizeZzzVoidFront } from "@lotus-yunzai/hoyo-client";
 import {
-  currentPeriod, domesticRegion, idOf, isOwnedRank, rankIdentity, rankRow, rankTowerSeason, rankType, sortedRankRows,
+  currentPeriod, rankRegion, idOf, isOwnedRank, rankIdentity, rankRow, rankTowerSeason, rankType, sortedRankRows,
   type RankMode, type RankProfile, type RankRow, type RankSnapshot, type RankType,
 } from "./challenge-rank-model.ts";
 
@@ -178,7 +178,7 @@ function profileText(value: unknown, max = 160) {
 
 function parseProfile(raw: Json, qq: string, uid: string) {
   const region = raw.region;
-  if (typeof region !== "string" || !domesticRegion(region) || !rankIdentity(uid, region)) return;
+  if (typeof region !== "string" || !rankRegion(region) || !rankIdentity(uid, region)) return;
   const level = typeof raw.level === "number" || typeof raw.level === "string" ? Number(raw.level) : undefined;
   const profileId = typeof raw.profileId === "number" && Number.isInteger(raw.profileId) &&
     raw.profileId > 0 && raw.profileId <= MAX_PROFILE_ID ? raw.profileId : undefined;

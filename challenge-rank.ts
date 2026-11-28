@@ -5,7 +5,7 @@ import { zzzResourceDirectory } from "./card-theme.ts";
 import type { createProfileStore, GameRole } from "@lotus-yunzai/account";
 import { previewRedeemIdentity } from "@lotus-yunzai/hoyo-client/redeem-submit";
 import {
-  currentPeriod, domesticRegion, idOf, isOwnedRank, rankCommand, rankIdentity, rankLabels, rankTowerSeason, rankType, sortedRankRows,
+  currentPeriod, domesticRegion, rankRegion, idOf, isOwnedRank, rankCommand, rankIdentity, rankLabels, rankTowerSeason, rankType, sortedRankRows,
   type RankRow, type RankSnapshot, type RankType,
 } from "./challenge-rank-model.ts";
 import { createChallengeRankStore, readRankConfig, setRankGroupEnabled, type RankGeneration } from "./challenge-rank-store.ts";
@@ -51,8 +51,9 @@ export async function ownedRankRole(profiles: ReturnType<typeof createProfileSto
   const selected = await profiles.savedRole(qq, profileId, "zzz");
   const source = await profiles.requestContext(qq, profileId, "zzz", selected.uid);
   if (source.revision === before.revision && source.role.uid === selected.uid && source.role.region === selected.region &&
-      source.role.gameBiz === "nap_cn" && source.role.gameBiz === selected.gameBiz &&
-      rankIdentity(selected.uid, selected.region) && previewRedeemIdentity(source)) return source;
+      source.role.gameBiz === selected.gameBiz && rankIdentity(selected.uid, selected.region) &&
+      (domesticRegion(selected.region) ? source.role.gameBiz === "nap_cn" && previewRedeemIdentity(source) :
+        source.role.gameBiz === "nap_global" && source.international && /^[1-9]\d{0,19}$/u.test(source.international.accountId))) return source;
 }
 
 type AdminCommand = { readonly kind: "admin-toggle"; readonly enabled: boolean } | { readonly kind: "admin-clear" };
@@ -92,7 +93,7 @@ async function manageZzzChallengeRanks(context: ChallengeRankContext, command: A
 
 export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfileStore>, signal: AbortSignal) {
   async function roleKeepsOwnership(row: RankRow) {
-    if (row.holo || row.voidFront || row.tower) {
+    if (row.holo || row.voidFront || row.tower || !domesticRegion(row.region)) {
       const active = row.profileId && await ownedRankRole(profiles, row.qq, row.profileId).catch(() => undefined);
       return !!active && active.role.uid === row.uid && active.role.region === row.region;
     }
@@ -114,11 +115,13 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
       const scope = rankGroup(context);
       const redis = globalThis.redis;
       if (!scope || !redis || (type === "ABYSS" && generation === undefined) ||
-          !currentPeriod(snapshot, Date.now()) || !domesticRegion(snapshot.region)) return;
+          !currentPeriod(snapshot, Date.now()) || !rankRegion(snapshot.region) ||
+          role.uid !== snapshot.uid || role.region !== snapshot.region ||
+          role.gameBiz !== (domesticRegion(snapshot.region) ? "nap_cn" : "nap_global")) return;
       try {
         if (!(await readRankConfig(scope.group)).allowed || !await rankMembership(context, scope.actor) ||
             signal.aborted || !await verify() || signal.aborted) return;
-        if (isOwnedRank(type)) {
+        if (isOwnedRank(type) || !domesticRegion(snapshot.region)) {
           const active = await ownedRankRole(profiles, scope.actor, profileId);
           if (!active || active.role.uid !== snapshot.uid || active.role.region !== snapshot.region || !await verify() || signal.aborted) return;
         }
@@ -149,9 +152,9 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         if (command.kind === "visibility") {
           if (!await rankMembership(context, actor)) return $t("challenge-rank.text_f9fd277d3d");
           const ownedType = command.types.find(isOwnedRank);
-          const role = ownedType ?
-            (await ownedRankRole(profiles, actor, command.profileId).catch(() => undefined))?.role :
-            await profiles.savedRole(actor, command.profileId, "zzz").catch(() => undefined);
+          const selected = await profiles.savedRole(actor, command.profileId, "zzz").catch(() => undefined);
+          const role = ownedType || (selected && !domesticRegion(selected.region)) ?
+            (await ownedRankRole(profiles, actor, command.profileId).catch(() => undefined))?.role : selected;
           if (!role || !rankIdentity(role.uid, role.region)) return ownedType ?
             $t("challenge-rank.text_7ff656ddba", { "value1": rankLabels[ownedType] }) : $t("challenge-rank.text_6e7b4ff3ac");
           if (signal.aborted) return;
@@ -169,12 +172,12 @@ export function createZzzChallengeRanks(profiles: ReturnType<typeof createProfil
         if (!members) return $t("challenge-rank.text_f9fd277d3d");
         const generation = await store.generation(group, rankType(mode));
         const candidates = await store.rows(group, mode, members, Date.now(), generation);
-        const rows: RankRow[] = [];
-        for (const row of sortedRankRows(mode, candidates)) {
-          if (await roleKeepsOwnership(row)) rows.push(row);
+        const owned: RankRow[] = [];
+        for (const row of candidates) {
+          if (await roleKeepsOwnership(row)) owned.push(row);
           if (signal.aborted) return;
-          if (rows.length >= settings.maximum) break;
         }
+        const rows = sortedRankRows(mode, owned).slice(0, settings.maximum);
         if (!rows.length) {
           const season = rankTowerSeason(rankType(mode));
           if (season) return $t("challenge-rank.text_3b5f19a85b", { "season": season, "value2": season });

@@ -1,6 +1,7 @@
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
+import { readChallengeReminderContext } from "./challenge-profile.ts";
 import type { createProfileStore } from "@lotus-yunzai/account";
 import type { createProfileHoyoClient } from "@lotus-yunzai/hoyo-client";
 import { challengeReminderWindow, createZzzChallengeReminderStore, type ChallengeReminderDefaults } from "./challenge-reminder-store.ts";
@@ -64,8 +65,8 @@ export function startZzzChallengeReminders(profiles: ReturnType<typeof createPro
       const userId = Number(qq);
       const route = await runtime.route(userId, plan.botId, active);
       if (!route || active.aborted || !samePlan(await readPlan(store, qq))) return;
-      const source = await profiles.requestSelectedContext(qq, 1, "zzz");
-      if (source.role.gameBiz !== "nap_cn" || active.aborted) return;
+      const source = await readChallengeReminderContext(profiles, qq, 1);
+      if (!source || active.aborted) return;
       const result = await client.fetchZzzChallengeStatus(source, { signal: active,
         skipShiyu: plan.preferences.abyssCheckLevel === 0, skipDeadly: plan.preferences.deadlyStars === 0 });
       if (active.aborted) return;

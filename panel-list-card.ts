@@ -43,7 +43,7 @@ export async function loadPanelPortraits(rows: readonly ZzzPanelAvatar[], local:
       }
       const cached = await local(`images/square_avatar/role_square_avatar_${row.id}.png`);
       if (cached) return cached;
-      const icon = row.role_square_url ?? row.group_icon_path;
+      const icon = row.role_square_url;
       const official = icon ? await artwork(fetchZzzOfficialArtwork(icon, options.signal)) : undefined;
       return official ?? (await options.atlasPortrait?.(row.id, true))?.image;
     })));

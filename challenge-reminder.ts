@@ -1,6 +1,8 @@
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
+import { zzzChallengeTime } from "./challenge-time.ts";
+import { readChallengeReminderContext } from "./challenge-profile.ts";
 import { gameCommandProfileId, MAX_PROFILE_ID, ProfileError, type createProfileStore } from "@lotus-yunzai/account";
 import { GameRecordRequestError, HoyoRequestError, type createProfileHoyoClient, type ZzzDeadlySnapshot, type ZzzShiyuSnapshot } from "@lotus-yunzai/hoyo-client";
 import { challengeReminderTime, createZzzChallengeReminderStore, type ChallengeReminderDefaults,
@@ -57,18 +59,17 @@ function summary({ abyssCheckLevel, deadlyStars, remindTime }: ReturnType<typeof
   return $t("challenge-reminder.text_0a989797d0", { "remindTime": remindTime, "abyss": abyss, "deadly": deadly });
 }
 
-function chinaTime(value: string) {
-  return Date.parse(value.replace(" ", "T") + "+08:00");
+function inPeriod(period: ZzzDeadlySnapshot["period"], now: number, region: string) {
+  if (!period) return true;
+  const start = zzzChallengeTime(period.start, region), end = zzzChallengeTime(period.end, region);
+  return start !== undefined && end !== undefined && start <= now && now <= end;
 }
 
-function inPeriod(period: ZzzDeadlySnapshot["period"], now: number) {
-  return !period || (chinaTime(period.start) <= now && now <= chinaTime(period.end));
-}
-
-function periodLines(period: ZzzDeadlySnapshot["period"], now: number) {
+function periodLines(period: ZzzDeadlySnapshot["period"], now: number, region: string) {
   if (!period) return [];
   const day = (value: string) => value.slice(0, 10).split("-").map(Number).join("/");
-  const end = chinaTime(period.end);
+  const end = zzzChallengeTime(period.end, region);
+  if (end === undefined) return [];
   const hours = Math.max(0, Math.floor((end - now) / 3_600_000));
   return [$t("challenge-reminder.text_001e45cbfe", { "value1": day(period.start), "value2": day(period.end) }), $t("challenge-reminder.text_86182928fc", { "value1": Math.floor(hours / 24), "value2": hours % 24 })];
 }
@@ -93,10 +94,10 @@ export function renderZzzChallengeStatus(
       const fifth = result.overall?.rating;
       const target = preferences.abyssCheckLevel;
       const passed = !!target && count !== undefined && (target === 6 ? count === 5 && fifth === "S+" : count >= target);
-      if (!onlyIncomplete || (target > 0 && count !== undefined && !passed && inPeriod(result.period, now))) {
+      if (!onlyIncomplete || (target > 0 && count !== undefined && !passed && inPeriod(result.period, now, result.region))) {
         lines.push($t("challenge-reminder.text_e48e8362c8", { "value1": count ?? "—", "value2": passed ? " ✓" : "" }));
         if (fifth || target === 0 || target === 6) lines.push($t("challenge-reminder.text_2b69096fc4", { "value1": fifth ?? $t("challenge-reminder.text_484d556139"), "value2": passed && target === 6 ? " ✓" : "" }));
-        lines.push(...periodLines(result.period, now));
+        lines.push(...periodLines(result.period, now, result.region));
       }
     }
   }
@@ -107,8 +108,8 @@ export function renderZzzChallengeStatus(
     const stars = result.totalStars ?? (result.status === "empty" ? 0 : undefined);
     const target = preferences.deadlyStars;
     const passed = !!target && stars !== undefined && stars >= target;
-    if (!onlyIncomplete || (target > 0 && stars !== undefined && !passed && inPeriod(result.period, now))) {
-      lines.push($t("challenge-reminder.text_5083419aa5", { "value1": stars ?? "—", "value2": passed ? " ✓" : "" }), ...periodLines(result.period, now));
+    if (!onlyIncomplete || (target > 0 && stars !== undefined && !passed && inPeriod(result.period, now, result.region))) {
+      lines.push($t("challenge-reminder.text_5083419aa5", { "value1": stars ?? "—", "value2": passed ? " ✓" : "" }), ...periodLines(result.period, now, result.region));
     }
   }
   return lines.join("\n");
@@ -136,8 +137,8 @@ export function createZzzChallengeReminders(profiles: ReturnType<typeof createPr
         store.updateUser(qq, update, global);
       if (command.kind === "status") {
         const { profileId } = command;
-        const source = await profiles.requestSelectedContext(qq, profileId, "zzz");
-        if (source.role.gameBiz !== "nap_cn") return $t("challenge-reminder.text_99b13fad14");
+        const source = await readChallengeReminderContext(profiles, qq, profileId);
+        if (!source) return $t("challenge-reminder.text_99b13fad14");
         const preferences = effectiveChallengeReminder(global, await store.user(qq));
         if (signal.aborted) return;
         await context.reply($t("challenge-reminder.text_666d9ed291"));
@@ -170,8 +171,8 @@ export function createZzzChallengeReminders(profiles: ReturnType<typeof createPr
         const botId = context.self_id;
         if (command.enabled) {
           if (!botId || !Number.isSafeInteger(botId) || botId < 1 || botId === context.user_id) return $t("challenge-reminder.text_0a50984465");
-          const source = await profiles.requestSelectedContext(qq, 1, "zzz");
-          if (source.role.gameBiz !== "nap_cn") return $t("challenge-reminder.text_8fd6f36099");
+          const source = await readChallengeReminderContext(profiles, qq, 1);
+          if (!source) return $t("challenge-reminder.text_8fd6f36099");
         }
         if (signal.aborted) return;
         const changed = await updateUser(user => user.enable === command.enabled && (!command.enabled || user.botId === botId) ?

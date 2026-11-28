@@ -1,6 +1,7 @@
 import { createTranslator as createTextTranslator } from "../../packages/i18n/index.ts";
 import messageCatalog from "./i18n/zh-CN.json";
 const $t = createTextTranslator("zzz", messageCatalog.messages);
+import { zzzChallengeTime } from "./challenge-time.ts";
 import { gameCommandProfileId, MAX_PROFILE_ID } from "@lotus-yunzai/account";
 import type { ZzzClimbingTowerSnapshot, ZzzDeadlyRoom, ZzzDeadlySnapshot, ZzzHoloBossRoom, ZzzHoloBossSnapshot, ZzzShiyuSnapshot, ZzzShiyuTeam, ZzzVoidFrontSnapshot, ZzzVoidFrontStage } from "@lotus-yunzai/hoyo-client";
 
@@ -14,13 +15,14 @@ export interface RankProfile {
   readonly qq: string;
   readonly profileId?: number;
   readonly uid: string;
-  readonly region: "prod_gf_cn" | "prod_qd_cn";
+  readonly region: "prod_gf_cn" | "prod_qd_cn" | "prod_gf_us" | "prod_gf_eu" | "prod_gf_jp" | "prod_gf_sg";
   readonly nickname: string;
   readonly level?: number;
   readonly regionName?: string;
 }
 
 export interface RankRow extends RankProfile {
+  readonly periodKey?: string;
   readonly score: number;
   readonly bonus: number;
   readonly latest: number;
@@ -116,12 +118,16 @@ export function rankCommand(command: string) {
   }
 }
 
-export function domesticRegion(value: string): value is RankProfile["region"] {
+export function domesticRegion(value: string): value is "prod_gf_cn" | "prod_qd_cn" {
   return value === "prod_gf_cn" || value === "prod_qd_cn";
 }
 
+export function rankRegion(value: string): value is RankProfile["region"] {
+  return domesticRegion(value) || /^prod_gf_(?:us|eu|jp|sg)$/u.test(value);
+}
+
 export function rankIdentity(uid: string, region: string) {
-  if (/^[1-9]\d{7,8}$/u.test(uid) && domesticRegion(region)) return `${region}:${uid}`;
+  if (domesticRegion(region) ? /^[1-9]\d{7,8}$/u.test(uid) : rankRegion(region) && /^[1-9]\d{9}$/u.test(uid)) return `${region}:${uid}`;
 }
 
 export function idOf(value: unknown) {
@@ -130,24 +136,18 @@ export function idOf(value: unknown) {
   if (/^[1-9]\d{0,15}$/u.test(id)) return id;
 }
 
-function timestamp(value: unknown) {
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/u.test(value)) {
-    const millis = Date.parse(value.replace(" ", "T") + "+08:00");
-    if (Number.isFinite(millis)) return millis;
-  }
-}
 
 export function currentPeriod(snapshot: RankSnapshot, now: number) {
   if ("seasons" in snapshot) return snapshot.status === "available" ? Number.MAX_SAFE_INTEGER : undefined;
   if (snapshot.scheduleType !== 1 || snapshot.status !== "available") return;
   if ("stages" in snapshot) {
-    const start = timestamp(snapshot.start);
+    const start = zzzChallengeTime(snapshot.start, snapshot.region);
     const ends = snapshot.rankEndsAt;
     if (ends !== undefined && Number.isSafeInteger(ends) && ends >= now && (start === undefined || start <= now)) return ends;
     return;
   }
-  const start = timestamp(snapshot.period?.start);
-  const end = timestamp(snapshot.period?.end);
+  const start = zzzChallengeTime(snapshot.period?.start, snapshot.region);
+  const end = zzzChallengeTime(snapshot.period?.end, snapshot.region);
   if (start !== undefined && end !== undefined && start <= now && now <= end) return end;
 }
 
@@ -159,28 +159,30 @@ export function rankRow(mode: RankMode, profile: RankProfile, snapshot: RankSnap
   if (profile.uid !== snapshot.uid || profile.region !== snapshot.region) return;
   const expiresAt = currentPeriod(snapshot, now);
   if (!expiresAt) return;
+  const periodKey = "period" in snapshot ? snapshot.period?.start : "stages" in snapshot ? snapshot.start : undefined;
+  const subject = { ...profile, ...(periodKey && { periodKey }) };
   const season = rankTowerSeason(rankType(mode));
   if (season && "seasons" in snapshot) {
     const record = snapshot.seasons.find(item => item.number === season);
     if (!record || !finite(record.layer) || (season >= 2 && !finite(record.mvp))) return;
     const score = season <= 2 ? record.layer : record.score;
     if (!finite(score)) return;
-    return { ...profile, score, bonus: 0, latest: 0, expiresAt, teams: [], source,
+    return { ...subject, score, bonus: 0, latest: 0, expiresAt, teams: [], source,
       tower: { layer: record.layer, noDamage: season >= 2 ? record.mvp : undefined, medal: record.medal } };
   }
   if (mode === "VOID_FRONT_BATTLE" && "stages" in snapshot) {
     if (snapshot.endingUnlocked !== true || !snapshot.finalStage || !finite(snapshot.totalScore)) return;
-    const start = timestamp(snapshot.start) ?? 0;
-    const cleared = [snapshot.finalStage, ...snapshot.stages].map(stage => timestamp(stage.clearedAt) ?? 0);
+    const start = zzzChallengeTime(snapshot.start, snapshot.region) ?? 0;
+    const cleared = [snapshot.finalStage, ...snapshot.stages].map(stage => zzzChallengeTime(stage.clearedAt, snapshot.region) ?? 0);
     if (cleared.some(time => time <= 0 || time < start || time > now)) return;
     const latest = Math.max(...cleared);
-    return { ...profile, score: snapshot.totalScore, bonus: 0, latest, expiresAt, teams: [],
+    return { ...subject, score: snapshot.totalScore, bonus: 0, latest, expiresAt, teams: [],
       voidFront: { finalStage: snapshot.finalStage, stages: snapshot.stages }, source };
   }
   if (mode === "HOLO_BOSS" && "bosses" in snapshot) {
     if (!snapshot.bosses.length || !finite(snapshot.totalStars) || !finite(snapshot.totalDuration) ||
         !finite(snapshot.undamaged) || snapshot.undamaged > snapshot.bosses.length) return;
-    return { ...profile, score: snapshot.totalDuration, bonus: snapshot.totalStars,
+    return { ...subject, score: snapshot.totalDuration, bonus: snapshot.totalStars,
       latest: observedAt && observedAt <= now ? observedAt : now, expiresAt, teams: [],
       holo: { bosses: snapshot.bosses, undamaged: snapshot.undamaged }, source };
   }
@@ -189,8 +191,8 @@ export function rankRow(mode: RankMode, profile: RankProfile, snapshot: RankSnap
     const score = snapshot.overall?.score;
     if (!teams?.length || !finite(score)) return;
     const rating = snapshot.overall?.rating;
-    const latest = Math.max(...teams.map(team => timestamp(team.challengeTime) ?? 0)) || now;
-    return { ...profile, score, bonus: rating ? ratingWeight[rating] ?? 0 : 0, latest, expiresAt, rating, teams, source };
+    const latest = Math.max(...teams.map(team => zzzChallengeTime(team.challengeTime, snapshot.region) ?? 0)) || now;
+    return { ...subject, score, bonus: rating ? ratingWeight[rating] ?? 0 : 0, latest, expiresAt, rating, teams, source };
   }
   if ((mode === "DEADLY" || mode === "DEADLY_HARD") && "trial" in snapshot) {
     const teams = mode === "DEADLY_HARD" ? snapshot.hard : snapshot.trial;
@@ -199,13 +201,16 @@ export function rankRow(mode: RankMode, profile: RankProfile, snapshot: RankSnap
     const score = hard ? teams.reduce((sum, team) => sum + team.score!, 0) : snapshot.totalScore;
     const bonus = hard ? 0 : snapshot.totalStars;
     if (!finite(score) || !finite(bonus)) return;
-    const latest = Math.max(0, ...teams.map(team => timestamp(team.clearedAt) ?? 0)) || now;
-    return { ...profile, score, bonus, latest, expiresAt, teams, source };
+    const latest = Math.max(0, ...teams.map(team => zzzChallengeTime(team.clearedAt, snapshot.region) ?? 0)) || now;
+    return { ...subject, score, bonus, latest, expiresAt, teams, source };
   }
 }
 
 export function sortedRankRows(mode: RankMode, rows: readonly RankRow[]) {
-  return [...rows].sort((a, b) => {
+  // Servers reset at different instants; never mix two official calendar periods.
+  const period = rows.some(row => !domesticRegion(row.region)) ? rows.reduce((latest, row) =>
+    row.periodKey && row.periodKey > latest ? row.periodKey : latest, "") : "";
+  return rows.filter(row => !period || row.periodKey === period).sort((a, b) => {
     const result = mode === "HOLO_BOSS" ? b.bonus - a.bonus || a.score - b.score || (b.holo?.undamaged ?? 0) - (a.holo?.undamaged ?? 0) :
       mode === "DEADLY" ? b.bonus - a.bonus || b.score - a.score : b.score - a.score || b.bonus - a.bonus;
     const towerTie = a.tower && b.tower ? b.tower.layer - a.tower.layer || (b.tower.noDamage ?? 0) - (a.tower.noDamage ?? 0) : 0;

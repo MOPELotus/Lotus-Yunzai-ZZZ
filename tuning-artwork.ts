@@ -1,4 +1,5 @@
 import { constants } from "node:fs";
+import { withoutReadRetries, withReadRetries } from "@lotus-yunzai/http";
 import { open, realpath } from "node:fs/promises";
 import { basename, dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,34 +48,42 @@ async function galleryImage(root: string, artwork: string | undefined) {
   }
 }
 
+async function artworkBytes(response: Response) {
+  if (!response.ok || !/^image\/(?:jpeg|png|webp)(?:;|$)/iu.test(response.headers.get("content-type") ?? "")) {
+    await response.body?.cancel().catch(() => undefined);
+    return;
+  }
+  const reader = response.body?.getReader();
+  if (!reader) return;
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return bytes ? Buffer.concat(chunks, bytes) : undefined;
+      bytes += value.byteLength;
+      if (bytes > maxBytes) return;
+      chunks.push(value);
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined);
+    reader.releaseLock();
+  }
+}
+
 async function fetchArtwork(url: URL, transport: ArtworkTransport, signal?: AbortSignal) {
   try {
-    const deadline = AbortSignal.timeout(3_000);
-    const response = await transport(url, {
-      credentials: "omit", redirect: "error", signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
-    });
-    if (!response.ok || !/^image\/(?:jpeg|png|webp)(?:;|$)/iu.test(response.headers.get("content-type") ?? "")) {
-      await response.body?.cancel().catch(() => undefined);
-      return;
-    }
-    const reader = response.body?.getReader();
-    if (!reader) return;
-    const chunks: Uint8Array[] = [];
-    let bytes = 0;
-    try {
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) return bytes ? Buffer.concat(chunks, bytes) : undefined;
-        bytes += value.byteLength;
-        if (bytes > maxBytes) {
-          await reader.cancel();
-          return;
-        }
-        chunks.push(value);
-      }
-    } finally {
-      reader.releaseLock();
-    }
+    const deadline = AbortSignal.any([AbortSignal.timeout(10_000), ...(signal ? [signal] : [])]);
+    let image: Buffer | undefined;
+    const request = withReadRetries((target, init) => withoutReadRetries(async () => {
+      const attempt = AbortSignal.any([deadline, AbortSignal.timeout(3_000)]);
+      const response = await transport(target, { ...init, signal: attempt });
+      image = await artworkBytes(response);
+      attempt.throwIfAborted();
+      return response;
+    }));
+    await request(url, { method: "GET", credentials: "omit", redirect: "error", signal: deadline });
+    return image;
   } catch {
     return;
   }
